@@ -13,12 +13,17 @@ class EventSystem:
         self._receivers: List[Callable[[List[Any]], Coroutine]] = []
 
     def register_handler(self, event_type: Type, handler: Union[Callable[[Any], None], Callable[[Any], Coroutine]]):
-        coroutine = types.coroutine(handler)
-        self._handlers[event_type].append(coroutine)
+        handler = types.coroutine(handler)
+        self._handlers[event_type].append(handler)
+        return handler
 
     def register_receiver(self, receiver: Union[Callable[[List[Any]], None], Callable[[List[Any]], Coroutine]]):
-        coroutine = types.coroutine(receiver)
-        self._receivers.append(coroutine)
+        handler = types.coroutine(receiver)
+        self._receivers.append(handler)
+        return handler
+
+    def unregister_handler(self, event_type: Type, handler: Union[Callable[[Any], None], Callable[[Any], Coroutine]]):
+        self._handlers[event_type].remove(handler)
 
     def raise_event(self, event: Any):
         self._events.append(event)

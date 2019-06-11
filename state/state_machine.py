@@ -1,10 +1,13 @@
 import asyncio
 from collections import defaultdict
-from typing import Any, List, Dict, DefaultDict, Callable, Union, Coroutine, TYPE_CHECKING
+from typing import Any, List, Dict, DefaultDict, Callable, Union, Coroutine, Type, TypeVar, Optional, TYPE_CHECKING
 from state import Transition
 
 if TYPE_CHECKING:
     from state import State
+
+
+T = TypeVar("T")
 
 
 class StateMachine:
@@ -19,7 +22,8 @@ class StateMachine:
         self._states[state_name] = state
 
     def add_transition(self, from_name, to_name,
-                       event_type, event_handler: Union[Callable[[Any], bool], Callable[[Any], Coroutine]]):
+                       event_type: Type[T],
+                       event_handler: Optional[Union[Callable[[T], bool], Callable[[T], Coroutine]]] = lambda _: True):
         try:
             transition = self._transitions[from_name][to_name]
         except KeyError:
