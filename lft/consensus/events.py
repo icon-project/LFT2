@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from consensus.factories import ConsensusData, ConsensusVote, ConsensusVotes
+    from lft.consensus.factories import ConsensusData, ConsensusVote, ConsensusVotes
 
 
 class RoundEvent:

@@ -1,10 +1,10 @@
 import asyncio
 from collections import defaultdict
 from typing import Any, List, Dict, DefaultDict, Callable, Union, Coroutine, Type, TypeVar, Optional, TYPE_CHECKING
-from state import Transition
+from lft.state import Transition
 
 if TYPE_CHECKING:
-    from state import State
+    from lft.state import State
 
 
 T = TypeVar("T")

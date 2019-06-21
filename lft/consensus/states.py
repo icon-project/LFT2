@@ -1,11 +1,11 @@
 import asyncio
 from typing import TYPE_CHECKING, Any
-from state import State
-from consensus.events import ProposeResultEvent, VoteEvent, VoteResultEvent, CommitResultEvent
+from lft.state import State
+from lft.consensus.events import ProposeResultEvent, VoteEvent, VoteResultEvent, CommitResultEvent
 
 if TYPE_CHECKING:
-    from consensus import Consensus
-    from consensus.events import RoundEvent
+    from lft.consensus import Consensus
+    from lft.consensus.events import RoundEvent
 
 
 class ConsensusState(State):

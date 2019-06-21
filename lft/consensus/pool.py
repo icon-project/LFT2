@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING
 from collections import defaultdict
 
 if TYPE_CHECKING:
-    from consensus import Consensus
-    from consensus.events import ProposeResultEvent, VoteEvent
+    from lft.consensus import Consensus
+    from lft.consensus.events import ProposeResultEvent, VoteEvent
 
 
 class DataPool:

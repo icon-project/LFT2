@@ -1,10 +1,10 @@
 from typing import Optional, TYPE_CHECKING
-from state import StateMachine
-from consensus.states import ProposeState, VoteState, CommitState
-from consensus.events import ProposeResultEvent, CommitResultEvent, VoteResultEvent
+from lft.state import StateMachine
+from lft.consensus.states import ProposeState, VoteState, CommitState
+from lft.consensus.events import ProposeResultEvent, CommitResultEvent, VoteResultEvent
 if TYPE_CHECKING:
-    from event import EventSystem
-    from consensus.factories import ConsensusDataFactory, ConsensusVoteFactory, ConsensusData
+    from lft.event import EventSystem
+    from lft.consensus.factories import ConsensusDataFactory, ConsensusVoteFactory, ConsensusData
 
 
 class Consensus:
