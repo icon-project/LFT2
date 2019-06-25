@@ -1,10 +1,10 @@
-from lft.event import EventSystem
+from lft.event import EventSystem, Event
 
 
 def test_event_system():
     event_system, results, _ = _create_event_system()
     event_system.raise_event(Event1())
-    event_system.run_forever()
+    event_system.start()
 
     assert results == [1, 2, 3]
 
@@ -16,39 +16,36 @@ def test_event_system_unregister():
 
     event_system.register_handler(Event1, lambda e: event_system.raise_event(Event3()))
     event_system.raise_event(Event1())
-    event_system.run_forever()
+    event_system.start()
 
     assert results == [3]
 
 
-class Event1:
+class Event1(Event):
     value = 1
 
 
-class Event2:
+class Event2(Event):
     value = 2
 
 
-class Event3:
+class Event3(Event):
     value = 3
 
 
 def on_event1(event: Event1, results: list, event_system: EventSystem):
-    print("on_event1")
     results.append(event.value)
     event_system.raise_event(Event2())
 
 
 def on_event2(event: Event2, results: list, event_system: EventSystem):
-    print("on_event2")
     results.append(event.value)
     event_system.raise_event(Event3())
 
 
 async def on_event3(event: Event3, results: list, event_system: EventSystem):
-    print("on_event3")
     results.append(event.value)
-    event_system.close()
+    event_system.stop()
 
 
 def _create_event_system():
