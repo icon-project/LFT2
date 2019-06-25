@@ -25,7 +25,7 @@ class SyncLayer:
             return
 
         if result is True:
-            self._raise_event_precommit()
+            self._raise_event_quorum()
         elif result is False:
             # if I am a leader
             self._raise_event_propose()
@@ -45,8 +45,8 @@ class SyncLayer:
         finally:
             self._event_system.raise_event(vote_event)
 
-    def _raise_event_precommit(self):
-        precommit_event = PrecommitEvent(self._sync_round.votes.get_result(), self._sync_round.data)
+    def _raise_event_quorum(self):
+        precommit_event = QuorumEvent(self._sync_round.votes.get_result(), self._sync_round.data)
         self._event_system.raise_event(precommit_event)
 
     def _raise_event_propose(self):

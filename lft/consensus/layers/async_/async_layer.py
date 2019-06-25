@@ -28,7 +28,7 @@ class AsyncLayer:
             return
         async_round.data = event.data
 
-        self._raise_precommit_event(event.data.prev_votes.get_result(), None)
+        self._raise_quorum_event(event.data.prev_votes.get_result(), None)
         self._raise_propose_sequence(event.term, event.round, event.data)
         for vote_event in async_round.vote_events:
             self._raise_vote_sequence(vote_event.vote)
@@ -40,7 +40,7 @@ class AsyncLayer:
         if async_round.data:
             self._raise_vote_sequence(event.vote)
 
-    def _on_event_precommit(self, event):
+    def _on_event_quorum(self, event):
         self._trim_round(event.term, event.round)
 
     def _new_or_get_round(self, term: int, round_: int):
@@ -52,8 +52,8 @@ class AsyncLayer:
 
         return async_round
 
-    def _raise_precommit_event(self, data_id):
-        precommit_event = self._raise_precommit_event(data_id, None)
+    def _raise_quorum_event(self, data_id):
+        precommit_event = QuorumEvent(data_id, None)
         self._event_system.raise_event(precommit_event)
 
     def _raise_propose_sequence(self, term: int, round_: int, data):
