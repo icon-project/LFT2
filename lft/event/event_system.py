@@ -1,52 +1,51 @@
 import asyncio
-import types
+import traceback
 from collections import defaultdict
-from typing import DefaultDict, Type, List, Callable, Coroutine, Any, Union
+from typing import DefaultDict, Type, List, Callable, Coroutine, Any, Union, Optional
+
+HandlerCoroutine = Callable[[Any], Coroutine]
+HandlerFunc = Callable[[Any], None],
+HandlerCallable = Union['HandlerFunc', 'HandlerCoroutine']
 
 
 class EventSystem:
     def __init__(self):
-        self._events = []
-        self._event_waiter = asyncio.Event()
+        self._events = asyncio.Queue()
+        self._opened = True
+        self._handlers: DefaultDict[Type, List[HandlerCoroutine]] = defaultdict(list)
 
-        self._handlers: DefaultDict[Type, List[Callable[[Any], Coroutine]]] = defaultdict(list)
-        self._receivers: List[Callable[[List[Any]], Coroutine]] = []
+    def __del__(self):
+        self.close()
 
-    def register_handler(self, event_type: Type, handler: Union[Callable[[Any], None], Callable[[Any], Coroutine]]):
-        handler = types.coroutine(handler)
+    def register_handler(self, event_type: Type, handler: HandlerCallable):
+        handler = asyncio.coroutine(handler)
         self._handlers[event_type].append(handler)
         return handler
 
-    def register_receiver(self, receiver: Union[Callable[[List[Any]], None], Callable[[List[Any]], Coroutine]]):
-        handler = types.coroutine(receiver)
-        self._receivers.append(handler)
-        return handler
-
-    def unregister_handler(self, event_type: Type, handler: Union[Callable[[Any], None], Callable[[Any], Coroutine]]):
+    def unregister_handler(self, event_type: Type, handler: HandlerCoroutine):
         self._handlers[event_type].remove(handler)
 
     def raise_event(self, event: Any):
-        self._events.append(event)
-        self._event_waiter.set()
+        self._events.put_nowait(event)
 
-    def flush_events(self):
-        events = self._events
-        self._events = []
-        return events
+    def close(self):
+        self._opened = False
+        self.raise_event(None)
 
     async def execute_events(self):
-        await self._event_waiter.wait()
-        try:
-            events = self.flush_events()
-        finally:
-            self._event_waiter.clear()
+        while self._opened:
+            event = await self._events.get()
+            if not event:
+                break
+            await self._execute_event(event)
 
-        for event in events:
-            for handler in self._handlers[type(event)]:
+    async def _execute_event(self, event):
+        for handler in self._handlers[type(event)]:
+            try:
                 await handler(event)
-        for receiver in self._receivers:
-            await receiver(events)
+            except Exception:
+                traceback.print_exc()
 
-    async def run_forever(self):
-        while True:
-            await self.execute_events()
+    def run_forever(self, loop: Optional[asyncio.AbstractEventLoop] = None):
+        loop = loop or asyncio.get_event_loop()
+        loop.run_until_complete(self.execute_events())
