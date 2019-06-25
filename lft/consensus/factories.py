@@ -50,12 +50,22 @@ class ConsensusVotes(ABC):
 class ConsensusVote(ABC):
     @abstractmethod
     @property
-    def id(self):
+    def id(self) -> bytes:
         raise NotImplementedError
 
     @abstractmethod
     @property
-    def data_id(self):
+    def data_id(self) -> bytes:
+        raise NotImplementedError
+
+    @abstractmethod
+    @property
+    def era(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    @property
+    def round(self) -> int:
         raise NotImplementedError
 
     @abstractmethod

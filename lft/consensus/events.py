@@ -5,15 +5,12 @@ if TYPE_CHECKING:
     from lft.consensus.factories import ConsensusData, ConsensusVote, ConsensusVotes
 
 
-class RoundEvent:
-    def __init__(self, round_: int, leader_id):
-        self.round = round_
-        self.leader_id = leader_id
-
-
-class ProposeResultEvent:
-    def __init__(self, data: 'ConsensusData'):
+class ProposeEvent:
+    def __init__(self, data: 'ConsensusData', era: int, round_: int, leader: bytes):
         self.data = data
+        self.era = era
+        self.round = round_
+        self.leader = leader
 
 
 class VoteEvent:
@@ -29,3 +26,7 @@ class VoteResultEvent:
 class CommitResultEvent:
     def __init__(self, data: 'ConsensusData'):
         self.data = data
+
+
+ProposeSequence = ProposeEvent
+VoteSequence = VoteEvent
