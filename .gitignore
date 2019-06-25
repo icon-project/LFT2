@@ -122,4 +122,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+<<<<<<< HEAD
 .idea
+=======
+
+.idea/
+>>>>>>> Add .idea directory to gitignore
