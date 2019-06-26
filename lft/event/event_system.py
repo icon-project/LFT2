@@ -36,8 +36,12 @@ class EventSystem:
                 break
             await self._execute_event(event)
 
-    async def _execute_event(self, event):
-        handlers = self._handlers[AnyEvent] + self._handlers[type(event)]
+    async def _execute_event(self, event: Event):
+        if type(event) is AnyEvent:
+            handlers = self._handlers[AnyEvent]
+        else:
+            handlers = self._handlers[AnyEvent] + self._handlers[type(event)]
+
         for handler in handlers:
             try:
                 await handler(event)

@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, IO
 from lft.event import EventSystem, AnyEvent, SerializableEvent
 
@@ -34,6 +35,7 @@ class EventRecorder:
             record = EventRecord(self.number, event)
             record_serialized = record.serialize()
             self.io.write(json.dumps(record_serialized))
+            self.io.write(os.linesep)
         self.number += 1
 
 
