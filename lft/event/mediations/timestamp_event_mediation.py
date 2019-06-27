@@ -10,6 +10,9 @@ class TimestampEventInstantMediationExecutor(EventInstantMediationExecutor):
     def execute(self):
         return int(time.time() * 1_000_000)
 
+    async def execute_async(self):
+        return super().execute()
+
 
 class TimestampEventRecorderMediationExecutor(EventRecorderMediationExecutor):
     def __init__(self, event_recorder: EventRecorder, io: IO):
@@ -32,6 +35,9 @@ class TimestampEventRecorderMediationExecutor(EventRecorderMediationExecutor):
         self._started = True
         return timestamp
 
+    async def execute_async(self):
+        return super().execute()
+
 
 class TimestampEventReplayerMediationExecutor(EventReplayerMediationExecutor):
     def __init__(self, event_replayer: EventReplayer, io: IO):
@@ -47,6 +53,9 @@ class TimestampEventReplayerMediationExecutor(EventReplayerMediationExecutor):
             self._number = int(number)
             self._timestamps = deque(int(timestamp) for timestamp in timestamps.split(",") if timestamp.isdecimal())
         return self._timestamps.popleft()
+
+    async def execute_async(self):
+        return super().execute()
 
 
 class TimestampEventMediation(EventMediation):

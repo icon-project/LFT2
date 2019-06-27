@@ -9,6 +9,10 @@ class EventMediationExecutor(ABC):
     def execute(self, **kwargs):
         raise NotImplementedError
 
+    @abstractmethod
+    async def execute_async(self, **kwargs):
+        raise NotImplementedError
+
 
 class EventInstantMediationExecutor(EventMediationExecutor):
     def __init__(self, event_system: EventSystem, **kwargs):
@@ -47,3 +51,5 @@ class EventMediation:
             return self._executor.execute(**kwargs)
         except Exception:
             traceback.print_exc()
+
+

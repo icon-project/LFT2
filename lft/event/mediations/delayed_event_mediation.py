@@ -11,6 +11,9 @@ class DelayedEventInstantMediationExecutor(EventInstantMediationExecutor):
         loop = loop or asyncio.get_event_loop()
         loop.call_later(delay, lambda: self._event_system.raise_event(event))
 
+    async def execute_async(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
+        return self.execute(delay, event, loop)
+
 
 class DelayedEventRecorderMediationExecutor(EventRecorderMediationExecutor):
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
@@ -19,11 +22,17 @@ class DelayedEventRecorderMediationExecutor(EventRecorderMediationExecutor):
         loop = loop or asyncio.get_event_loop()
         loop.call_later(delay, lambda: self._event_recorder.event_system.raise_event(event))
 
+    async def execute_async(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
+        return self.execute(delay, event, loop)
+
 
 class DelayedEventReplayerMediationExecutor(EventReplayerMediationExecutor):
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         # do nothing
         _is_valid_event(event)
+
+    async def execute_async(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
+        return self.execute(delay, event, loop)
 
 
 class DelayedEventMediation(EventMediation):
