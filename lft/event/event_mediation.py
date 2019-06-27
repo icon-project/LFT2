@@ -11,17 +11,17 @@ class EventMediationExecutor(ABC):
 
 
 class EventInstantMediationExecutor(EventMediationExecutor):
-    def __init__(self, event_system: EventSystem):
+    def __init__(self, event_system: EventSystem, **kwargs):
         self._event_system = event_system
 
 
 class EventRecorderMediationExecutor(EventMediationExecutor):
-    def __init__(self, event_recorder: EventRecorder):
+    def __init__(self, event_recorder: EventRecorder, **kwargs):
         self._event_recorder = event_recorder
 
 
 class EventReplayerMediationExecutor(EventMediationExecutor):
-    def __init__(self, event_replayer: EventReplayer):
+    def __init__(self, event_replayer: EventReplayer, **kwargs):
         self._event_replayer = event_replayer
 
 
@@ -33,14 +33,14 @@ class EventMediation:
     def __init__(self):
         self._executor: Optional[EventMediationExecutor] = None
 
-    def switch_instant(self, event_system: EventSystem):
-        self._executor = self.InstantExecutorType(event_system)
+    def switch_instant(self, event_system: EventSystem, **kwargs):
+        self._executor = self.InstantExecutorType(event_system, **kwargs)
 
-    def switch_recorder(self, event_recorder: EventRecorder):
-        self._executor = self.RecorderExecutorType(event_recorder)
+    def switch_recorder(self, event_recorder: EventRecorder, **kwargs):
+        self._executor = self.RecorderExecutorType(event_recorder, **kwargs)
 
-    def switch_replayer(self, event_replayer: EventReplayer):
-        self._executor = self.ReplayerExecutorType(event_replayer)
+    def switch_replayer(self, event_replayer: EventReplayer, **kwargs):
+        self._executor = self.ReplayerExecutorType(event_replayer, **kwargs)
 
     def execute(self, **kwargs):
         try:

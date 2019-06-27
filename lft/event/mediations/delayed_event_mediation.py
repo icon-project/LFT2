@@ -1,7 +1,7 @@
 import asyncio
 from lft.event import Event, SerializableEvent
-from lft.event.mediation import EventMediation, EventInstantMediationExecutor
-from lft.event.mediation import EventReplayerMediationExecutor, EventRecorderMediationExecutor
+from lft.event import EventMediation, EventInstantMediationExecutor
+from lft.event import EventReplayerMediationExecutor, EventRecorderMediationExecutor
 
 
 class DelayedEventInstantMediationExecutor(EventInstantMediationExecutor):
