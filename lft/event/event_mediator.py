@@ -1,10 +1,9 @@
-import traceback
 from abc import ABC, abstractmethod
 from typing import Optional, Type
 from lft.event import EventSimulator, EventRecorder, EventReplayer
 
 
-class EventMediationExecutor(ABC):
+class EventMediatorExecutor(ABC):
     @abstractmethod
     def execute(self, **kwargs):
         raise NotImplementedError
@@ -14,28 +13,28 @@ class EventMediationExecutor(ABC):
         raise NotImplementedError
 
 
-class EventInstantMediationExecutor(EventMediationExecutor):
+class EventInstantMediatorExecutor(EventMediatorExecutor):
     def __init__(self, event_simulator: EventSimulator):
         self._event_simulator = event_simulator
 
 
-class EventRecorderMediationExecutor(EventMediationExecutor):
+class EventRecorderMediatorExecutor(EventMediatorExecutor):
     def __init__(self, event_recorder: EventRecorder):
         self._event_recorder = event_recorder
 
 
-class EventReplayerMediationExecutor(EventMediationExecutor):
+class EventReplayerMediatorExecutor(EventMediatorExecutor):
     def __init__(self, event_replayer: EventReplayer):
         self._event_replayer = event_replayer
 
 
-class EventMediation:
-    InstantExecutorType: Type[EventInstantMediationExecutor]
-    RecorderExecutorType: Type[EventRecorderMediationExecutor]
-    ReplayerExecutorType: Type[EventReplayerMediationExecutor]
+class EventMediator:
+    InstantExecutorType: Type[EventInstantMediatorExecutor]
+    RecorderExecutorType: Type[EventRecorderMediatorExecutor]
+    ReplayerExecutorType: Type[EventReplayerMediatorExecutor]
 
     def __init__(self):
-        self._executor: Optional[EventMediationExecutor] = None
+        self._executor: Optional[EventMediatorExecutor] = None
 
     def switch_instant(self, event_system: EventSimulator, **kwargs):
         self._executor = self.InstantExecutorType(event_system, **kwargs)

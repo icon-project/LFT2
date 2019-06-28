@@ -2,11 +2,11 @@ import time
 import os
 from collections import deque
 from typing import IO
-from lft.event import EventMediation, EventInstantMediationExecutor, EventRecorder, EventReplayer
-from lft.event import EventReplayerMediationExecutor, EventRecorderMediationExecutor
+from lft.event import EventMediator, EventInstantMediatorExecutor, EventRecorder, EventReplayer
+from lft.event import EventReplayerMediatorExecutor, EventRecorderMediatorExecutor
 
 
-class TimestampEventInstantMediationExecutor(EventInstantMediationExecutor):
+class TimestampEventInstantMediatorExecutor(EventInstantMediatorExecutor):
     def execute(self):
         return int(time.time() * 1_000_000)
 
@@ -14,7 +14,7 @@ class TimestampEventInstantMediationExecutor(EventInstantMediationExecutor):
         return super().execute()
 
 
-class TimestampEventRecorderMediationExecutor(EventRecorderMediationExecutor):
+class TimestampEventRecorderMediatorExecutor(EventRecorderMediatorExecutor):
     def __init__(self, event_recorder: EventRecorder, io: IO):
         super().__init__(event_recorder)
         self._io = io
@@ -39,7 +39,7 @@ class TimestampEventRecorderMediationExecutor(EventRecorderMediationExecutor):
         return super().execute()
 
 
-class TimestampEventReplayerMediationExecutor(EventReplayerMediationExecutor):
+class TimestampEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
     def __init__(self, event_replayer: EventReplayer, io: IO):
         super().__init__(event_replayer)
         self._io = io
@@ -58,10 +58,10 @@ class TimestampEventReplayerMediationExecutor(EventReplayerMediationExecutor):
         return super().execute()
 
 
-class TimestampEventMediation(EventMediation):
-    InstantExecutorType = TimestampEventInstantMediationExecutor
-    RecorderExecutorType = TimestampEventRecorderMediationExecutor
-    ReplayerExecutorType = TimestampEventReplayerMediationExecutor
+class TimestampEventMediator(EventMediator):
+    InstantExecutorType = TimestampEventInstantMediatorExecutor
+    RecorderExecutorType = TimestampEventRecorderMediatorExecutor
+    ReplayerExecutorType = TimestampEventReplayerMediatorExecutor
 
     def execute(self):
         return super().execute()

@@ -1,10 +1,10 @@
 import asyncio
 from lft.event import Event, SerializableEvent
-from lft.event import EventMediation, EventInstantMediationExecutor
-from lft.event import EventReplayerMediationExecutor, EventRecorderMediationExecutor
+from lft.event import EventMediator, EventInstantMediatorExecutor
+from lft.event import EventReplayerMediatorExecutor, EventRecorderMediatorExecutor
 
 
-class DelayedEventInstantMediationExecutor(EventInstantMediationExecutor):
+class DelayedEventInstantMediatorExecutor(EventInstantMediatorExecutor):
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         _is_valid_event(event)
 
@@ -15,7 +15,7 @@ class DelayedEventInstantMediationExecutor(EventInstantMediationExecutor):
         return self.execute(delay, event, loop)
 
 
-class DelayedEventRecorderMediationExecutor(EventRecorderMediationExecutor):
+class DelayedEventRecorderMediatorExecutor(EventRecorderMediatorExecutor):
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         _is_valid_event(event)
 
@@ -26,7 +26,7 @@ class DelayedEventRecorderMediationExecutor(EventRecorderMediationExecutor):
         return self.execute(delay, event, loop)
 
 
-class DelayedEventReplayerMediationExecutor(EventReplayerMediationExecutor):
+class DelayedEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         # do nothing
         _is_valid_event(event)
@@ -35,10 +35,10 @@ class DelayedEventReplayerMediationExecutor(EventReplayerMediationExecutor):
         return self.execute(delay, event, loop)
 
 
-class DelayedEventMediation(EventMediation):
-    InstantExecutorType = DelayedEventInstantMediationExecutor
-    RecorderExecutorType = DelayedEventRecorderMediationExecutor
-    ReplayerExecutorType = DelayedEventReplayerMediationExecutor
+class DelayedEventMediator(EventMediator):
+    InstantExecutorType = DelayedEventInstantMediatorExecutor
+    RecorderExecutorType = DelayedEventRecorderMediatorExecutor
+    ReplayerExecutorType = DelayedEventReplayerMediatorExecutor
 
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         return super().execute(delay=delay, event=event, loop=loop)

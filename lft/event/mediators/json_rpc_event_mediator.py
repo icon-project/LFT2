@@ -5,11 +5,11 @@ import pickle
 from jsonrpcclient.clients.http_client import HTTPClient
 from jsonrpcclient.clients.aiohttp_client import AiohttpClient
 from typing import IO
-from lft.event import EventMediation, EventInstantMediationExecutor, EventRecorder, EventReplayer
-from lft.event import EventReplayerMediationExecutor, EventRecorderMediationExecutor
+from lft.event import EventMediator, EventInstantMediatorExecutor, EventRecorder, EventReplayer
+from lft.event import EventReplayerMediatorExecutor, EventRecorderMediatorExecutor
 
 
-class JsonRpcEventInstantMediationExecutor(EventInstantMediationExecutor):
+class JsonRpcEventInstantMediatorExecutor(EventInstantMediatorExecutor):
     def execute(self, url: str, method: str, params: dict=None):
         return request(url, method, **params)
 
@@ -17,7 +17,7 @@ class JsonRpcEventInstantMediationExecutor(EventInstantMediationExecutor):
         return await request_async(url, method, **params)
 
 
-class JsonRpcEventRecorderMediationExecutor(EventRecorderMediationExecutor):
+class JsonRpcEventRecorderMediatorExecutor(EventRecorderMediatorExecutor):
     def __init__(self, event_recorder: EventRecorder, io: IO):
         super().__init__(event_recorder)
         self._io = io
@@ -74,7 +74,7 @@ class JsonRpcEventRecorderMediationExecutor(EventRecorderMediationExecutor):
             return result
 
 
-class JsonRpcEventReplayerMediationExecutor(EventReplayerMediationExecutor):
+class JsonRpcEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
     def __init__(self, event_replayer: EventReplayer, io: IO):
         super().__init__(event_replayer)
         self._io = io
@@ -112,10 +112,10 @@ class JsonRpcEventReplayerMediationExecutor(EventReplayerMediationExecutor):
         return self.execute(url, method, params)
 
 
-class JsonRpcEventMediation(EventMediation):
-    InstantExecutorType = JsonRpcEventInstantMediationExecutor
-    RecorderExecutorType = JsonRpcEventRecorderMediationExecutor
-    ReplayerExecutorType = JsonRpcEventReplayerMediationExecutor
+class JsonRpcEventMediator(EventMediator):
+    InstantExecutorType = JsonRpcEventInstantMediatorExecutor
+    RecorderExecutorType = JsonRpcEventRecorderMediatorExecutor
+    ReplayerExecutorType = JsonRpcEventReplayerMediatorExecutor
 
     def execute(self, url: str, method: str, params: dict=None):
         return super().execute(url=url, method=method, params=params)
