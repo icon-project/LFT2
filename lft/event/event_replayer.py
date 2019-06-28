@@ -1,4 +1,5 @@
 import json
+import os
 from typing import IO
 from lft.event import EventSimulator, EventRecord, Event, AnyEvent
 
@@ -46,10 +47,13 @@ class EventReplayer:
         if self._record:
             return self._record
 
-        if self._records.readable():
+        while self._records.readable():
             line = self._records.readline()
-            if line:
+            if not line:
+                return None
+            elif line == os.linesep:
+                continue
+            else:
                 record_serialized = json.loads(line)
                 return EventRecord.deserialize(record_serialized)
-        return None
 

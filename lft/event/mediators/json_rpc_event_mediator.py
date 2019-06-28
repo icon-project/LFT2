@@ -84,7 +84,7 @@ class JsonRpcEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
         number = self._number
         while number < self._event_replayer.number:
             line = self._io.readline()
-            if not line:
+            if line == os.linesep:
                 continue
             if line[0] != "#":
                 continue
@@ -94,12 +94,15 @@ class JsonRpcEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
             raise RuntimeError
 
         self._number = number
-        line = self._io.readline()
+        while True:
+            line = self._io.readline()
+            if line != os.linesep:
+                break
         if line[0] != "$":
             raise RuntimeError
 
         pickled_len = int(line[1:])
-        response_pickled = self._io.read(pickled_len + 1)
+        response_pickled = self._io.read(pickled_len)
         response_pickled = response_pickled.encode()
         response_pickled = base64.decodebytes(response_pickled)
         result = pickle.loads(response_pickled)

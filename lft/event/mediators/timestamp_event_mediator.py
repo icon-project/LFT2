@@ -48,7 +48,10 @@ class TimestampEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
 
     def execute(self):
         if self._number != self._event_replayer.number:
-            line = self._io.readline()
+            while True:
+                line = self._io.readline()
+                if line and line != os.linesep:
+                    break
             number, timestamps = line.split(":")
             self._number = int(number)
             self._timestamps = deque(int(timestamp) for timestamp in timestamps.split(",") if timestamp.isdecimal())
