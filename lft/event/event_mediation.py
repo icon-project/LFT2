@@ -47,9 +47,7 @@ class EventMediation:
         self._executor = self.ReplayerExecutorType(event_replayer, **kwargs)
 
     def execute(self, **kwargs):
-        try:
-            return self._executor.execute(**kwargs)
-        except Exception:
-            traceback.print_exc()
+        return self._executor.execute(**kwargs)
 
-
+    async def execute_async(self, **kwargs):
+        return await self._executor.execute_async(**kwargs)
