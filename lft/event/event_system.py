@@ -1,66 +1,57 @@
 import asyncio
-import traceback
-from collections import defaultdict
-from typing import DefaultDict, Type, List, Callable, Coroutine, Union, Optional
-from lft.event import Event, AnyEvent
-
-HandlerCoroutine = Callable[[Event], Coroutine]
-HandlerFunc = Callable[[Event], None],
-HandlerCallable = Union['HandlerFunc', 'HandlerCoroutine']
+from typing import Dict, Type, IO
+from lft.event import EventSimulator, EventRecorder, EventReplayer, EventMediation
 
 
 class EventSystem:
     def __init__(self):
-        self._events = asyncio.Queue()
-        self._running = False
-        self._handlers: DefaultDict[Type, List[HandlerCoroutine]] = defaultdict(list)
+        self.simulator = EventSimulator()
+        self.recorder = EventRecorder(self.simulator)
+        self.replayer = EventReplayer(self.simulator)
+        self.mediations: Dict[Type[EventMediation], EventMediation] = {}
 
-    def __del__(self):
-        self.stop()
+    def start_record(self,
+                     record_io: IO, mediation_ios: Dict[Type[EventMediation], IO],
+                     blocking=True, loop: asyncio.AbstractEventLoop=None):
+        for mediation in self.mediations.values():
+            io = mediation_ios.get(type(mediation))
+            if io:
+                mediation.switch_recorder(self.recorder, io=io)
+            else:
+                mediation.switch_recorder(self.recorder)
+        self.recorder.start(record_io)
+        self.simulator.start(blocking, loop)
 
-    def register_handler(self, event_type: Type, handler: HandlerCallable):
-        handler = asyncio.coroutine(handler)
-        self._handlers[event_type].append(handler)
-        return handler
+    def start_replay(self,
+                     record_io: IO, mediation_ios: Dict[Type[EventMediation], IO],
+                     blocking=True, loop: asyncio.AbstractEventLoop=None):
+        for mediation in self.mediations.values():
+            io = mediation_ios.get(type(mediation))
+            if io:
+                mediation.switch_replayer(self.replayer, io=io)
+            else:
+                mediation.switch_replayer(self.replayer)
+        self.replayer.start(record_io)
+        self.simulator.start(blocking, loop)
 
-    def unregister_handler(self, event_type: Type, handler: HandlerCoroutine):
-        self._handlers[event_type].remove(handler)
-
-    def raise_event(self, event: Event):
-        self._events.put_nowait(event)
-
-    async def execute_events(self):
-        while self._running:
-            event = await self._events.get()
-            if not event:
-                break
-            await self._execute_event(event)
-
-    async def _execute_event(self, event: Event):
-        if type(event) is AnyEvent:
-            handlers = self._handlers[AnyEvent]
-        else:
-            handlers = self._handlers[AnyEvent] + self._handlers[type(event)]
-
-        for handler in handlers:
-            try:
-                await handler(event)
-            except Exception:
-                traceback.print_exc()
-
-    def start(self, blocking=True, loop: Optional[asyncio.AbstractEventLoop] = None):
-        self._running = True
-
-        loop = loop or asyncio.get_event_loop()
-        if blocking:
-            loop.run_until_complete(self.execute_events())
-        else:
-            loop.create_task(self.execute_events())
+    def start(self, blocking=True, loop: asyncio.AbstractEventLoop=None):
+        self.simulator.start(blocking, loop)
 
     def stop(self):
-        self._running = False
-        self.raise_event(None)
+        self.simulator.stop()
+        self.recorder.stop()
+        self.replayer.stop()
 
-    def clear(self):
-        self._events = asyncio.Queue()
-        self._running = False
+    def close(self):
+        self.simulator.clear()
+        self.recorder.close()
+        self.replayer.close()
+
+    def set_mediation(self, mediation_type: Type[EventMediation]):
+        self.mediations[mediation_type] = mediation_type()
+
+    def get_mediation(self, mediation_type: Type[EventMediation]):
+        return self.mediations[mediation_type]
+
+    def del_mediation(self, mediation_type: Type[EventMediation]):
+        del self.mediations[mediation_type]

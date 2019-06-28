@@ -1,4 +1,4 @@
-from lft.event import EventSystem, Event
+from lft.event import EventSimulator, Event
 
 
 def test_event_system():
@@ -33,17 +33,17 @@ class Event3(Event):
     value = 3
 
 
-def on_event1(event: Event1, results: list, event_system: EventSystem):
+def on_event1(event: Event1, results: list, event_system: EventSimulator):
     results.append(event.value)
     event_system.raise_event(Event2())
 
 
-def on_event2(event: Event2, results: list, event_system: EventSystem):
+def on_event2(event: Event2, results: list, event_system: EventSimulator):
     results.append(event.value)
     event_system.raise_event(Event3())
 
 
-async def on_event3(event: Event3, results: list, event_system: EventSystem):
+async def on_event3(event: Event3, results: list, event_system: EventSimulator):
     results.append(event.value)
     event_system.stop()
 
@@ -52,7 +52,7 @@ def _create_event_system():
     results = []
     handlers = []
 
-    event_system = EventSystem()
+    event_system = EventSimulator()
     handler = event_system.register_handler(Event1, lambda e: on_event1(e, results, event_system))
     handlers.append(handler)
 

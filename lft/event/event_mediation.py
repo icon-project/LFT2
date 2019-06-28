@@ -1,7 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
 from typing import Optional, Type
-from lft.event import EventSystem, EventRecorder, EventReplayer
+from lft.event import EventSimulator, EventRecorder, EventReplayer
 
 
 class EventMediationExecutor(ABC):
@@ -15,17 +15,17 @@ class EventMediationExecutor(ABC):
 
 
 class EventInstantMediationExecutor(EventMediationExecutor):
-    def __init__(self, event_system: EventSystem, **kwargs):
-        self._event_system = event_system
+    def __init__(self, event_simulator: EventSimulator):
+        self._event_simulator = event_simulator
 
 
 class EventRecorderMediationExecutor(EventMediationExecutor):
-    def __init__(self, event_recorder: EventRecorder, **kwargs):
+    def __init__(self, event_recorder: EventRecorder):
         self._event_recorder = event_recorder
 
 
 class EventReplayerMediationExecutor(EventMediationExecutor):
-    def __init__(self, event_replayer: EventReplayer, **kwargs):
+    def __init__(self, event_replayer: EventReplayer):
         self._event_replayer = event_replayer
 
 
@@ -37,7 +37,7 @@ class EventMediation:
     def __init__(self):
         self._executor: Optional[EventMediationExecutor] = None
 
-    def switch_instant(self, event_system: EventSystem, **kwargs):
+    def switch_instant(self, event_system: EventSimulator, **kwargs):
         self._executor = self.InstantExecutorType(event_system, **kwargs)
 
     def switch_recorder(self, event_recorder: EventRecorder, **kwargs):

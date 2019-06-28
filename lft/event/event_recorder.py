@@ -1,27 +1,28 @@
 import json
 import os
 from typing import Any, IO
-from lft.event import EventSystem, AnyEvent, SerializableEvent
+from lft.event import EventSimulator, AnyEvent, SerializableEvent
 
 
 class EventRecorder:
-    def __init__(self, event_system: EventSystem, io: IO):
-        self.event_system = event_system
+    def __init__(self, event_simulator: EventSimulator):
+        self.event_simulator = event_simulator
         self.number = 0
-        self.io = io
+        self.io: IO = None
 
         self._handler = None
 
     def __del__(self):
         self.close()
 
-    def start(self):
+    def start(self, io: IO):
         self.stop()
-        self._handler = self.event_system.register_handler(AnyEvent, self.on_event_record)
+        self.io = io
+        self._handler = self.event_simulator.register_handler(AnyEvent, self.on_event_record)
 
     def stop(self):
         if self._handler:
-            self.event_system.unregister_handler(AnyEvent, self._handler)
+            self.event_simulator.unregister_handler(AnyEvent, self._handler)
             self._handler = None
 
     def close(self):

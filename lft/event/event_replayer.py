@@ -1,11 +1,11 @@
 import json
 from typing import IO
-from lft.event import EventSystem, EventRecord, Event, AnyEvent
+from lft.event import EventSimulator, EventRecord, Event, AnyEvent
 
 
 class EventReplayer:
-    def __init__(self, event_system: EventSystem):
-        self.event_system = event_system
+    def __init__(self, event_simulator: EventSimulator):
+        self.event_simulator = event_simulator
         self.number = -1  # EventReplayer raises a trash event first to start event system
 
         self._record: EventRecord = None
@@ -19,12 +19,12 @@ class EventReplayer:
         self.stop()
 
         self._records = records
-        self._handler = self.event_system.register_handler(AnyEvent, self.on_event_replay)
-        self.event_system.raise_event(AnyEvent())
+        self._handler = self.event_simulator.register_handler(AnyEvent, self.on_event_replay)
+        self.event_simulator.raise_event(AnyEvent())
 
     def stop(self):
         if self._handler:
-            self.event_system.unregister_handler(AnyEvent, self._handler)
+            self.event_simulator.unregister_handler(AnyEvent, self._handler)
             self._handler = None
 
     def close(self):
@@ -36,7 +36,7 @@ class EventReplayer:
         self._record = self._get_record_if_not_exist()
         if self._record:
             if self.number + 1 == self._record.number:
-                self.event_system.raise_event(self._record.event)
+                self.event_simulator.raise_event(self._record.event)
                 self._record = None
         else:
             self.stop()
