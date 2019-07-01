@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Any, IO
-from lft.event import EventSimulator, AnyEvent, SerializableEvent
+from lft.event import EventSimulator, Event, AnyEvent
 
 
 class EventRecorder:
@@ -32,7 +32,7 @@ class EventRecorder:
             self.io = None
 
     def on_event_record(self, event: Any):
-        if not event.deterministic and isinstance(event, SerializableEvent):
+        if not event.deterministic:
             record = EventRecord(self.number, event)
             record_serialized = record.serialize()
             self.io.write(json.dumps(record_serialized))
@@ -41,23 +41,19 @@ class EventRecorder:
 
 
 class EventRecord:
-    def __init__(self, number: int, event: SerializableEvent):
+    def __init__(self, number: int, event: Event):
         self.number = number
         self.event = event
 
     def serialize(self):
         return {
             "number": self.number,
-            "event_type": type(self.event).__name__,
-            "event_contents": self.event.serialize()
+            "event": self.event.serialize()
         }
 
     @classmethod
     def deserialize(cls, record_serialized: dict):
-        event_type_name = record_serialized["event_type"]
-        event_type = SerializableEvent.types[event_type_name]
-
         return EventRecord(
             record_serialized["number"],
-            event_type.deserialize(record_serialized["event_contents"])
+            Event.deserialize(record_serialized["event"])
         )

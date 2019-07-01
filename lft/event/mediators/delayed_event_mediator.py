@@ -1,5 +1,5 @@
 import asyncio
-from lft.event import Event, SerializableEvent
+from lft.event import Event
 from lft.event import EventMediator, EventInstantMediatorExecutor
 from lft.event import EventReplayerMediatorExecutor, EventRecorderMediatorExecutor
 
@@ -47,6 +47,4 @@ class DelayedEventMediator(EventMediator):
 def _is_valid_event(event: Event):
     if event.deterministic:
         raise RuntimeError("Delayed event must not be deterministic")
-    if not isinstance(event, SerializableEvent):
-        raise RuntimeError("Delayed event must be serializable")
 

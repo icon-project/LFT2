@@ -1,8 +1,8 @@
-import traceback
 from io import StringIO
-from typing import Type, TypeVar
-from lft.event import EventSystem, Event, SerializableEvent
+from typing import TypeVar
+from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator, TimestampEventMediator, JsonRpcEventMediator
+from tests.event_system.event_system_replay_0_test import Event1, Event2, Event3, on_test1, on_test2, on_test3
 
 T = TypeVar("T")
 
@@ -34,96 +34,15 @@ def test_event_system():
     event_system.start_replay(record_io, {TimestampEventMediator: timestamp_io, JsonRpcEventMediator: json_rpc_io})
 
 
-class Event1(SerializableEvent):
-    def serialize(self) -> str:
-        return ""
-
-    @classmethod
-    def deserialize(cls: Type[T], event_serialized: str) -> T:
-        return Event1()
-
-
-class Event2(Event):
-    pass
-
-
-class Event3(SerializableEvent):
-    def __init__(self, num: int):
-        self.num = num
-
-    def serialize(self) -> str:
-        return str(self.num)
-
-    @classmethod
-    def deserialize(cls: Type[T], event_serialized: str) -> T:
-        return Event3(int(event_serialized))
-
-
-def on_test1(event1: Event1, results: list, event_system: EventSystem):
-    print("on_test1")
-
-    timestamp_mediator = event_system.get_mediator(TimestampEventMediator)
-    timestamp = timestamp_mediator.execute()
-    results.append(timestamp)
-
-    timestamp = timestamp_mediator.execute()
-    print(timestamp)
-
-    json_rpc_mediator = event_system.get_mediator(JsonRpcEventMediator)
-    try:
-        json_rpc_mediator.execute("https://wallet.icon.foundation/api/v3", "icx_getLastBlock1")
-    except Exception as e:
-        traceback.print_exc()
-
-    try:
-        json_rpc_mediator.execute("https://wallet.icon.foundation1l/api/v3", "icx_getLastBlock")
-    except Exception as e:
-        traceback.print_exc()
-
-    event_system.simulator.raise_event(Event2())
-
-
-def on_test2(event2: Event2, results: list, event_system: EventSystem):
-    print("on_test2")
-
-    timestamp_mediator = event_system.get_mediator(TimestampEventMediator)
-    timestamp = timestamp_mediator.execute()
-    print(timestamp)
-
-    json_rpc_mediator = event_system.get_mediator(JsonRpcEventMediator)
-    response = json_rpc_mediator.execute("https://wallet.icon.foundation/api/v3", "icx_getLastBlock")
-    print(response.text)
-
-    event3 = Event3(3)
-    event3.deterministic = False
-
-    delayed_mediator = event_system.get_mediator(DelayedEventMediator)
-    delayed_mediator.execute(3, event3)
-
-
-def on_test3(event3: Event3, results: list, event_system: EventSystem):
-    print("on_test3")
-
-    timestamp_mediator = event_system.get_mediator(TimestampEventMediator)
-    timestamp = timestamp_mediator.execute()
-    print(timestamp)
-
-    json_rpc_mediator = event_system.get_mediator(JsonRpcEventMediator)
-    response = json_rpc_mediator.execute("https://wallet.icon.foundation/api/v3", "icx_getLastBlock")
-    print(response.text)
-
-    event_system.stop()
-
-
 record = """
-{"number": 0, "event_type": "Event1", "event_contents": ""}
-{"number": 2, "event_type": "Event3", "event_contents": "3"}
+{"number": 0, "event": {"event_name": "tests.event_system.event_system_replay_0_test.Event1", "event_contents": {}}}
+{"number": 2, "event": {"event_name": "tests.event_system.event_system_replay_0_test.Event3", "event_contents": {"num": 3}}}
 """
 
 timestamp = """
-1:1561696863064036,1561696863064085,
-2:1561696863179743,
-3:1561696866297717,
+1:1561965244228174,1561965244228195,
+2:1561965244365848,
+3:1561965247453797,
 """
 
 json_rpc = """

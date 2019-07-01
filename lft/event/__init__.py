@@ -1,4 +1,4 @@
-from .event import Event, AnyEvent, SerializableEvent
+from .event import Event, AnyEvent
 from .event_simulator import EventSimulator
 from .event_recorder import EventRecorder, EventRecord
 from .event_replayer import EventReplayer

@@ -1,7 +1,7 @@
 from io import StringIO
 from typing import Type, TypeVar
 from itertools import zip_longest
-from lft.event import EventSystem, Event, SerializableEvent
+from lft.event import EventSystem, Event
 from lft.event.mediators import DelayedEventMediator, TimestampEventMediator, JsonRpcEventMediator
 
 T = TypeVar("T")
@@ -35,6 +35,7 @@ def test_event_system():
     record_io.seek(0)
     timestamp_io.seek(0)
     json_rpc_io.seek(0)
+
     event_system.simulator.clear()
     event_system.start_replay(record_io, {TimestampEventMediator: timestamp_io, JsonRpcEventMediator: json_rpc_io})
 
@@ -45,29 +46,17 @@ def test_event_system():
                for result0, result1 in zip_longest(original_results, results))
 
 
-class Event1(SerializableEvent):
-    def serialize(self) -> str:
-        return ""
-
-    @classmethod
-    def deserialize(cls: Type[T], event_serialized: str) -> T:
-        return Event1()
+class Event1(Event):
+    pass
 
 
 class Event2(Event):
     pass
 
 
-class Event3(SerializableEvent):
+class Event3(Event):
     def __init__(self, num: int):
         self.num = num
-
-    def serialize(self) -> str:
-        return str(self.num)
-
-    @classmethod
-    def deserialize(cls: Type[T], event_serialized: str) -> T:
-        return Event3(int(event_serialized))
 
 
 def on_test1(event1: Event1, results: list, event_system: EventSystem):

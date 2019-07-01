@@ -1,31 +1,44 @@
-from abc import ABC, abstractmethod
-from typing import Generic, Type, TypeVar
+from dataclasses import dataclass
+from typing import Type, TypeVar
 
 T = TypeVar("T")
 
 
-class Event(ABC):
-    deterministic = True
+def _get_type_name(cls: type):
+    return f"{cls.__module__}.{cls.__qualname__}"
 
 
-class AnyEvent(Event):
-    pass
-
-
-class SerializableEventMeta(type(Event)):
+class EventMeta(type):
     types = {}
 
     def __init__(cls, cls_name, bases, attrs):
         super().__init__(cls_name, bases, attrs)
-        cls.types[cls_name] = cls
+        cls.types[_get_type_name(cls)] = cls
 
 
-class SerializableEvent(Event, Generic[T], metaclass=SerializableEventMeta):
-    @abstractmethod
-    def serialize(self) -> str:
-        raise NotImplementedError
+@dataclass
+class Event(metaclass=EventMeta):
+
+    deterministic = True
+
+    def serialize(self) -> dict:
+        items = self.__dict__
+        items.pop("deterministic")
+        return {
+            "event_name": _get_type_name(self.__class__),
+            "event_contents": items
+        }
 
     @classmethod
-    @abstractmethod
-    def deserialize(cls: Type[T], event_serialized: str) -> T:
-        raise NotImplementedError
+    def deserialize(cls: Type[T], event_serialized: dict) -> T:
+        event_name = event_serialized["event_name"]
+        event_type = cls.types[event_name]
+
+        event_contents = event_serialized["event_contents"]
+        return event_type(**event_contents)
+
+
+@dataclass
+class AnyEvent(Event):
+    pass
+
