@@ -25,3 +25,7 @@ class Term(ABC):
     @abstractmethod
     def verify_data(self, data) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    def get_leader(self, round) -> bytes:
+        raise NotImplementedError

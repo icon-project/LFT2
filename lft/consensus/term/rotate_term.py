@@ -20,6 +20,7 @@ from lft.consensus.term import Term
 
 
 class RotateTerm(Term):
+
     def __init__(self, num: int, validators: List[bytes]):
         self._num = num
         self.validators = validators
@@ -30,3 +31,6 @@ class RotateTerm(Term):
 
     def verify_data(self, data: ConsensusData) -> bool:
         return data.leader == self.validators[data.round % len(self.validators)]
+
+    def get_leader(self, round_: int) -> bytes:
+        return self.validators[round_ % len(self.validators)]
