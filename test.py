@@ -1,5 +1,5 @@
 import asyncio
-from lft.event import EventSystem
+from lft.event import EventSimulator
 from lft.state import StateMachine, State
 
 
@@ -62,7 +62,7 @@ state_machine.state = "idle"
 
 
 async def main():
-    event_system = EventSystem()
+    event_system = EventSimulator()
     event_system.register_receiver(state_machine.transfer_states)
 
     asyncio.ensure_future(event_system.run_forever())

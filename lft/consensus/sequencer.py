@@ -5,7 +5,7 @@ from lft.consensus.factories import ConsensusData, ConsensusVote
 
 
 if TYPE_CHECKING:
-    from lft.event import EventSystem
+    from lft.event import EventSimulator
 
 
 DataCollection = dict
@@ -13,7 +13,7 @@ VoteCollection = defaultdict(list)
 
 
 class Sequencer:
-    def __init__(self, event_system: 'EventSystem'):
+    def __init__(self, event_system: 'EventSimulator'):
         self._event_system = event_system
         self._event_system.register_handler(ProposeEvent, self._on_event_propose)
 

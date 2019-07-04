@@ -1,52 +1,57 @@
 import asyncio
-import types
-from collections import defaultdict
-from typing import DefaultDict, Type, List, Callable, Coroutine, Any, Union
+from typing import Dict, Type, IO
+from lft.event import EventSimulator, EventRecorder, EventReplayer, EventMediator
 
 
 class EventSystem:
     def __init__(self):
-        self._events = []
-        self._event_waiter = asyncio.Event()
+        self.simulator = EventSimulator()
+        self.recorder = EventRecorder(self.simulator)
+        self.replayer = EventReplayer(self.simulator)
+        self.mediators: Dict[Type[EventMediator], EventMediator] = {}
 
-        self._handlers: DefaultDict[Type, List[Callable[[Any], Coroutine]]] = defaultdict(list)
-        self._receivers: List[Callable[[List[Any]], Coroutine]] = []
+    def start_record(self,
+                     record_io: IO, mediator_ios: Dict[Type[EventMediator], IO],
+                     blocking=True, loop: asyncio.AbstractEventLoop=None):
+        for mediator in self.mediators.values():
+            io = mediator_ios.get(type(mediator))
+            if io:
+                mediator.switch_recorder(self.recorder, io=io)
+            else:
+                mediator.switch_recorder(self.recorder)
+        self.recorder.start(record_io)
+        self.simulator.start(blocking, loop)
 
-    def register_handler(self, event_type: Type, handler: Union[Callable[[Any], None], Callable[[Any], Coroutine]]):
-        handler = types.coroutine(handler)
-        self._handlers[event_type].append(handler)
-        return handler
+    def start_replay(self,
+                     record_io: IO, mediator_ios: Dict[Type[EventMediator], IO],
+                     blocking=True, loop: asyncio.AbstractEventLoop=None):
+        for mediator in self.mediators.values():
+            io = mediator_ios.get(type(mediator))
+            if io:
+                mediator.switch_replayer(self.replayer, io=io)
+            else:
+                mediator.switch_replayer(self.replayer)
+        self.replayer.start(record_io)
+        self.simulator.start(blocking, loop)
 
-    def register_receiver(self, receiver: Union[Callable[[List[Any]], None], Callable[[List[Any]], Coroutine]]):
-        handler = types.coroutine(receiver)
-        self._receivers.append(handler)
-        return handler
+    def start(self, blocking=True, loop: asyncio.AbstractEventLoop=None):
+        self.simulator.start(blocking, loop)
 
-    def unregister_handler(self, event_type: Type, handler: Union[Callable[[Any], None], Callable[[Any], Coroutine]]):
-        self._handlers[event_type].remove(handler)
+    def stop(self):
+        self.simulator.stop()
+        self.recorder.stop()
+        self.replayer.stop()
 
-    def raise_event(self, event: Any):
-        self._events.append(event)
-        self._event_waiter.set()
+    def close(self):
+        self.simulator.clear()
+        self.recorder.close()
+        self.replayer.close()
 
-    def flush_events(self):
-        events = self._events
-        self._events = []
-        return events
+    def set_mediator(self, mediator_type: Type[EventMediator]):
+        self.mediators[mediator_type] = mediator_type()
 
-    async def execute_events(self):
-        await self._event_waiter.wait()
-        try:
-            events = self.flush_events()
-        finally:
-            self._event_waiter.clear()
+    def get_mediator(self, mediator_type: Type[EventMediator]):
+        return self.mediators[mediator_type]
 
-        for event in events:
-            for handler in self._handlers[type(event)]:
-                await handler(event)
-        for receiver in self._receivers:
-            await receiver(events)
-
-    async def run_forever(self):
-        while True:
-            await self.execute_events()
+    def del_mediator(self, mediator_type: Type[EventMediator]):
+        del self.mediators[mediator_type]

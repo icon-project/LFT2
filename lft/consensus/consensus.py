@@ -3,12 +3,12 @@ from lft.state import StateMachine
 from lft.consensus.states import ProposeState, VoteState, CommitState
 from lft.consensus.events import ProposeResultEvent, CommitResultEvent, VoteResultEvent
 if TYPE_CHECKING:
-    from lft.event import EventSystem
+    from lft.event import EventSimulator
     from lft.consensus.factories import ConsensusDataFactory, ConsensusVoteFactory, ConsensusData
 
 
 class Consensus:
-    def __init__(self, event_system: 'EventSystem', leader_id: bytes,
+    def __init__(self, event_system: 'EventSimulator', leader_id: bytes,
                  data_factory: 'ConsensusDataFactory', vote_factory: 'ConsensusVoteFactory'):
         self.event_system = event_system
         self.data_factory = data_factory
