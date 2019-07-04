@@ -21,15 +21,15 @@ from lft.consensus.term import RotateTerm
 
 class MockConsensusData(ConsensusData):
     @property
-    def id(self):
+    def id(self) -> bytes:
         return
 
     @property
-    def prev_id(self):
+    def prev_id(self) -> bytes:
         return
 
     @property
-    def leader(self):
+    def leader(self) -> bytes:
         return self._leader
 
     @property

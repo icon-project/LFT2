@@ -69,17 +69,17 @@ class ConsensusVote(ABC):
 class ConsensusData(ABC):
     @property
     @abstractmethod
-    def id(self):
+    def id(self) -> bytes:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def prev_id(self):
+    def prev_id(self) -> bytes:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def leader(self):
+    def leader(self) -> bytes:
         raise NotImplementedError
 
     @property
