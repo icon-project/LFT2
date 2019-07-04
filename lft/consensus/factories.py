@@ -41,23 +41,23 @@ class ConsensusVotes(ABC):
 
 
 class ConsensusVote(ABC):
-    @abstractmethod
     @property
+    @abstractmethod
     def id(self) -> bytes:
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def data_id(self) -> bytes:
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def era(self) -> int:
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def round(self) -> int:
         raise NotImplementedError
 
@@ -67,37 +67,37 @@ class ConsensusVote(ABC):
 
 
 class ConsensusData(ABC):
-    @abstractmethod
     @property
+    @abstractmethod
     def id(self):
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def prev_id(self):
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def leader(self):
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def terms(self) -> int:
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def height(self) -> int:
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def round(self) -> int:
         raise NotImplementedError
 
-    @abstractmethod
     @property
-    def votes(self) -> ConsensusVotes:
+    @abstractmethod
+    def votes(self) -> 'ConsensusVotes':
         raise NotImplementedError

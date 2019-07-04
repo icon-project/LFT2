@@ -54,5 +54,3 @@ class SyncLayer:
         propose_event = ProposeEvent(new_data)
         self._event_system.raise_event(propose_event)
 
-
-

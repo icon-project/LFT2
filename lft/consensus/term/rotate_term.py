@@ -20,7 +20,7 @@ from lft.consensus.term import Term
 
 
 class RotateTerm(Term):
-    def __init__(self, num: int, validators: List):
+    def __init__(self, num: int, validators: List[bytes]):
         self._num = num
         self.validators = validators
 
