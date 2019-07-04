@@ -16,7 +16,7 @@ class EventReplayer:
         self._handler = None
 
     def __del__(self):
-        self.stop()
+        self.close()
 
     def start(self, records: IO):
         self.stop()
