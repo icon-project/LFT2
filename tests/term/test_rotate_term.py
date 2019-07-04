@@ -59,4 +59,3 @@ def test_rotate_term(round_num, leader_num):
     term = RotateTerm(0, validators)
     consensus_data_mock = MockConsensusData(leader=validators[leader_num], round_=round_num)
     assert term.verify_data(consensus_data_mock)
-
