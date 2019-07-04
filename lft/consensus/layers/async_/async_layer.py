@@ -1,12 +1,13 @@
 from collections import defaultdict
 from typing import DefaultDict, Dict
 from lft.consensus.layers.async_ import AsyncRound
+from lft.consensus.term import Term
 
 
 class AsyncLayer:
     def __init__(self, event_system):
         self._event_system = event_system
-        self._term: int = None
+        self._term: Term = None
         self._round: int = None
 
         # self._async_rounds[term][round] = AsyncRound
@@ -18,9 +19,9 @@ class AsyncLayer:
 
     def _on_event_propose(self, event):
         # 새로운 term 이 시작 되는 건 어떻게 판단하지?
-        if self._term > event.term:
+        if self._is_past_event(event):
             return
-        if self._term == event.term and self._round > event.round:
+        if not self._term.verify_data(event):
             return
 
         async_round = self._new_or_get_round(event.term, event.round)
@@ -34,6 +35,9 @@ class AsyncLayer:
             self._raise_vote_sequence(vote_event.vote)
 
     def _on_event_vote(self, event):
+        if self._is_past_event(event):
+            return
+
         async_round = self._new_or_get_round(event.term, event.round)
         async_round.vote_events.append(event)
 
@@ -51,6 +55,12 @@ class AsyncLayer:
             self._async_rounds[term][round_] = async_round
 
         return async_round
+
+    def _is_past_event(self, event) -> bool:
+        if self._term.num > event.term:
+            return True
+        if self._term.num == event.term and self._round > event.round:
+            return True
 
     def _raise_quorum_event(self, data_id):
         precommit_event = QuorumEvent(data_id, None)

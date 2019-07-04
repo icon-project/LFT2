@@ -16,7 +16,7 @@
 from typing import List
 
 from lft.consensus.factories import ConsensusData
-from lft.consensus.term.term import Term
+from lft.consensus.term import Term
 
 
 class RotateTerm(Term):
