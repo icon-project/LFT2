@@ -21,7 +21,7 @@ class JsonRpcEventRecorderMediatorExecutor(EventRecorderMediatorExecutor):
     def __init__(self, event_recorder: EventRecorder, io: IO):
         super().__init__(event_recorder)
         self._io = io
-        self._number = -1
+        self._number = 0
         self._started = False
 
     def execute(self, url: str, method: str, params: dict=None):
@@ -78,7 +78,7 @@ class JsonRpcEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
     def __init__(self, event_replayer: EventReplayer, io: IO):
         super().__init__(event_replayer)
         self._io = io
-        self._number = -1
+        self._number = 0
 
     def execute(self, url: str, method: str, params: dict=None):
         number = self._number

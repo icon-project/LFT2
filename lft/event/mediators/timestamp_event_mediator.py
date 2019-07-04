@@ -18,7 +18,7 @@ class TimestampEventRecorderMediatorExecutor(EventRecorderMediatorExecutor):
     def __init__(self, event_recorder: EventRecorder, io: IO):
         super().__init__(event_recorder)
         self._io = io
-        self._number = -1
+        self._number = 0
         self._started = False
 
     def execute(self):
@@ -43,7 +43,7 @@ class TimestampEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
     def __init__(self, event_replayer: EventReplayer, io: IO):
         super().__init__(event_replayer)
         self._io = io
-        self._number = -1
+        self._number = 0
         self._timestamps = None
 
     def execute(self):

@@ -5,9 +5,11 @@ from lft.event import EventSimulator, EventRecord, Event, AnyEvent
 
 
 class EventReplayer:
+    INIT_EVENT_COUNT = 1
+
     def __init__(self, event_simulator: EventSimulator):
         self.event_simulator = event_simulator
-        self.number = -1  # EventReplayer raises a trash event first to start event system
+        self.number = -self.INIT_EVENT_COUNT  # EventReplayer raises a trash event(AnyEvent) first to start event system
 
         self._record: EventRecord = None
         self._records: IO = None
