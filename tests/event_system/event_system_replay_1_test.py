@@ -10,7 +10,7 @@ T = TypeVar("T")
 def test_event_system():
     results = []
 
-    event_system = EventSystem()
+    event_system = EventSystem(False)
     event_system.set_mediator(TimestampEventMediator)
     event_system.set_mediator(DelayedEventMediator)
     event_system.set_mediator(JsonRpcEventMediator)

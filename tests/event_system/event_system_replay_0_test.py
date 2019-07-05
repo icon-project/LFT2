@@ -1,6 +1,7 @@
 from io import StringIO
-from typing import Type, TypeVar
 from itertools import zip_longest
+from typing import TypeVar
+
 from lft.event import EventSystem, Event
 from lft.event.mediators import DelayedEventMediator, TimestampEventMediator, JsonRpcEventMediator
 
@@ -10,7 +11,7 @@ T = TypeVar("T")
 def test_event_system():
     results = []
 
-    event_system = EventSystem()
+    event_system = EventSystem(False)
     event_system.set_mediator(TimestampEventMediator)
     event_system.set_mediator(DelayedEventMediator)
     event_system.set_mediator(JsonRpcEventMediator)

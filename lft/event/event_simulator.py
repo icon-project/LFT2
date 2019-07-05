@@ -1,4 +1,5 @@
 import asyncio
+import time
 import traceback
 from collections import defaultdict
 from typing import DefaultDict, Type, List, Callable, Coroutine, Union, Optional
@@ -10,8 +11,8 @@ HandlerCallable = Union['HandlerFunc', 'HandlerCoroutine']
 
 
 class EventSimulator:
-    def __init__(self):
-        self._events = asyncio.Queue()
+    def __init__(self, use_priority=True):
+        self._event_tasks = asyncio.PriorityQueue() if use_priority else asyncio.Queue()
         self._running = False
         self._handlers: DefaultDict[Type, List[HandlerCoroutine]] = defaultdict(list)
 
@@ -27,18 +28,19 @@ class EventSimulator:
         self._handlers[event_type].remove(handler)
 
     def raise_event(self, event: Event):
-        self._events.put_nowait(event)
+        event_task = (not event.deterministic, time.monotonic_ns(), event)
+        self._event_tasks.put_nowait(event_task)
 
     async def execute_events(self):
         while self._running:
-            event = await self._events.get()
+            non_deterministic, mono_ns, event = await self._event_tasks.get()
             if not event:
                 break
             await self._execute_event(event)
 
     async def _execute_event(self, event: Event):
         if type(event) is AnyEvent:
-            handlers = self._handlers[AnyEvent]
+            handlers = self._handlers[AnyEvent][:]
         else:
             handlers = self._handlers[AnyEvent] + self._handlers[type(event)]
 
@@ -59,8 +61,7 @@ class EventSimulator:
 
     def stop(self):
         self._running = False
-        self.raise_event(None)
 
     def clear(self):
-        self._events = asyncio.Queue()
+        self._event_tasks = self._event_tasks.__class__()
         self._running = False

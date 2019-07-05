@@ -4,15 +4,17 @@ from lft.event import EventSimulator, EventRecorder, EventReplayer, EventMediato
 
 
 class EventSystem:
-    def __init__(self):
-        self.simulator = EventSimulator()
+    def __init__(self, use_priority=True):
+        self.simulator = EventSimulator(use_priority)
         self.recorder = EventRecorder(self.simulator)
         self.replayer = EventReplayer(self.simulator)
         self.mediators: Dict[Type[EventMediator], EventMediator] = {}
 
     def start_record(self,
-                     record_io: IO, mediator_ios: Dict[Type[EventMediator], IO],
+                     record_io: IO, mediator_ios: Dict[Type[EventMediator], IO]=None,
                      blocking=True, loop: asyncio.AbstractEventLoop=None):
+        if not mediator_ios:
+            mediator_ios = {}
         for mediator in self.mediators.values():
             io = mediator_ios.get(type(mediator))
             if io:
@@ -23,8 +25,10 @@ class EventSystem:
         self.simulator.start(blocking, loop)
 
     def start_replay(self,
-                     record_io: IO, mediator_ios: Dict[Type[EventMediator], IO],
+                     record_io: IO, mediator_ios: Dict[Type[EventMediator], IO]=None,
                      blocking=True, loop: asyncio.AbstractEventLoop=None):
+        if not mediator_ios:
+            mediator_ios = {}
         for mediator in self.mediators.values():
             io = mediator_ios.get(type(mediator))
             if io:

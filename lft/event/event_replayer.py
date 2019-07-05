@@ -36,13 +36,14 @@ class EventReplayer:
             self._records.close()
 
     def on_event_replay(self, event: Event):
-        self._record = self._get_record_if_not_exist()
-        if self._record:
-            if self.number + 1 == self._record.number:
+        while True:
+            self._record = self._get_record_if_not_exist()
+            if self._record and self._record.number <= self.number + 1:
                 self.event_simulator.raise_event(self._record.event)
                 self._record = None
-        else:
-            self.stop()
+            else:
+                break
+
         self.number += 1
 
     def _get_record_if_not_exist(self):
