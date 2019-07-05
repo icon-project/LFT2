@@ -31,5 +31,5 @@ class RotateTerm(Term):
     def verify_data(self, data: ConsensusData) -> bool:
         return data.leader == self.validators[data.round % len(self.validators)]
 
-    def get_leader(self, round_: int) -> bytes:
-        return self.validators[round_ % len(self.validators)]
+    def verify_leader(self, leader: bytes, round_: int) -> bool:
+        return leader == self.validators[round_ % len(self.validators)]
