@@ -1,3 +1,4 @@
+import json
 import time
 import os
 from collections import deque
@@ -18,47 +19,74 @@ class TimestampEventRecorderMediatorExecutor(EventRecorderMediatorExecutor):
     def __init__(self, event_recorder: EventRecorder, io: IO):
         super().__init__(event_recorder)
         self._io = io
-        self._number = 0
-        self._started = False
 
     def execute(self):
-        timestamp = int(time.time() * 1_000_000)
-        if self._number != self._event_recorder.number:
-            self._number = self._event_recorder.number
-
-            if self._started:
-                self._io.write(os.linesep)
-            self._io.write(str(self._number))
-            self._io.write(":")
-        self._io.write(str(timestamp))
-        self._io.write(",")
-        self._started = True
-        return timestamp
+        result = None
+        try:
+            result = int(time.time() * 1_000_000)
+        except Exception as e:
+            result = e
+            raise e
+        else:
+            return result
+        finally:
+            self._write(result)
 
     async def execute_async(self):
         return super().execute()
+
+    def _write(self, result):
+        number = self._event_recorder.number
+        serialized = serialize(number, result)
+        dumped = json.dumps(serialized)
+
+        self._io.write(dumped)
+        self._io.write(os.linesep)
 
 
 class TimestampEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
     def __init__(self, event_replayer: EventReplayer, io: IO):
         super().__init__(event_replayer)
         self._io = io
-        self._number = 0
-        self._timestamps = None
 
     def execute(self):
-        if self._number != self._event_replayer.number:
-            while True:
-                line = self._io.readline()
-                if line and line != os.linesep:
-                    break
-            number, timestamps = line.split(":")
-            self._number = int(number)
-            self._timestamps = deque(int(timestamp) for timestamp in timestamps.split(",") if timestamp.isdecimal())
-        return self._timestamps.popleft()
+        last_number = None
+        last_result = None
+
+        while self._is_less_last_number(last_number):
+            last_number, last_result = self._read()
+
+        if not self._is_equal_last_number(last_number):
+            raise RuntimeError
+
+        if isinstance(last_result, Exception):
+            raise last_result
+        else:
+            return last_result
 
     async def execute_async(self):
-        return super().execute()
+        return self.execute()
+
+    def _read(self):
+        dumped = self._io.readline()
+        if not dumped:
+            return None, None
+        if dumped == os.linesep:
+            return None, None
+        serialized = json.loads(dumped)
+        return deserialize(serialized)
+
+    def _is_less_last_number(self, last_number: int):
+        return (
+            last_number is None or
+            last_number < self._event_replayer.number
+        )
+
+    def _is_equal_last_number(self, last_number: int):
+        return (
+            last_number is not None and
+            last_number == self._event_replayer.number
+        )
 
 
 class TimestampEventMediator(EventMediator):
@@ -68,3 +96,14 @@ class TimestampEventMediator(EventMediator):
 
     def execute(self):
         return super().execute()
+
+
+def serialize(number: int, timestamp: int) -> dict:
+    return {
+        "number": number,
+        "timestamp": timestamp
+    }
+
+
+def deserialize(serialized: dict) -> (int, int):
+    return serialized["number"], serialized["timestamp"]
