@@ -37,7 +37,7 @@ class MockConsensusData(ConsensusData):
         return
 
     @property
-    def height(self) -> int:
+    def number(self) -> int:
         return
 
     @property

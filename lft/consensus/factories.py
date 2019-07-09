@@ -53,7 +53,7 @@ class ConsensusVote(ABC):
 
     @property
     @abstractmethod
-    def era(self) -> int:
+    def term(self) -> int:
         raise NotImplementedError
 
     @property
@@ -89,7 +89,7 @@ class ConsensusData(ABC):
 
     @property
     @abstractmethod
-    def height(self) -> int:
+    def number(self) -> int:
         raise NotImplementedError
 
     @property
