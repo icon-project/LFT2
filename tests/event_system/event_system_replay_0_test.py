@@ -93,7 +93,7 @@ def on_test2(event2: Event2, results: list, event_system: EventSystem):
 
     json_rpc_mediator = event_system.get_mediator(JsonRpcEventMediator)
     response = json_rpc_mediator.execute("https://wallet.icon.foundation/api/v3", "icx_getLastBlock")
-    results.append(response.text)
+    results.append(response)
 
     event3 = Event3(3)
     event3.deterministic = False
@@ -111,6 +111,6 @@ def on_test3(event3: Event3, results: list, event_system: EventSystem):
 
     json_rpc_mediator = event_system.get_mediator(JsonRpcEventMediator)
     response = json_rpc_mediator.execute("https://wallet.icon.foundation/api/v3", "icx_getLastBlock")
-    results.append(response.text)
+    results.append(response)
 
     event_system.stop()

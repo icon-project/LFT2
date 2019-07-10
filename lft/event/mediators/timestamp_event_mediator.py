@@ -1,9 +1,8 @@
 import time
-import os
-from collections import deque
 from typing import IO
 from lft.event import EventMediator, EventInstantMediatorExecutor, EventRecorder, EventReplayer
 from lft.event import EventReplayerMediatorExecutor, EventRecorderMediatorExecutor
+from lft.event.mediators.mixin import EventMediatorRecorderMixin
 
 
 class TimestampEventInstantMediatorExecutor(EventInstantMediatorExecutor):
@@ -14,51 +13,37 @@ class TimestampEventInstantMediatorExecutor(EventInstantMediatorExecutor):
         return super().execute()
 
 
-class TimestampEventRecorderMediatorExecutor(EventRecorderMediatorExecutor):
+class TimestampEventRecorderMediatorExecutor(EventRecorderMediatorExecutor, EventMediatorRecorderMixin):
     def __init__(self, event_recorder: EventRecorder, io: IO):
         super().__init__(event_recorder)
         self._io = io
-        self._number = 0
-        self._started = False
 
     def execute(self):
-        timestamp = int(time.time() * 1_000_000)
-        if self._number != self._event_recorder.number:
-            self._number = self._event_recorder.number
-
-            if self._started:
-                self._io.write(os.linesep)
-            self._io.write(str(self._number))
-            self._io.write(":")
-        self._io.write(str(timestamp))
-        self._io.write(",")
-        self._started = True
-        return timestamp
+        result = None
+        try:
+            result = int(time.time() * 1_000_000)
+        except Exception as e:
+            result = e
+            raise e
+        else:
+            return result
+        finally:
+            self._write(self._io, self._event_recorder.number, result)
 
     async def execute_async(self):
         return super().execute()
 
 
-class TimestampEventReplayerMediatorExecutor(EventReplayerMediatorExecutor):
+class TimestampEventReplayerMediatorExecutor(EventReplayerMediatorExecutor, EventMediatorRecorderMixin):
     def __init__(self, event_replayer: EventReplayer, io: IO):
         super().__init__(event_replayer)
         self._io = io
-        self._number = 0
-        self._timestamps = None
 
     def execute(self):
-        if self._number != self._event_replayer.number:
-            while True:
-                line = self._io.readline()
-                if line and line != os.linesep:
-                    break
-            number, timestamps = line.split(":")
-            self._number = int(number)
-            self._timestamps = deque(int(timestamp) for timestamp in timestamps.split(",") if timestamp.isdecimal())
-        return self._timestamps.popleft()
+        return self._read(self._io, self._event_replayer.number)
 
     async def execute_async(self):
-        return super().execute()
+        return self.execute()
 
 
 class TimestampEventMediator(EventMediator):
