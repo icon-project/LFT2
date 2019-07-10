@@ -58,6 +58,11 @@ class ConsensusVote(ABC):
 
     @property
     @abstractmethod
+    def voter_id(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
     def round(self) -> int:
         raise NotImplementedError
 
