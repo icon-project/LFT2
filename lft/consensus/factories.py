@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, TypeVar
+
+T = TypeVar("T")
 
 
 class ConsensusDataFactory(ABC):
+    # node id를 할당해주면 어떨까
     @abstractmethod
     async def create_data(self) -> 'ConsensusData':
         raise NotImplementedError
@@ -13,6 +16,7 @@ class ConsensusDataFactory(ABC):
 
 
 class ConsensusVoteFactory(ABC):
+    # node id를 할당해주면 어떨까
     async def create_vote(self) -> 'ConsensusVote':
         raise NotImplementedError
 
@@ -26,13 +30,15 @@ class ConsensusDataVerifier(ABC):
         raise NotImplementedError
 
 
+class ConsensusVoteVerifier(ABC):
+    @abstractmethod
+    async def verify(self):
+        raise NotImplementedError
+
+
 class ConsensusVotes(ABC):
     @abstractmethod
     async def add_vote(self, vote: 'ConsensusVotes'):
-        raise NotImplementedError
-
-    @abstractmethod
-    async def verify(self):
         raise NotImplementedError
 
     @abstractmethod
@@ -64,10 +70,6 @@ class ConsensusVote(ABC):
     @property
     @abstractmethod
     def round_num(self) -> int:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def verify(self):
         raise NotImplementedError
 
 

@@ -1,32 +1,66 @@
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, List
 
+from lft.event import Event
 
 if TYPE_CHECKING:
-    from lft.consensus.factories import ConsensusData, ConsensusVote, ConsensusVotes
+    from lft.consensus.factories import ConsensusData, ConsensusVote
 
 
-class ProposeEvent:
-    def __init__(self, data: 'ConsensusData', era: int, round_: int, leader: bytes):
-        self.data = data
-        self.era = era
-        self.round = round_
-        self.leader = leader
+@dataclass
+class InitializeEvent(Event):
+    """ loopchain to async layer
+    """
+    candidate_data: ConsensusData
+    voters: List[bytes]
 
 
-class VoteEvent:
-    def __init__(self, vote: 'ConsensusVote'):
-        self.vote = vote
+@dataclass
+class ReceivedConsensusDataEvent(Event):
+    """ from loopchain to async layer
+    """
+    data: ConsensusData
 
 
-class VoteResultEvent:
-    def __init__(self, votes: 'ConsensusVotes'):
-        self.votes = votes
+@dataclass
+class ReceivedConsensusVoteEvent(Event):
+    """ from loopchain to async layer
+    """
+    vote: ConsensusVote
 
 
-class CommitResultEvent:
-    def __init__(self, data: 'ConsensusData'):
-        self.data = data
+@dataclass
+class BroadcastConsensusDataEvent(Event):
+    """ from sync layer to loopchain
+    """
+    data: ConsensusData
+    proposer: bytes
 
 
-ProposeSequence = ProposeEvent
-VoteSequence = VoteEvent
+@dataclass
+class BroadcastConsensusVoteEvent(Event):
+    """ from sync layer to loopchain
+    """
+    vote: ConsensusVote
+
+
+@dataclass
+class QuorumEvent(Event):
+    """ from sync layer to its async layer and loopchain
+    """
+    candidate_data: ConsensusData
+    data: ConsensusData
+
+
+@dataclass
+class ProposeSequence(Event):
+    """ from async layer to sync layer
+    """
+    data: ConsensusData
+
+
+@dataclass
+class VoteSequence(Event):
+    """ from async layer to sync layer
+    """
+    vote: ConsensusVote

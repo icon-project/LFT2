@@ -1,4 +1,5 @@
-from lft.consensus.layers.sync import SyncRound
+from lft.consensus.layers.sync.sync_round import SyncRound
+from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent, QuorumEvent
 
 
 class SyncLayer:
@@ -50,7 +51,7 @@ class SyncLayer:
         self._event_system.raise_event(precommit_event)
 
     def _raise_event_propose(self):
-        new_data = self._data_factory.create(self._term, self._sync_round.round_num + 1)
-        propose_event = ProposeEvent(new_data)
+        new_data = self._data_factory.create(self._sync_round.term_num, self._sync_round.round_num + 1)
+        propose_event = BroadcastConsensusDataEvent(new_data)
         self._event_system.raise_event(propose_event)
 

@@ -1,7 +1,9 @@
 from collections import defaultdict
 from typing import DefaultDict, Dict
-from lft.consensus.layers.async_ import AsyncRound
+
+from lft.consensus.layers.async_.async_round import AsyncRound
 from lft.consensus.term import Term
+from lft.consensus.events import ProposeSequence, VoteSequence
 
 
 class AsyncLayer:
@@ -62,12 +64,8 @@ class AsyncLayer:
         if self._term.num == event.term_num and self._round > event.round_num:
             return True
 
-    def _raise_quorum_event(self, data_id):
-        precommit_event = QuorumEvent(data_id, None)
-        self._event_system.raise_event(precommit_event)
-
-    def _raise_propose_sequence(self, term: int, round_: int, data):
-        propose_sequence = ProposeSequence(event.term_num, event.round_num, event.data)
+    def _raise_propose_sequence(self, data):
+        propose_sequence = ProposeSequence(data)
         self._event_system.raise_event(propose_sequence)
 
     def _raise_vote_sequence(self, vote):
