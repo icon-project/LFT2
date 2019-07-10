@@ -40,10 +40,10 @@ record = r"""
 """
 
 timestamp = r"""
-{"number": 1, "timestamp": 1562570860521752}
-{"number": 1, "timestamp": 1562570860521947}
-{"number": 2, "timestamp": 1562570860695386}
-{"number": 3, "timestamp": 1562570863808278}
+{"number": 1, "type": "int", "contents": 1562570860521752}
+{"number": 1, "type": "int", "contents": 1562570860521947}
+{"number": 2, "type": "int", "contents": 1562570860695386}
+{"number": 3, "type": "int", "contents": 1562570863808278}
 """
 
 json_rpc = r"""
