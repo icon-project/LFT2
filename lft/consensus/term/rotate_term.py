@@ -30,10 +30,10 @@ class RotateTerm(Term):
         return self._num
 
     def verify_data(self, data: ConsensusData) -> bool:
-        return data.leader == self.get_leader(data.round_num)
+        return data.proposer == self.get_proposer(data.round_num)
 
-    def verify_leader(self, leader: bytes, round_: int) -> bool:
-        return leader == self.get_leader(round_)
+    def verify_proposer(self, proposer: bytes, round_num: int) -> bool:
+        return proposer == self.get_proposer(round_num)
 
-    def get_leader(self, round_: int) -> bytes:
-        return self.validators[int(round_ / self._rotate_term) % len(self.validators)]
+    def get_proposer(self, round_num: int) -> bytes:
+        return self.validators[int(round_num / self._rotate_term) % len(self.validators)]

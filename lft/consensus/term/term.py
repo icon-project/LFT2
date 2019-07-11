@@ -27,5 +27,5 @@ class Term(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def verify_leader(self, leader: bytes, round_: int) -> bytes:
+    def verify_proposer(self, proposer: bytes, round_num: int) -> bool:
         raise NotImplementedError

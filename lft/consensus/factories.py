@@ -84,7 +84,7 @@ class ConsensusData(ABC):
 
     @property
     @abstractmethod
-    def leader(self) -> bytes:
+    def proposer(self) -> bytes:
         raise NotImplementedError
 
     @property
