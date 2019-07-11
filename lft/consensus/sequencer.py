@@ -40,5 +40,5 @@ class Sequencer:
         # vote verification
         # check event.era and event.round have already finished.
 
-        self._vote_events[event.vote.term_num][event.vote.round].append(event)
+        self._vote_events[event.vote.term_num][event.vote.round_num].append(event)
 

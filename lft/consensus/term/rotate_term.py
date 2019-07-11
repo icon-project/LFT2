@@ -30,7 +30,7 @@ class RotateTerm(Term):
         return self._num
 
     def verify_data(self, data: ConsensusData) -> bool:
-        return data.leader == self.get_leader(data.round)
+        return data.leader == self.get_leader(data.round_num)
 
     def verify_leader(self, leader: bytes, round_: int) -> bool:
         return leader == self.get_leader(round_)

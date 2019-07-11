@@ -41,7 +41,7 @@ class MockConsensusData(ConsensusData):
         return
 
     @property
-    def round(self) -> int:
+    def round_num(self) -> int:
         return self._round
 
     @property

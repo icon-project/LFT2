@@ -24,13 +24,13 @@ class AsyncLayer:
         if not self._term.verify_data(event):
             return
 
-        async_round = self._new_or_get_round(event.term_num, event.round)
+        async_round = self._new_or_get_round(event.term_num, event.round_num)
         if async_round.data:
             return
         async_round.data = event.data
 
         self._raise_quorum_event(event.data.prev_votes.get_result(), None)
-        self._raise_propose_sequence(event.term_num, event.round, event.data)
+        self._raise_propose_sequence(event.term_num, event.round_num, event.data)
         for vote_event in async_round.vote_events:
             self._raise_vote_sequence(vote_event.vote)
 
@@ -38,14 +38,14 @@ class AsyncLayer:
         if self._is_past_event(event):
             return
 
-        async_round = self._new_or_get_round(event.term_num, event.round)
+        async_round = self._new_or_get_round(event.term_num, event.round_num)
         async_round.vote_events.append(event)
 
         if async_round.data:
             self._raise_vote_sequence(event.vote)
 
     def _on_event_quorum(self, event):
-        self._trim_round(event.term_num, event.round)
+        self._trim_round(event.term_num, event.round_num)
 
     def _new_or_get_round(self, term: int, round_: int):
         try:
@@ -59,7 +59,7 @@ class AsyncLayer:
     def _is_past_event(self, event) -> bool:
         if self._term.num > event.term_num:
             return True
-        if self._term.num == event.term_num and self._round > event.round:
+        if self._term.num == event.term_num and self._round > event.round_num:
             return True
 
     def _raise_quorum_event(self, data_id):
@@ -67,7 +67,7 @@ class AsyncLayer:
         self._event_system.raise_event(precommit_event)
 
     def _raise_propose_sequence(self, term: int, round_: int, data):
-        propose_sequence = ProposeSequence(event.term_num, event.round, event.data)
+        propose_sequence = ProposeSequence(event.term_num, event.round_num, event.data)
         self._event_system.raise_event(propose_sequence)
 
     def _raise_vote_sequence(self, vote):

@@ -63,7 +63,7 @@ class ConsensusVote(ABC):
 
     @property
     @abstractmethod
-    def round(self) -> int:
+    def round_num(self) -> int:
         raise NotImplementedError
 
     @abstractmethod
@@ -99,7 +99,7 @@ class ConsensusData(ABC):
 
     @property
     @abstractmethod
-    def round(self) -> int:
+    def round_num(self) -> int:
         raise NotImplementedError
 
     @property
