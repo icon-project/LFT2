@@ -20,13 +20,6 @@ class ConsensusVoteFactory(ABC):
         raise NotImplementedError
 
 
-class ConsensusData(ABC):
-    @abstractmethod
-    @property
-    def id(self):
-        raise NotImplementedError
-
-
 class ConsensusDataVerifier(ABC):
     @abstractmethod
     async def verify(self):
@@ -48,27 +41,68 @@ class ConsensusVotes(ABC):
 
 
 class ConsensusVote(ABC):
-    @abstractmethod
     @property
+    @abstractmethod
     def id(self) -> bytes:
         raise NotImplementedError
 
-    @abstractmethod
     @property
+    @abstractmethod
     def data_id(self) -> bytes:
         raise NotImplementedError
 
-    @abstractmethod
     @property
-    def era(self) -> int:
+    @abstractmethod
+    def term_num(self) -> int:
         raise NotImplementedError
 
-    @abstractmethod
     @property
-    def round(self) -> int:
+    @abstractmethod
+    def voter_id(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def round_num(self) -> int:
         raise NotImplementedError
 
     @abstractmethod
     async def verify(self):
         raise NotImplementedError
 
+
+class ConsensusData(ABC):
+    @property
+    @abstractmethod
+    def id(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def prev_id(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def proposer(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def term_num(self) -> int:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def number(self) -> int:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def round_num(self) -> int:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def votes(self) -> 'ConsensusVotes':
+        raise NotImplementedError

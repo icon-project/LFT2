@@ -1,7 +1,7 @@
 class SyncRound:
-    def __init__(self, term: int, round_: int, data, votes):
-        self.term: int = term
-        self.round: int = round_
+    def __init__(self, term_num: int, round_num: int, data, votes):
+        self.term_num: int = term_num
+        self.round_num: int = round_num
 
         self.data = data
         self.votes = votes
