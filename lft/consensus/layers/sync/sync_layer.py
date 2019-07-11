@@ -10,7 +10,7 @@ class SyncLayer:
         self._sync_round: SyncRound = None
 
     def _on_sequence_propose(self, sequence):
-        self._new_round(sequence.term, sequence.round, sequence.data)
+        self._new_round(sequence.term_num, sequence.round, sequence.data)
         self._raise_event_vote()
 
     def _on_sequence_vote(self, sequence):
@@ -39,9 +39,9 @@ class SyncLayer:
         try:
             verifier.verify(self._sync_round.data)
         except:
-            vote_event = VoteEvent(None, self._sync_round.term, self._sync_round.round)
+            vote_event = VoteEvent(None, self._sync_round.term_num, self._sync_round.round)
         else:
-            vote_event = VoteEvent(self._sync_round.data.id, self._sync_round.term, self._sync_round.round)
+            vote_event = VoteEvent(self._sync_round.data.id, self._sync_round.term_num, self._sync_round.round)
         finally:
             self._event_system.raise_event(vote_event)
 

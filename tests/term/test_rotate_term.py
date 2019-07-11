@@ -33,7 +33,7 @@ class MockConsensusData(ConsensusData):
         return self._leader
 
     @property
-    def terms(self) -> int:
+    def term_num(self) -> int:
         return
 
     @property

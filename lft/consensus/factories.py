@@ -53,7 +53,7 @@ class ConsensusVote(ABC):
 
     @property
     @abstractmethod
-    def term(self) -> int:
+    def term_num(self) -> int:
         raise NotImplementedError
 
     @property
@@ -89,7 +89,7 @@ class ConsensusData(ABC):
 
     @property
     @abstractmethod
-    def terms(self) -> int:
+    def term_num(self) -> int:
         raise NotImplementedError
 
     @property
