@@ -57,6 +57,6 @@ class MockConsensusData(ConsensusData):
                                                               (2, 3, 0), (29, 3, 9), (70, 5, 4)])
 def test_rotate_term(round_num, rotate_term, leader_num):
     validators = [b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9']
-    term = RotateTerm(0, rotate_term=rotate_term, validators=validators)
+    term = RotateTerm(0, rotate_bound=rotate_term, voters=validators)
     consensus_data_mock = MockConsensusData(leader=validators[leader_num], round_=round_num)
     assert term.verify_data(consensus_data_mock)

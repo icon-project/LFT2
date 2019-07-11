@@ -20,10 +20,10 @@ from lft.consensus.term import Term
 
 
 class RotateTerm(Term):
-    def __init__(self, num: int, validators: List[bytes], rotate_term: int = 1):
+    def __init__(self, num: int, voters: List[bytes], rotate_bound: int = 1):
         self._num = num
-        self._rotate_term = rotate_term
-        self.validators = validators
+        self._rotate_bound = rotate_bound
+        self.voters = voters
 
     @property
     def num(self) -> int:
@@ -36,4 +36,4 @@ class RotateTerm(Term):
         return proposer == self.get_proposer(round_num)
 
     def get_proposer(self, round_num: int) -> bytes:
-        return self.validators[int(round_num / self._rotate_term) % len(self.validators)]
+        return self.voters[int(round_num // self._rotate_bound) % len(self.voters)]
