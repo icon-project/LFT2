@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, TypeVar
-
-T = TypeVar("T")
+from typing import Tuple
 
 
 class ConsensusDataFactory(ABC):
@@ -11,16 +9,23 @@ class ConsensusDataFactory(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def create_data_verifier(self, data: 'ConsensusData') -> 'ConsensusDataVerifier':
+    async def create_not_data(self) -> 'ConsensusData':
+        raise NotImplementedError
+
+    @abstractmethod
+    async def create_data_verifier(self) -> 'ConsensusDataVerifier':
         raise NotImplementedError
 
 
 class ConsensusVoteFactory(ABC):
     # node id를 할당해주면 어떨까
-    async def create_vote(self) -> 'ConsensusVote':
+    async def create_vote(self, voter_id: bytes) -> 'ConsensusVote':
         raise NotImplementedError
 
-    async def create_votes(self) -> 'ConsensusVotes':
+    async def create_not_vote(self, voter_id: bytes) -> 'ConsensusVote':
+        raise NotImplementedError
+
+    async def create_vote_verifier(self) -> 'ConsensusVoteVerifier':
         raise NotImplementedError
 
 
@@ -33,16 +38,6 @@ class ConsensusDataVerifier(ABC):
 class ConsensusVoteVerifier(ABC):
     @abstractmethod
     async def verify(self):
-        raise NotImplementedError
-
-
-class ConsensusVotes(ABC):
-    @abstractmethod
-    async def add_vote(self, vote: 'ConsensusVotes'):
-        raise NotImplementedError
-
-    @abstractmethod
-    async def get_result(self) -> Optional[bool]:
         raise NotImplementedError
 
 
@@ -70,6 +65,15 @@ class ConsensusVote(ABC):
     @property
     @abstractmethod
     def round_num(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def __bool__(self) -> bool:
+        """
+        Determine if it is NotVote
+        if not vote:
+            # NotVote
+        """
         raise NotImplementedError
 
 
@@ -106,5 +110,14 @@ class ConsensusData(ABC):
 
     @property
     @abstractmethod
-    def votes(self) -> 'ConsensusVotes':
+    def prev_votes(self) -> Tuple['ConsensusVote']:
         raise NotImplementedError
+
+    @abstractmethod
+    def __bool__(self) -> bool:
+        """
+        Determine if it is NotData
+        if not data:
+            # NotData
+        :return:
+        """

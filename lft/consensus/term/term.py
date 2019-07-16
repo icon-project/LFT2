@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import ABC, abstractmethod
+from lft.consensus.factories import ConsensusData, ConsensusVote
 
 
 class Term(ABC):
@@ -23,9 +24,25 @@ class Term(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def verify_data(self, data) -> bool:
+    def verify_data(self, data: ConsensusData):
+        raise NotImplementedError
+
+    @abstractmethod
+    def verify_vote(self, vote: ConsensusVote, vote_index: int = -1):
         raise NotImplementedError
 
     @abstractmethod
     def verify_proposer(self, proposer: bytes, round_num: int) -> bool:
         raise NotImplementedError
+
+
+class InvalidProposer(Exception):
+    def __init__(self, proposer: bytes, expected: bytes):
+        self.proposer = proposer
+        self.expected = expected
+
+
+class InvalidVoter(Exception):
+    def __init__(self, voter: bytes, expected: bytes):
+        self.voter = voter
+        self.expected = expected
