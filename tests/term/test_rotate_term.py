@@ -48,8 +48,8 @@ class MockConsensusData(ConsensusData):
     def prev_votes(self) -> Sequence[ConsensusVote]:
         return ()
 
-    def __bool__(self):
-        return True
+    def is_not(self) -> bool:
+        return False
 
     def __init__(self, leader, round_):
         self._leader = leader

@@ -125,7 +125,7 @@ class AsyncLayer:
     def _is_acceptable_data(self, data: ConsensusData):
         if data.id in self._data_dict:
             return False
-        if not data and self._data_dict:
+        if data.is_not() and self._data_dict:
             return False
         if data.term_num != self._term.num:
             return False
@@ -138,7 +138,7 @@ class AsyncLayer:
     def _is_acceptable_vote(self, vote: ConsensusVote):
         if vote.id in self._vote_dict[vote.voter_id]:
             return False
-        if not vote and self._vote_dict[vote.voter_id]:
+        if vote.is_not() and self._vote_dict[vote.voter_id]:
             return False
         if vote.term_num != self._term.num:
             return False

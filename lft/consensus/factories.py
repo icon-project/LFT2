@@ -25,6 +25,9 @@ class ConsensusVoteFactory(ABC):
     async def create_not_vote(self, voter_id: bytes) -> 'ConsensusVote':
         raise NotImplementedError
 
+    async def create_none_vote(self, voter_id: bytes) -> 'ConsensusVote':
+        raise NotImplementedError
+
     async def create_vote_verifier(self) -> 'ConsensusVoteVerifier':
         raise NotImplementedError
 
@@ -68,12 +71,11 @@ class ConsensusVote(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def __bool__(self) -> bool:
-        """
-        Determine if it is NotVote
-        if not vote:
-            # NotVote
-        """
+    def is_not(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_none(self) -> bool:
         raise NotImplementedError
 
 
@@ -114,10 +116,5 @@ class ConsensusData(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def __bool__(self) -> bool:
-        """
-        Determine if it is NotData
-        if not data:
-            # NotData
-        :return:
-        """
+    def is_not(self) -> bool:
+        raise NotImplementedError
