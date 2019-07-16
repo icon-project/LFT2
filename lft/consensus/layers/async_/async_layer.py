@@ -26,8 +26,24 @@ class AsyncLayer:
         self._term: Optional[Term] = None
         self._round_num = -1
 
+        self._handlers = [
+            event_system.simulator.register_handler(InitializeEvent, self._on_event_initialize),
+            event_system.simulator.register_handler(QuorumEvent, self._on_event_quorum),
+            event_system.simulator.register_handler(ReceivedConsensusDataEvent, self._on_event_received_consensus_data),
+            event_system.simulator.register_handler(ReceivedConsensusVoteEvent, self._on_event_received_consensus_vote)
+        ]
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        for handler in self._handlers:
+            self._event_system.simulator.unregister_handler(handler)
+        self._handlers.clear()
+
     async def _on_event_initialize(self, event: InitializeEvent):
-        await self._new_round(event.candidate_data.round_num + 1, event.voters)
+        new_round_num = event.candidate_data.round_num + 1 if event.candidate_data else 0
+        await self._new_round(new_round_num, event.voters)
 
     async def _on_event_quorum(self, event: QuorumEvent):
         await self._new_round(event.candidate_data.round_num + 1)
