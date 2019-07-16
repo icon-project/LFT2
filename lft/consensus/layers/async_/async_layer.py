@@ -63,7 +63,8 @@ class AsyncLayer:
             self._data_dict[data.id] = data
             await self._raise_propose_sequence(data)
             for voter in self._term.voters:
-                await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, voter_id=voter)
+                vote = await self._vote_factory.create_not_vote(voter)
+                await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
         elif data.round_num == self._round_num + 1:
             for prev_vote in data.prev_votes:
                 if prev_vote.voter_id not in self._term.voters:
@@ -90,9 +91,7 @@ class AsyncLayer:
         mediator = self._event_system.get_mediator(DelayedEventMediator)
         mediator.execute(delay, event)
 
-    async def _raise_received_consensus_vote(self, delay: float, voter_id: bytes):
-        vote = await self._vote_factory.create_not_vote(voter_id)
-
+    async def _raise_received_consensus_vote(self, delay: float, vote: ConsensusVote):
         event = ReceivedConsensusVoteEvent(vote)
         event.deterministic = False
 
