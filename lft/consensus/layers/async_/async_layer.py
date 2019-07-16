@@ -3,6 +3,7 @@ from typing import DefaultDict, Dict, Optional, Tuple
 from lft.consensus.events import (ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, ProposeSequence, VoteSequence,
                                   QuorumEvent, InitializeEvent)
 from lft.consensus.term import Term, RotateTerm
+from lft.consensus.term.term import InvalidProposer
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.factories import ConsensusData, ConsensusDataFactory, ConsensusVote, ConsensusVoteFactory
@@ -14,9 +15,11 @@ TIMEOUT_VOTE = 2.0
 
 class AsyncLayer:
     def __init__(self,
+                 id_: bytes,
                  event_system: EventSystem,
                  data_factory: ConsensusDataFactory,
                  vote_factory: ConsensusVoteFactory):
+        self._id = id_
         self._event_system = event_system
         self._data_factory = data_factory
         self._vote_factory = vote_factory
@@ -44,9 +47,11 @@ class AsyncLayer:
     async def _on_event_initialize(self, event: InitializeEvent):
         new_round_num = event.candidate_data.round_num + 1 if event.candidate_data else 0
         await self._new_round(new_round_num, event.voters)
+        await self._new_data()
 
     async def _on_event_quorum(self, event: QuorumEvent):
         await self._new_round(event.candidate_data.round_num + 1)
+        await self._new_data()
 
     async def _on_event_received_consensus_data(self, event: ReceivedConsensusDataEvent):
         data = event.data
@@ -67,7 +72,7 @@ class AsyncLayer:
                     continue
                 self._vote_dict[prev_vote.voter_id][prev_vote.id] = prev_vote
                 await self._raise_vote_sequence(prev_vote)
-            await self._raise_received_consensus_data(0, data)
+            await self._raise_received_consensus_data(delay=0, data=data)
 
     async def _on_event_received_consensus_vote(self, event):
         vote = event.vote
@@ -78,10 +83,7 @@ class AsyncLayer:
         self._vote_dict[vote.voter_id][vote.id] = vote
         await self._raise_vote_sequence(vote)
 
-    async def _raise_received_consensus_data(self, delay: float, data: Optional[ConsensusData] = None):
-        if data is None:
-            data = await self._data_factory.create_not_data()
-
+    async def _raise_received_consensus_data(self, delay: float, data: ConsensusData):
         event = ReceivedConsensusDataEvent(data)
         event.deterministic = False
 
@@ -112,7 +114,16 @@ class AsyncLayer:
 
         if voters:
             self._term = RotateTerm(0, voters)
-        await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE)
+
+    async def _new_data(self):
+        try:
+            self._term.verify_proposer(self._id, self._round_num)
+        except InvalidProposer:
+            data = await self._data_factory.create_not_data()
+            await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
+        else:
+            data = await self._data_factory.create_data()
+            await self._raise_received_consensus_data(delay=0, data=data)
 
     def _is_acceptable_data(self, data: ConsensusData):
         if data.id in self._data_dict:
