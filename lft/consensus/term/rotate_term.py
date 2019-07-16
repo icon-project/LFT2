@@ -13,17 +13,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Tuple
+from typing import Sequence
 from lft.consensus.factories import ConsensusData, ConsensusVote
 from lft.consensus.term import Term
 from lft.consensus.term.term import InvalidProposer, InvalidVoter
 
 
 class RotateTerm(Term):
-    def __init__(self, num: int, voters: Tuple[bytes], rotate_bound: int = 1):
+    def __init__(self, num: int, voters: Sequence[bytes], rotate_bound: int = 1):
         self._num = num
         self._rotate_bound = rotate_bound
-        self._voters = voters
+        self._voters = tuple(voters)
 
     @property
     def num(self) -> int:

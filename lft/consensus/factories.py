@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Sequence
 
 
 class ConsensusDataFactory(ABC):
@@ -110,7 +110,7 @@ class ConsensusData(ABC):
 
     @property
     @abstractmethod
-    def prev_votes(self) -> Tuple['ConsensusVote']:
+    def prev_votes(self) -> Sequence['ConsensusVote']:
         raise NotImplementedError
 
     @abstractmethod
