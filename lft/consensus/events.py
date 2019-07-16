@@ -3,7 +3,6 @@ from typing import Sequence
 from lft.event import Event
 from lft.consensus.data import ConsensusData, ConsensusVote
 
-
 @dataclass
 class InitializeEvent(Event):
     """ application to async layer

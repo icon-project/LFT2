@@ -42,6 +42,7 @@ class ConsensusDataVerifier(ABC):
     @abstractmethod
     async def verify(self, data: 'ConsensusData'):
         raise NotImplementedError
+
     async def add_vote(self, vote: 'ConsensusVote'):
         raise NotImplementedError
 

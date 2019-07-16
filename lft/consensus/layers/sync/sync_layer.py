@@ -1,4 +1,5 @@
 from lft.consensus.events import BroadcastConsensusDataEvent, DoneRoundEvent
+from lft.consensus.factories import ConsensusData
 from lft.consensus.layers.sync.sync_round import SyncRound
 
 
@@ -7,8 +8,12 @@ class SyncLayer:
         self._event_system = event_system
         self._data_factory = data_factory
         self._vote_factory = vote_factory
+        self._candidate_data: ConsensusData = None
 
         self._sync_round: SyncRound = None
+
+    def _on_init(self, init_event: InitializeEvent):
+        self._candidate_data = init_event.candidate_data
 
     def _on_sequence_propose(self, sequence):
         self._new_round(sequence.term_num, sequence.round_num, sequence.data)
