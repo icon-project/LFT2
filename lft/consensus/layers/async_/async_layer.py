@@ -67,9 +67,7 @@ class AsyncLayer:
                 await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
         elif data.round_num == self._round_num + 1:
             for prev_vote in data.prev_votes:
-                if prev_vote.voter_id not in self._term.voters:
-                    continue
-                if prev_vote.id in self._vote_dict[prev_vote.voter_id]:
+                if not self._is_acceptable_vote(prev_vote):
                     continue
                 self._vote_dict[prev_vote.voter_id][prev_vote.id] = prev_vote
                 await self._raise_vote_sequence(prev_vote)
