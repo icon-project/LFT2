@@ -36,7 +36,7 @@ class MockVote(ConsensusVote):
 
     @property
     def data_id(self) -> bytes:
-        return self.data_id
+        return self._data_id
 
     @property
     def term_num(self) -> int:

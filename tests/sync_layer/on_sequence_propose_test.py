@@ -13,57 +13,61 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import asyncio
+from io import StringIO
+
 import pytest
 
-from lft.consensus.events import ReceivedConsensusDataEvent, BroadcastConsensusVoteEvent, InitializeEvent
+from lft.consensus.events import BroadcastConsensusVoteEvent, InitializeEvent, \
+    ProposeSequence
 from lft.consensus.factories import ConsensusVoteFactory, ConsensusVote, ConsensusVotes
 from lft.consensus.layers.sync.sync_layer import SyncLayer
 from lft.event import EventSystem
+from lft.event.mediators import TimestampEventMediator, JsonRpcEventMediator
 from tests.test_utils.test_datas import MockConsensusData, NONE_ID
 from tests.test_utils.test_factories import MockVoteFactory, MockDataFactory
 
 
-@pytest.mark.parametrize("candidate_id,propose_id,propose_prev_id,expected_vote_id",
+@pytest.mark.parametrize("candidate_id,propose_id,propose_prev_id,expected_vote_data_id",
                          [(b"a", b"b", b"a", b"b"),
                           (b"a", b"b", b"c", NONE_ID),
                           (b"a", NONE_ID, None, NONE_ID)])
-def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_id):
+def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_data_id):
     """ GIVEN SyncLayer with candidate_data and ProposeSequence, setup
     WHEN raise ProposeSequence
     THEN Receive VoteEvent about ProposeSequence
     """
-    # GIVEN
-    callback_is_called, event_system, vote_factory = _init_sync(propose_prev_id, expected_vote_id)
+    loop = asyncio.get_event_loop()
 
-    propose = MockConsensusData(propose_id, propose_prev_id, vote_factory.voter_id,
-                                1, 2, 2, None)
+    async def async_on_propose():
+        # GIVEN
+        event_system, vote_factory, sync_layer = await _init_sync(candidate_id)
 
-    propose_event = ReceivedConsensusDataEvent(propose)
+        propose = MockConsensusData(propose_id, propose_prev_id, vote_factory.voter_id,
+                                    0, 2, 1, None)
+        propose_event = ProposeSequence(propose)
 
-    # WHEN
-    event_system.simulator.raise_event(propose_event)
+        # WHEN
+        await sync_layer._on_sequence_propose(propose_event)
+        # THEN
+        non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
+        assert isinstance(event, BroadcastConsensusVoteEvent)
 
-    # THEN
-    # run _vote_verify_handler
-    assert callback_is_called
+        assert event.vote.data_id == expected_vote_data_id
+    loop.run_until_complete(async_on_propose())
 
 
-def _init_sync(propose_prev_id, expected_vote_id):
+async def _init_sync(candidate_id):
     event_system = EventSystem(True)
     vote_factory = MockVoteFactory(b"my_id")
-    candidate_data = MockConsensusData(propose_prev_id, None, b"leader", 1, 1, 1,
+    candidate_data = MockConsensusData(candidate_id, None, b"leader", 0, 1, 0,
                                        None)
-    callback_is_called = False
-
-    def _vote_verify_handler(vote_event: BroadcastConsensusVoteEvent):
-        callback_is_called = True
-        assert vote_event.vote.data_id == expected_vote_id
-
-    event_system.simulator.register_handler(BroadcastConsensusVoteEvent, _vote_verify_handler)
-    sycn_layer = SyncLayer(event_system, MockDataFactory(), vote_factory)
+    print(f"prev_id: {candidate_id}")
+    sync_layer = SyncLayer(event_system, MockDataFactory(), vote_factory)
     init_event = InitializeEvent(candidate_data=candidate_data, voters=[])
-    event_system.simulator.raise_event(init_event)
-    return callback_is_called, event_system, vote_factory
+    await sync_layer._on_init(init_event)
+
+    return event_system, vote_factory, sync_layer
 
 
 def double_propose_test():
