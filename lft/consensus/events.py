@@ -1,10 +1,7 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Sequence
-
+from typing import Sequence
 from lft.event import Event
-
-if TYPE_CHECKING:
-    from lft.consensus.factories import ConsensusData, ConsensusVote
+from lft.consensus.factories import ConsensusData, ConsensusVote
 
 
 @dataclass

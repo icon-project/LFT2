@@ -34,7 +34,7 @@ class AsyncLayer:
         self._term: Optional[Term] = None
         self._round_num = -1
         self._data_num = -1
-        self._prev_id = None
+        self._prev_id: bytes = None
 
         self._vote_timeout_started = False
 
