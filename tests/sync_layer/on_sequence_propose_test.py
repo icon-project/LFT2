@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import asyncio
+from asyncio import QueueEmpty
 from io import StringIO
 
 import pytest
@@ -37,8 +38,6 @@ def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_dat
     WHEN raise ProposeSequence
     THEN Receive VoteEvent about ProposeSequence
     """
-    loop = asyncio.get_event_loop()
-
     async def async_on_propose():
         # GIVEN
         event_system, vote_factory, sync_layer = await _init_sync(candidate_id)
@@ -52,8 +51,18 @@ def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_dat
         # THEN
         non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
         assert isinstance(event, BroadcastConsensusVoteEvent)
-
         assert event.vote.data_id == expected_vote_data_id
+
+        # Test double propose
+        # GIVEN
+        second_propose = MockConsensusData(b'b', b'a', vote_factory.voter_id, 0, 2, 1, None)
+        # WHEN
+        await sync_layer._on_sequence_propose(ProposeSequence(data=second_propose))
+        with pytest.raises(QueueEmpty):
+            event_system.simulator._event_tasks.get_nowait()
+
+
+    loop = asyncio.get_event_loop()
     loop.run_until_complete(async_on_propose())
 
 
@@ -70,7 +79,10 @@ async def _init_sync(candidate_id):
     return event_system, vote_factory, sync_layer
 
 
+@pytest.mark.parametrize("candidate_id,propose_id,propose_prev_id,expected_vote_data_id",
+                         [(b"a", b"b", b"a", b"b"),
+                          (b"a", b"b", b"c", NONE_ID),
+                          (b"a", NONE_ID, None, NONE_ID)])
 def double_propose_test():
-    # 위의 테스트를 함수로 쪼게서 실
-    # callback_is_called, event_system, vote_factory = _init_sync(propose_prev_id)
     pass
+

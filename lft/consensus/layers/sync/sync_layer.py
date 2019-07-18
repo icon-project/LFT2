@@ -36,28 +36,26 @@ class SyncLayer:
         :param propose_event:
         :return:
         """
-        print("start propose event")
         data = propose_event.data
         vote = None
         if self._verify_is_connect_to_candidate(data) and await self._verify_data(data):
-            print("verify success")
             # TODO Broadcast Correct Vote
             vote = await self._vote_factory.create_vote(data_id=data.id,
                                                         term_num=self._sync_round.term_num,
                                                         round_num=self._sync_round.round_num)
         else:
-            print("verify fail")
             vote = await self._vote_factory.create_none_vote(term_num=self._sync_round.term_num,
                                                              round_num=self._sync_round.round_num)
 
-        self._raise_broadcast_vote(vote)
+        if not self._sync_round.data:
+            self._sync_round.data = data
+            self._raise_broadcast_vote(vote)
 
     def _raise_broadcast_vote(self, vote: ConsensusVote):
         self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
 
     def _verify_is_connect_to_candidate(self, data: ConsensusData) -> bool:
         if self._candidate_data.id == data.prev_id:
-            print("connect to candidate")
             return True
         return False
 
