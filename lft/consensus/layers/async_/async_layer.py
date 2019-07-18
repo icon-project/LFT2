@@ -45,8 +45,7 @@ class AsyncLayer:
         self._handlers.clear()
 
     async def _on_event_initialize(self, event: InitializeEvent):
-        new_round_num = event.candidate_data.round_num + 1 if event.candidate_data else 0
-        await self._new_round(new_round_num, event.voters)
+        await self._new_round(event.term_num, event.round_num, event.voters)
         await self._new_data()
 
     async def _on_event_quorum(self, event: QuorumEvent):
@@ -104,13 +103,12 @@ class AsyncLayer:
         vote_sequence = VoteSequence(vote)
         self._event_system.simulator.raise_event(vote_sequence)
 
-    async def _new_round(self, new_round_num: int, voters: Tuple[bytes] = ()):
+    async def _new_round(self, new_term_num: int, new_round_num: int, voters: Tuple[bytes] = ()):
+        if not self._term or self._term.num != new_term_num:
+            self._term = RotateTerm(new_term_num, voters)
         self._round_num = new_round_num
         self._data_dict.clear()
         self._vote_dict.clear()
-
-        if voters:
-            self._term = RotateTerm(0, voters)
 
     async def _new_data(self):
         try:

@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 class InitializeEvent(Event):
     """ application to async layer
     """
+    term_num: int
+    round_num: int
     candidate_data: ConsensusData
     voters: Tuple[bytes]
 
