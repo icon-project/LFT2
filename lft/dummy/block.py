@@ -1,7 +1,8 @@
-from lft.consensus.factories import ConsensusData, ConsensusDataVerifier, ConsensusDataFactory
 from loopchain.blockchain.blocks import Block
 from loopchain.blockchain.blocks.v0_3 import BlockBuilder, BlockVerifier
 from loopchain.blockchain.transactions import TransactionVersioner
+
+from lft.consensus.factories import ConsensusData, ConsensusDataVerifier, ConsensusDataFactory
 
 tx_versioner = TransactionVersioner()
 

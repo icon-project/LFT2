@@ -29,7 +29,7 @@ class MockConsensusData(ConsensusData):
         return
 
     @property
-    def proposer(self) -> bytes:
+    def proposer_id(self) -> bytes:
         return self._leader
 
     @property
