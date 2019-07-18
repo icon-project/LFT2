@@ -26,7 +26,7 @@ class SyncLayer:
 
         self._sync_round = SyncRound(term_num=self._candidate_data.term_num,
                                      round_num=self._candidate_data.round_num + 1,
-                                     data=None,
+                                     datas=None,
                                      votes=None
                                      )
 
@@ -47,8 +47,9 @@ class SyncLayer:
             vote = await self._vote_factory.create_none_vote(term_num=self._sync_round.term_num,
                                                              round_num=self._sync_round.round_num)
 
-        if not self._sync_round.data:
-            self._sync_round.data = data
+        self._sync_round.add_data(data)
+        if not self._sync_round.voted_data_id:
+            self._sync_round.vote(vote)
             self._raise_broadcast_vote(vote)
 
     def _raise_broadcast_vote(self, vote: ConsensusVote):
