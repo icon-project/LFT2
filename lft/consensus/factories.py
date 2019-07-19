@@ -5,15 +5,15 @@ from typing import Sequence
 class ConsensusDataFactory(ABC):
     # node id를 할당해주면 어떨까
     @abstractmethod
-    async def create_data(self) -> 'ConsensusData':
+    async def create_data(self, number: int, term_num: int, round_num: int) -> 'ConsensusData':
         raise NotImplementedError
 
     @abstractmethod
-    async def create_not_data(self) -> 'ConsensusData':
+    async def create_not_data(self, number: int, term_num: int, round_num: int) -> 'ConsensusData':
         raise NotImplementedError
 
     @abstractmethod
-    async def create_data_verifier(self) -> 'ConsensusDataVerifier':
+    async def create_data_verifier(self, number: int, term_num: int, round_num: int) -> 'ConsensusDataVerifier':
         raise NotImplementedError
 
 

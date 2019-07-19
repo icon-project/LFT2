@@ -47,11 +47,13 @@ class BroadcastConsensusVoteEvent(Event):
 
 
 @dataclass
-class QuorumEvent(Event):
+class DoneRoundEvent(Event):
     """ from sync layer to its async layer and application
     """
+    term_num: int
+    round_num: int
     candidate_data: ConsensusData
-    data: ConsensusData
+    commit_data: ConsensusData
 
 
 @dataclass
