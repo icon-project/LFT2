@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import ABC, abstractmethod
+from typing import Sequence
 from lft.consensus.factories import ConsensusData, ConsensusVote
 
 
@@ -21,6 +22,11 @@ class Term(ABC):
     @property
     @abstractmethod
     def num(self) -> int:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def quorum_num(self) -> int:
         raise NotImplementedError
 
     @abstractmethod
@@ -33,6 +39,18 @@ class Term(ABC):
 
     @abstractmethod
     def verify_proposer(self, proposer: bytes, round_num: int) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_proposer(self, round_num: int) -> bytes:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_voter(self, vote_index: int) -> bytes:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_voters(self) -> Sequence[bytes]:
         raise NotImplementedError
 
 

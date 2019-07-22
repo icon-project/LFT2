@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import math
 from typing import Sequence
 from lft.consensus.factories import ConsensusData, ConsensusVote
 from lft.consensus.term import Term
@@ -28,6 +29,10 @@ class RotateTerm(Term):
     @property
     def num(self) -> int:
         return self._num
+
+    @property
+    def quorum_num(self) -> int:
+        return math.ceil(len(self._voters) * 0.67)
 
     def verify_data(self, data: ConsensusData):
         self.verify_proposer(data.proposer, data.round_num)
@@ -56,3 +61,6 @@ class RotateTerm(Term):
 
     def get_voter(self, vote_index: int):
         return self._voters[vote_index]
+
+    def get_voters(self) -> Sequence[bytes]:
+        return self._voters

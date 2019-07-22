@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from typing import DefaultDict, Dict, Optional, Tuple
 from lft.consensus.events import (ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, ProposeSequence, VoteSequence,
                                   DoneRoundEvent, InitializeEvent)
@@ -15,7 +15,7 @@ TIMEOUT_VOTE = 2.0
 DataByID = Dict[bytes, ConsensusData]  # dict[id] = ConsensusData
 DataByRound = DefaultDict[int, DataByID]  # dict[round][id] = ConsensusData
 
-VoteByID = Dict[bytes, ConsensusVote]  # dict[id] = ConsensusVote
+VoteByID = OrderedDict[bytes, ConsensusVote]  # dict[id] = ConsensusVote
 VoteByVoterID = DefaultDict[bytes, VoteByID]  # dict[voter_id][id] = ConsensusVote
 VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = ConsensusVote
 
@@ -32,10 +32,12 @@ class AsyncLayer:
         self._vote_factory = vote_factory
 
         self._data_dict: DataByRound = defaultdict(dict)
-        self._vote_dict: VoteByRound = defaultdict(lambda: defaultdict(dict))
+        self._vote_dict: VoteByRound = defaultdict(lambda: defaultdict(OrderedDict))
         self._term: Optional[Term] = None
         self._round_num = -1
         self._data_num = -1
+
+        self._vote_timeout_started = False
 
         simulator = event_system.simulator
         self._handlers = {
@@ -75,12 +77,14 @@ class AsyncLayer:
             if self._round_num == data.round_num:
                 self._term.verify_data(data)
                 self._data_dict[data.round_num][data.id] = data
-                await self._raise_propose_and_non_votes(data, not_vote_delay=TIMEOUT_VOTE)
+                await self._raise_propose_sequence(data)
         elif self._data_num + 1 == data.number:
             if self._round_num + 1 == data.round_num:
                 self._term.verify_data(data)
                 self._data_dict[data.round_num][data.id] = data
-                await self._raise_prev_votes_and_re_raise_data(data)
+                for vote in data.prev_votes:
+                    await self._raise_received_consensus_vote(delay=0, vote=vote)
+                await self._raise_received_consensus_data(delay=0, data=data)
 
     async def _on_event_received_consensus_vote(self, event: ReceivedConsensusVoteEvent):
         vote = event.vote
@@ -90,8 +94,16 @@ class AsyncLayer:
         self._term.verify_vote(vote)
         self._vote_dict[vote.round_num][vote.voter_id][vote.id] = vote
 
-        if self._round_num == vote.round_num:
-            await self._raise_vote_sequence(vote)
+        if self._round_num != vote.round_num:
+            return
+        await self._raise_vote_sequence(vote)
+
+        if self._vote_timeout_started or not self._votes_reach_quorum(self._round_num):
+            return
+        self._vote_timeout_started = True
+        for voter in self._term.get_voters():
+            vote = await self._vote_factory.create_not_vote(voter)
+            await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
     async def _raise_received_consensus_data(self, delay: float, data: ConsensusData):
         event = ReceivedConsensusDataEvent(data)
@@ -115,18 +127,9 @@ class AsyncLayer:
         vote_sequence = VoteSequence(vote)
         self._event_system.simulator.raise_event(vote_sequence)
 
-    async def _raise_propose_and_non_votes(self, data: ConsensusData, not_vote_delay: float):
-        await self._raise_propose_sequence(data)
-        for voter in self._term.voters:
-            vote = await self._vote_factory.create_not_vote(voter)
-            await self._raise_received_consensus_vote(delay=not_vote_delay, vote=vote)
-
-    async def _raise_prev_votes_and_re_raise_data(self, data: ConsensusData):
-        for vote in data.prev_votes:
-            await self._raise_vote_sequence(vote)
-        await self._raise_received_consensus_data(delay=0, data=data)
-
     async def _new_round(self, new_data_num: int, new_term_num: int, new_round_num: int, voters: Tuple[bytes] = ()):
+        self._vote_timeout_started = False
+
         self._data_num = new_data_num
         self._round_num = new_round_num
 
@@ -179,6 +182,14 @@ class AsyncLayer:
             return False
 
         return True
+
+    def _votes_reach_quorum(self, round_num: int):
+        count = 0
+        for voter_id, votes_by_id in self._vote_dict[round_num].items():
+            vote = next(iter(votes_by_id), None)
+            if vote and not vote.is_not():
+                count += 1
+        return count >= self._term.quorum_num
 
     def _trim_rounds(self, d: dict):
         expired_rounds = [round_ for round_ in d if round_ < self._round_num]
