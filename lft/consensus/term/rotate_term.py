@@ -57,7 +57,7 @@ class RotateTerm(Term):
                 raise InvalidVoter(voter, bytes(0))
 
     def get_proposer(self, round_num: int) -> bytes:
-        return self._voters[int(round_num // self._rotate_bound) % len(self._voters)]
+        return self._voters[round_num // self._rotate_bound % len(self._voters)]
 
     def get_voter(self, vote_index: int):
         return self._voters[vote_index]
