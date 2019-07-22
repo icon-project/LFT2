@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Tuple
 
 from lft.event import Event
 
@@ -9,47 +9,50 @@ if TYPE_CHECKING:
 
 @dataclass
 class InitializeEvent(Event):
-    """ loopchain to async layer
+    """ application to async layer
     """
+    term_num: int
+    round_num: int
     candidate_data: ConsensusData
-    voters: List[bytes]
+    voters: Tuple[bytes]
 
 
 @dataclass
 class ReceivedConsensusDataEvent(Event):
-    """ from loopchain to async layer
+    """ from application to async layer
     """
     data: ConsensusData
 
 
 @dataclass
 class ReceivedConsensusVoteEvent(Event):
-    """ from loopchain to async layer
+    """ from application to async layer
     """
     vote: ConsensusVote
 
 
 @dataclass
 class BroadcastConsensusDataEvent(Event):
-    """ from sync layer to loopchain
+    """ from sync layer to application
     """
     data: ConsensusData
-    proposer: bytes
 
 
 @dataclass
 class BroadcastConsensusVoteEvent(Event):
-    """ from sync layer to loopchain
+    """ from sync layer to application
     """
     vote: ConsensusVote
 
 
 @dataclass
-class QuorumEvent(Event):
-    """ from sync layer to its async layer and loopchain
+class DoneRoundEvent(Event):
+    """ from sync layer to its async layer and application
     """
+    term_num: int
+    round_num: int
     candidate_data: ConsensusData
-    data: ConsensusData
+    commit_data: ConsensusData
 
 
 @dataclass
