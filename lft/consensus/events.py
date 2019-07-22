@@ -36,7 +36,6 @@ class BroadcastConsensusDataEvent(Event):
     """ from sync layer to application
     """
     data: ConsensusData
-    proposer: bytes
 
 
 @dataclass
