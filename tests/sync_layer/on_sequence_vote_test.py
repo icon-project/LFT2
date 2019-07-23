@@ -15,6 +15,7 @@
 # limitations under the License.
 import pytest
 
+from lft.consensus.events import DoneRoundEvent
 from tests.sync_layer.setup_sync_layer import BASIC_CANDIDATE_DATA
 from tests.test_utils.test_datas import MockConsensusData
 now_data = MockConsensusData(propose_id, propose_prev_id, vote_factory.voter_id,

@@ -13,12 +13,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from lft.consensus.factories import ConsensusVoteFactory, ConsensusVote, ConsensusVotes, ConsensusDataFactory, \
+from lft.consensus.factories import ConsensusVoteFactory, ConsensusVote, ConsensusDataFactory, \
     ConsensusDataVerifier, ConsensusData
 from tests.test_utils.test_datas import MockVote, NONE_ID
 
 
 class MockVoteFactory(ConsensusVoteFactory):
+
+    async def create_not_vote(self, voter_id: bytes) -> 'ConsensusVote':
+        pass
+
+    async def create_vote_verifier(self) -> 'ConsensusVoteVerifier':
+        pass
 
     def __init__(self, voter_id: bytes):
         self.voter_id = voter_id
@@ -34,11 +40,11 @@ class MockVoteFactory(ConsensusVoteFactory):
     def _create_id(self, data_id: bytes, term_num: int, round_num: int) -> bytes:
         return self.voter_id + data_id + bytes([term_num]) + bytes([round_num])
 
-    async def create_votes(self) -> 'ConsensusVotes':
-        pass
-
 
 class MockDataFactory(ConsensusDataFactory):
+    async def create_not_data(self, number: int, term_num: int, round_num: int) -> 'ConsensusData':
+        pass
+
     async def create_data(self) -> 'ConsensusData':
         pass
 

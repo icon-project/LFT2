@@ -59,6 +59,7 @@ def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_dat
         await sync_layer._on_sequence_propose(ProposeSequence(data=second_propose))
         with pytest.raises(QueueEmpty):
             event_system.simulator._event_tasks.get_nowait()
+        print("Success")
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(async_on_propose())

@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from collections import defaultdict
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Sequence
 
-from lft.consensus.factories import ConsensusVote, ConsensusData, ConsensusVotes
+from lft.consensus.factories import ConsensusVote, ConsensusData
 
 
 NONE_ID = b"0"
@@ -54,31 +54,10 @@ class MockVote(ConsensusVote):
         return True
 
 
-class MockVotes(ConsensusVotes):
-    def __init__(self, quorum: int):
-        self._votes: Dict[bytes][List[ConsensusVote]] = defaultdict(lambda: [])
-        self._quorum = quorum
-        self._consensus_data = NONE_ID
-        self._result = False
-
-    async def add_vote(self, vote: 'ConsensusVote'):
-        # no duplicate check cause it is mock
-        self._votes[vote.data_id].append(vote)
-        if len(self._votes[vote.data_id]) >= self._quorum:
-            self._result = True
-            self._consensus_data = vote.data_id
-
-    async def verify(self):
-        pass
-
-    async def get_result(self) -> Optional[bool]:
-        return self._result
-
-
 class MockConsensusData(ConsensusData):
 
     def __init__(self, id_: bytes, prev_id: bytes, proposer: bytes, term_num: int, number: int, round_num: int,
-                 votes: ConsensusVotes):
+                 votes: Sequence[ConsensusVote]):
         self._id = id_
         self._prev_id = prev_id
         self._proposer = proposer
@@ -112,5 +91,8 @@ class MockConsensusData(ConsensusData):
         return self._round_num
 
     @property
-    def votes(self) -> 'ConsensusVotes':
+    def prev_votes(self) -> Sequence['ConsensusVote']:
         return self._votes
+
+    def is_not(self) -> bool:
+        return False

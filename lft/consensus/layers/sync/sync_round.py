@@ -15,7 +15,7 @@ class SyncRound:
 
         self._datas: Dict[bytes, ConsensusData] = datas if datas else {}
         self._votes: Dict[bytes, Dict[bytes, ConsensusVote]] = votes if votes else defaultdict(lambda: {})
-        self.voted_data_id = None
+        self.is_voted = False
 
     def add_data(self, data: ConsensusData):
         self._datas[data.id] = data
