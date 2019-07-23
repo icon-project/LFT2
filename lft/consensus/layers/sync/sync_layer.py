@@ -49,7 +49,7 @@ class SyncLayer:
 
         self._sync_round.add_data(data)
         if not self._sync_round.voted_data_id:
-            self._sync_round.vote(vote)
+            self._sync_round.add_vote(vote)
             self._raise_broadcast_vote(vote)
 
     def _raise_broadcast_vote(self, vote: ConsensusVote):

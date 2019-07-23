@@ -17,6 +17,8 @@ class InitializeEvent(Event):
 class ReceivedConsensusDataEvent(Event):
     """ from application to async layer
     """
+    deterministic = False
+
     data: 'ConsensusData'
 
 
@@ -24,6 +26,8 @@ class ReceivedConsensusDataEvent(Event):
 class ReceivedConsensusVoteEvent(Event):
     """ from application to async layer
     """
+    deterministic = False
+
     vote: 'ConsensusVote'
 
 
@@ -63,3 +67,13 @@ class VoteSequence(Event):
     """ from async layer to sync layer
     """
     vote: 'ConsensusVote'
+
+
+@dataclass
+class DoneRoundEvent(Event):
+    """ When the round is done sync layer raises this event
+    """
+    term_num: int
+    round_num: int
+    round_result: bool
+
