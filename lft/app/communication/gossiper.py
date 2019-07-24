@@ -19,13 +19,13 @@ class Gossiper:
         self._sender = sender
         self._receiver = receiver
 
-        self._cached_blocks = set()
+        self._cached_data = set()
         self._cached_votes = set()
 
-        self._reserved_blocks = set()
+        self._reserved_data = set()
         self._reserved_votes = set()
 
-        self._asset_blocks = set()
+        self._asset_data = set()
         self._asset_votes = set()
 
         simulator = event_system.simulator
@@ -44,9 +44,9 @@ class Gossiper:
             self._event_system.simulator.unregister_handler(event_type, handler)
         self._handlers.clear()
 
-    def _send_block(self, block: ConsensusData):
+    def _send_data(self, data: ConsensusData):
         delay = self._get_random_delay()
-        asyncio.get_event_loop().call_later(delay, self._receiver.receive_block, block)
+        asyncio.get_event_loop().call_later(delay, self._receiver.receive_data, data)
 
     def _send_vote(self, vote: ConsensusVote):
         delay = self._get_random_delay()
@@ -55,13 +55,13 @@ class Gossiper:
     def _on_propose_sequence(self, event: ProposeSequence):
         if event.data.is_not():
             return
-        if event.data in self._cached_blocks:
+        if event.data in self._cached_data:
             return
 
-        self._cached_blocks.add(event.data)
-        self._reserved_blocks.add(event.data)
-        self._asset_blocks.add(event.data)
-        asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_blocks.remove, event.data)
+        self._cached_data.add(event.data)
+        self._reserved_data.add(event.data)
+        self._asset_data.add(event.data)
+        asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_data.remove, event.data)
 
     def _on_vote_sequence(self, event: VoteSequence):
         if event.vote.is_not():
@@ -71,22 +71,22 @@ class Gossiper:
 
         self._cached_votes.add(event.vote)
         self._reserved_votes.add(event.vote)
-        self._asset_blocks.add(event.vote)
+        self._asset_data.add(event.vote)
         asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_votes.remove, event.vote)
 
     async def _gossip(self):
         while True:
-            for block in self._reserved_blocks:
-                self._send_block(block)
-            self._reserved_blocks.clear()
+            for data in self._reserved_data:
+                self._send_data(data)
+            self._reserved_data.clear()
 
             for vote in self._reserved_votes:
                 self._send_vote(vote)
             self._reserved_votes.clear()
 
-            missing_blocks = self._asset_blocks - self._receiver.received_blocks
-            for block in missing_blocks:
-                self._send_block(block)
+            missing_data = self._asset_data - self._receiver.received_data
+            for data in missing_data:
+                self._send_data(data)
 
             missing_votes = self._asset_votes - self._receiver.received_votes
             for vote in missing_votes:
