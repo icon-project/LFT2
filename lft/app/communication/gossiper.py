@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from lft.app import Node
 
 TIME_SLEEP = 0.1
-TIME_TO_LIVE = 256
+TIME_TO_LIVE = 5
 
 
 class Gossiper:
@@ -24,6 +24,9 @@ class Gossiper:
 
         self._reserved_blocks = set()
         self._reserved_votes = set()
+
+        self._asset_blocks = set()
+        self._asset_votes = set()
 
         simulator = event_system.simulator
         self._handlers = {
@@ -57,6 +60,7 @@ class Gossiper:
 
         self._cached_blocks.add(event.data)
         self._reserved_blocks.add(event.data)
+        self._asset_blocks.add(event.data)
         asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_blocks.remove, event.data)
 
     def _on_vote_sequence(self, event: VoteSequence):
@@ -67,6 +71,7 @@ class Gossiper:
 
         self._cached_votes.add(event.vote)
         self._reserved_votes.add(event.vote)
+        self._asset_blocks.add(event.vote)
         asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_votes.remove, event.vote)
 
     async def _gossip(self):
@@ -78,6 +83,14 @@ class Gossiper:
             for vote in self._reserved_votes:
                 self._send_vote(vote)
             self._reserved_votes.clear()
+
+            missing_blocks = self._asset_blocks - self._receiver.received_blocks
+            for block in missing_blocks:
+                self._send_block(block)
+
+            missing_votes = self._asset_votes - self._receiver.received_votes
+            for vote in missing_votes:
+                self._send_vote(vote)
 
             await asyncio.sleep(0.1)
 

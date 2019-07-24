@@ -13,6 +13,9 @@ class Node:
         self.event_system = EventSystem()
         self.event_system.set_mediator(DelayedEventMediator)
 
+        self.received_blocks = set()
+        self.received_votes = set()
+
         self._consensus = Consensus(self.event_system, self.id, None, None)
         self._gossipers = {}
 
@@ -32,14 +35,24 @@ class Node:
         self.event_system.simulator.start(blocking)
 
     def receive_block(self, block: ConsensusData):
-        print(f"{self.id} : receive_block : {block}")
-        event = ReceivedConsensusDataEvent(block)
-        self.event_system.simulator.raise_event(event)
+        if block in self.received_blocks:
+            print(f"{self.id} : receive block but ignored : {block}")
+        else:
+            print(f"{self.id} : receive_block : {block}")
+            self.received_blocks.add(block)
+
+            event = ReceivedConsensusDataEvent(block)
+            self.event_system.simulator.raise_event(event)
 
     def receive_vote(self, vote: ConsensusVote):
-        print(f"{self.id} : receive_block : {vote}")
-        event = ReceivedConsensusVoteEvent(vote)
-        self.event_system.simulator.raise_event(event)
+        if vote in self.received_votes:
+            print(f"{self.id} : receive vote but ignored : {vote}")
+        else:
+            print(f"{self.id} : receive_block : {vote}")
+            self.received_votes.add(vote)
+
+            event = ReceivedConsensusVoteEvent(vote)
+            self.event_system.simulator.raise_event(event)
 
     def register_peer(self, peer_id: bytes, peer: 'Node'):
         gossiper = Gossiper(self.event_system, self, peer)
