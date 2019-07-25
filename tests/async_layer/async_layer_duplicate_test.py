@@ -10,9 +10,9 @@ from .conftest import start_event_system
 
 param_count = 10
 
-voter_nums = [random.randint(4, 100) for _ in range(param_count)]
+voter_nums = [random.randint(4, 20) for _ in range(param_count)]
 init_round_nums = [random.randint(1, 100) for _ in range(param_count)]
-data_counts = [random.randint(10, 100) for _ in range(param_count)]
+data_counts = [random.randint(10, 20) for _ in range(param_count)]
 parameters = list(zip(voter_nums, init_round_nums, data_counts))
 
 
