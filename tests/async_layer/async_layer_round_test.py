@@ -42,7 +42,7 @@ async def test_async_layer_past_round_vote(async_layer_items,
                                            vote_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
-    for vote, vote_factory in zip(voters, vote_factories):
+    for vote_factory in vote_factories:
         vote_factory = cast(DefaultConsensusVoteFactory, vote_factory)
         vote = await vote_factory.create_vote(os.urandom(16), 0, vote_round_num)
 
@@ -89,7 +89,7 @@ async def test_async_layer_future_round_vote(async_layer_items,
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
     votes = []
-    for vote, vote_factory in zip(voters, vote_factories):
+    for vote_factory in vote_factories:
         vote_factory = cast(DefaultConsensusVoteFactory, vote_factory)
         vote = await vote_factory.create_vote(os.urandom(16), 0, vote_round_num)
         votes.append(vote)
