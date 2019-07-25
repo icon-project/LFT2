@@ -15,6 +15,7 @@
 # limitations under the License.
 from abc import ABC, abstractmethod
 from typing import Sequence
+
 from lft.consensus.factories import ConsensusData, ConsensusVote
 
 
@@ -38,11 +39,11 @@ class Term(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def verify_proposer(self, proposer: bytes, round_num: int) -> bool:
+    def verify_proposer(self, proposer_id: bytes, round_num: int) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def get_proposer(self, round_num: int) -> bytes:
+    def get_proposer_id(self, round_num: int) -> bytes:
         raise NotImplementedError
 
     @abstractmethod

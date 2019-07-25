@@ -15,6 +15,7 @@
 # limitations under the License.
 import math
 from typing import Sequence
+
 from lft.consensus.factories import ConsensusData, ConsensusVote
 from lft.consensus.term import Term
 from lft.consensus.term.term import InvalidProposer, InvalidVoter
@@ -35,17 +36,17 @@ class RotateTerm(Term):
         return math.ceil(len(self._voters) * 0.67)
 
     def verify_data(self, data: ConsensusData):
-        self.verify_proposer(data.proposer, data.round_num)
+        self.verify_proposer(data.proposer_id, data.round_num)
         for i, vote in data.prev_votes:
             self.verify_vote(vote, i)
 
     def verify_vote(self, vote: ConsensusVote, vote_index: int = -1):
         self.verify_voter(vote.voter_id, vote_index)
 
-    def verify_proposer(self, proposer: bytes, round_num: int):
-        expected = self.get_proposer(round_num)
-        if proposer != expected:
-            raise InvalidProposer(proposer, expected)
+    def verify_proposer(self, proposer_id: bytes, round_num: int):
+        expected = self.get_proposer_id(round_num)
+        if proposer_id != expected:
+            raise InvalidProposer(proposer_id, expected)
 
     def verify_voter(self, voter: bytes, vote_index: int = -1):
         if vote_index >= 0:
@@ -56,7 +57,7 @@ class RotateTerm(Term):
             if voter not in self._voters:
                 raise InvalidVoter(voter, bytes(0))
 
-    def get_proposer(self, round_num: int) -> bytes:
+    def get_proposer_id(self, round_num: int) -> bytes:
         return self._voters[round_num // self._rotate_bound % len(self._voters)]
 
     def get_voter(self, vote_index: int):

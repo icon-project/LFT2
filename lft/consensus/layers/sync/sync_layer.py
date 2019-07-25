@@ -1,5 +1,5 @@
+from lft.consensus.events import BroadcastConsensusDataEvent, DoneRoundEvent
 from lft.consensus.layers.sync.sync_round import SyncRound
-from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent, DoneRoundEvent
 
 
 class SyncLayer:
