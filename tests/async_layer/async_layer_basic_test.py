@@ -1,12 +1,11 @@
 import os
 import pytest
-from functools import partial
 from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
-from lft.event import EventSystem, Event
+from .conftest import start_event_system
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("voter_num", list(i for i in range(4, 100)))
+@pytest.mark.parametrize("init_round_num, voter_num", [(0, i) for i in range(4, 100)])
 async def test_async_layer_basic(async_layer_items, voter_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
@@ -22,12 +21,7 @@ async def test_async_layer_basic(async_layer_items, voter_num: int):
         event.deterministic = False
         event_system.simulator.raise_event(event)
 
-    event = _StopEvent()
-    event.deterministic = False
-    event_system.simulator.raise_event(event)
-    event_system.simulator.register_handler(_StopEvent, partial(_stop, event_system))
-
-    await event_system.start(blocking=False)
+    await start_event_system(event_system)
 
     assert data is async_layer._data_dict[0][data.id]
     assert len(async_layer._data_dict) == 1
@@ -38,12 +32,4 @@ async def test_async_layer_basic(async_layer_items, voter_num: int):
         assert len(async_layer._vote_dict[0][voter]) == 1
     assert len(async_layer._vote_dict) == 1
     assert len(async_layer._vote_dict[0]) == voter_num - 1
-
-
-class _StopEvent(Event):
-    pass
-
-
-def _stop(event_system: EventSystem, event: _StopEvent):
-    event_system.stop()
 

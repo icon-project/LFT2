@@ -1,14 +1,15 @@
 import os
 import pytest
+from functools import partial
 from lft.consensus.default_data.factories import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
 from lft.consensus.events import InitializeEvent
 from lft.consensus.layers.async_.async_layer import AsyncLayer
-from lft.event import EventSystem
+from lft.event import EventSystem, Event
 from lft.event.mediators import DelayedEventMediator
 
 
 @pytest.fixture(scope="function")
-def async_layer_items(voter_num: int):
+def async_layer_items(init_round_num: int, voter_num: int):
     node_id = os.urandom(16)
     event_system = EventSystem()
     event_system.set_mediator(DelayedEventMediator)
@@ -22,8 +23,25 @@ def async_layer_items(voter_num: int):
     data_factory = DefaultConsensusDataFactory(node_id)
     voters_factories = [DefaultConsensusVoteFactory(voter) for voter in voters]
 
-    event = InitializeEvent(0, 0, None, voters)
+    event = InitializeEvent(0, init_round_num, None, voters)
     event_system.simulator.raise_event(event)
 
     return node_id, event_system, async_layer, voters, data_factory, voters_factories
+
+
+async def start_event_system(event_system: EventSystem):
+    event = _StopEvent()
+    event.deterministic = False
+    event_system.simulator.raise_event(event)
+    event_system.simulator.register_handler(_StopEvent, partial(_stop, event_system))
+
+    await event_system.start(blocking=False)
+
+
+class _StopEvent(Event):
+    pass
+
+
+def _stop(event_system: EventSystem, event: _StopEvent):
+    event_system.stop()
 

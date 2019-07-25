@@ -1,11 +1,10 @@
 import os
 import random
 import pytest
-from functools import partial
 from typing import cast
 from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
 from lft.consensus.default_data.factories import DefaultConsensusVoteFactory
-from lft.event import EventSystem, Event
+from .conftest import start_event_system
 
 param_count = 50
 
@@ -105,21 +104,4 @@ async def test_async_layer_future_round_vote(async_layer_items,
     for voter, vote in zip(voters, votes):
         assert len(async_layer._vote_dict[vote_round_num][voter]) == 1
         assert vote is async_layer._vote_dict[vote_round_num][voter][vote.id]
-
-
-async def start_event_system(event_system: EventSystem):
-    event = _StopEvent()
-    event.deterministic = False
-    event_system.simulator.raise_event(event)
-    event_system.simulator.register_handler(_StopEvent, partial(_stop, event_system))
-
-    await event_system.start(blocking=False)
-
-
-class _StopEvent(Event):
-    pass
-
-
-def _stop(event_system: EventSystem, event: _StopEvent):
-    event_system.stop()
 
