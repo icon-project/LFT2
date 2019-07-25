@@ -110,7 +110,7 @@ class AsyncLayer:
         if self._vote_timeout_started or not self._votes_reach_quorum(self._round_num):
             return
         self._vote_timeout_started = True
-        for voter in self._term.get_voters():
+        for voter in self._term.get_voters_id():
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
