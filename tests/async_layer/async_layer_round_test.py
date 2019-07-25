@@ -6,7 +6,7 @@ from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVo
 from lft.consensus.default_data.factories import DefaultConsensusVoteFactory
 from .conftest import start_event_system
 
-param_count = 50
+param_count = 10
 
 voter_nums = [random.randint(4, 100) for _ in range(param_count)]
 init_round_nums = [random.randint(1, 100) for _ in range(param_count)]
