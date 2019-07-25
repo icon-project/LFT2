@@ -50,14 +50,14 @@ class EventSimulator:
             except Exception:
                 traceback.print_exc()
 
-    def start(self, blocking=True, loop: Optional[asyncio.AbstractEventLoop] = None):
+    def start(self, blocking=True, loop: Optional[asyncio.AbstractEventLoop] = None) -> Optional[asyncio.Task]:
         self._running = True
 
         loop = loop or asyncio.get_event_loop()
         if blocking:
-            loop.run_until_complete(self.execute_events())
+            return loop.run_until_complete(self.execute_events())
         else:
-            loop.create_task(self.execute_events())
+            return loop.create_task(self.execute_events())
 
     def stop(self):
         self._running = False
