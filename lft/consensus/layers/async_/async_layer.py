@@ -34,7 +34,6 @@ class AsyncLayer:
         self._term: Optional[Term] = None
         self._round_num = -1
         self._data_num = -1
-        self._prev_id: bytes = None
 
         self._vote_timeout_started = False
 
@@ -59,21 +58,12 @@ class AsyncLayer:
         self._handlers.clear()
 
     async def _on_event_initialize(self, event: InitializeEvent):
-        if event.candidate_data:
-            new_data_num = event.candidate_data.number + 1
-            prev_id = event.candidate_data.id
-        else:
-            new_data_num = 0
-            prev_id = None
-
-        await self._new_round(new_data_num, prev_id, event.term_num, event.round_num, event.voters)
+        new_data_num = event.candidate_data.number + 1 if event.candidate_data else 0
+        await self._new_round(new_data_num, event.term_num, event.round_num, event.voters)
         await self._new_data()
 
     async def _on_event_done_round(self, event: DoneRoundEvent):
-        await self._new_round(event.candidate_data.number + 1,
-                              event.candidate_data.id,
-                              event.term_num,
-                              event.round_num + 1)
+        await self._new_round(event.candidate_data.number + 1, event.term_num, event.round_num + 1)
         await self._new_data()
 
     async def _on_event_received_consensus_data(self, event: ReceivedConsensusDataEvent):
@@ -137,14 +127,12 @@ class AsyncLayer:
 
     async def _new_round(self,
                          new_data_num: int,
-                         new_prev_id: bytes,
                          new_term_num: int,
                          new_round_num: int,
                          voters: Sequence[bytes] = ()):
         self._vote_timeout_started = False
 
         self._data_num = new_data_num
-        self._prev_id = new_prev_id
         self._round_num = new_round_num
 
         if not self._term or self._term.num != new_term_num:
@@ -165,7 +153,6 @@ class AsyncLayer:
         expected_proposer = self._term.get_proposer_id(self._round_num)
         if expected_proposer != self._id:
             data = await self._data_factory.create_not_data(self._data_num,
-                                                            self._prev_id,
                                                             self._term.num,
                                                             self._round_num)
             await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
