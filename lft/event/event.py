@@ -23,7 +23,7 @@ class Event(metaclass=EventMeta):
 
     def serialize(self) -> dict:
         items = self.__dict__
-        items.pop("deterministic")
+        items.pop("deterministic", None)
         return {
             "event_name": _get_type_name(self.__class__),
             "event_contents": items
