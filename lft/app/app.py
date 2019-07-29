@@ -16,5 +16,9 @@ class App:
             node.event_system.simulator.raise_event(event)
             node.start(False)
 
-        asyncio.get_event_loop().run_forever()
+        try:
+            asyncio.get_event_loop().run_forever()
+        except KeyboardInterrupt:
+            print()
+            print("Keyboard Interrupt")
 
