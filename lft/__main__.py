@@ -4,9 +4,9 @@ from lft.app import App
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("node_num", type=int, help="Provide the number of nodes")
+    parser.add_argument("number", type=int, help="The number of nodes")
     args = parser.parse_args()
-    app = App(args.node_num)
+    app = App(args.number)
     app.start()
 
 
