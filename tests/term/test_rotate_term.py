@@ -15,7 +15,7 @@
 # limitations under the License.
 import pytest
 from typing import Sequence
-from lft.consensus.factories import ConsensusData, ConsensusVote
+from lft.consensus.data import ConsensusData, ConsensusVote
 from lft.consensus.term import RotateTerm
 
 

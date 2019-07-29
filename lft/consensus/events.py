@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Sequence
 from lft.event import Event
-from lft.consensus.factories import ConsensusData, ConsensusVote
+from lft.consensus.data import ConsensusData, ConsensusVote
 
 
 @dataclass

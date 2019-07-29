@@ -3,7 +3,7 @@ from lft.consensus.layers.async_.async_layer import AsyncLayer
 
 if TYPE_CHECKING:
     from lft.event import EventSystem
-    from lft.consensus.factories import ConsensusDataFactory, ConsensusVoteFactory
+    from lft.consensus.data import ConsensusDataFactory, ConsensusVoteFactory
 
 
 class Consensus:

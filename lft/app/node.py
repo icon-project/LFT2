@@ -3,7 +3,7 @@ from lft.app.communication import Gossiper
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
-from lft.consensus.factories import ConsensusData, ConsensusVote
+from lft.consensus.data import ConsensusData, ConsensusVote
 from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
 
 

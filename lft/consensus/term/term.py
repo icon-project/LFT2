@@ -16,7 +16,7 @@
 from abc import ABC, abstractmethod
 from typing import Sequence
 
-from lft.consensus.factories import ConsensusData, ConsensusVote
+from lft.consensus.data import ConsensusData, ConsensusVote
 
 
 class Term(ABC):

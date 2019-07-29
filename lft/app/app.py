@@ -8,7 +8,7 @@ class App:
         self.nodes = [Node() for _ in range(node_count)]
 
     def start(self):
-        event = InitializeEvent(None, tuple(node.id for node in self.nodes))
+        event = InitializeEvent(None, 0, None, tuple(node.id for node in self.nodes))
         for node in self.nodes:
             for peer in (peer for peer in self.nodes if peer != node):
                 node.register_peer(peer.id, peer)

@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from lft.consensus.factories import ConsensusVote, ConsensusData
+from lft.consensus.data import ConsensusVote, ConsensusData
 
 
 class DefaultConsensusData(ConsensusData):

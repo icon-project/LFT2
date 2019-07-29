@@ -16,7 +16,7 @@
 import math
 from typing import Sequence
 
-from lft.consensus.factories import ConsensusData, ConsensusVote
+from lft.consensus.data import ConsensusData, ConsensusVote
 from lft.consensus.term import Term
 from lft.consensus.term.term import InvalidProposer, InvalidVoter
 
