@@ -1,5 +1,7 @@
 import os
 from lft.app.communication import Gossiper
+from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
+from lft.app.logger import Logger
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
@@ -16,8 +18,13 @@ class Node:
         self.received_data = set()
         self.received_votes = set()
 
-        self._consensus = Consensus(self.event_system, self.id, None, None)
         self._gossipers = {}
+        self._logger = Logger(self.id, self.event_system.simulator)
+        self._consensus = Consensus(
+            self.event_system,
+            self.id,
+            DefaultConsensusDataFactory(self.id),
+            DefaultConsensusVoteFactory(self.id))
 
     def __del__(self):
         self.close()
@@ -32,7 +39,7 @@ class Node:
             self._consensus = None
 
     def start(self, blocking=True):
-        self.event_system.simulator.start(blocking)
+        self.event_system.start(blocking)
 
     def receive_data(self, data: ConsensusData):
         if data in self.received_data:
