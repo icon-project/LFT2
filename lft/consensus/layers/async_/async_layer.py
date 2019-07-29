@@ -73,7 +73,8 @@ class AsyncLayer:
 
         if self._data_num == data.number:
             if self._round_num == data.round_num:
-                self._term.verify_data(data)
+                if not data.is_not():
+                    self._term.verify_data(data)
                 self._data_dict[data.round_num][data.id] = data
                 await self._raise_propose_sequence(data)
         elif self._data_num + 1 == data.number:
