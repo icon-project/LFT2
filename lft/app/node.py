@@ -1,8 +1,9 @@
 import os
+from typing import IO, Dict, Type
 from lft.app.communication import Gossiper
 from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
 from lft.app.logger import Logger
-from lft.event import EventSystem
+from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
 from lft.consensus.data import ConsensusData, ConsensusVote
@@ -10,8 +11,8 @@ from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVo
 
 
 class Node:
-    def __init__(self):
-        self.id = os.urandom(16)
+    def __init__(self, id_: bytes):
+        self.id = id_
         self.event_system = EventSystem()
         self.event_system.set_mediator(DelayedEventMediator)
 
@@ -30,7 +31,7 @@ class Node:
         self.close()
 
     def close(self):
-        for gossiper in self._gossipers:
+        for gossiper in self._gossipers.values():
             gossiper.close()
         self._gossipers.clear()
 
@@ -40,6 +41,12 @@ class Node:
 
     def start(self, blocking=True):
         self.event_system.start(blocking)
+
+    def start_record(self, record_io: IO, mediator_ios: Dict[Type[EventMediator], IO]=None, blocking=True):
+        self.event_system.start_record(record_io, mediator_ios, blocking)
+
+    def start_replay(self, record_io: IO, mediator_ios: Dict[Type[EventMediator], IO]=None, blocking=True):
+        self.event_system.start_replay(record_io, mediator_ios, blocking)
 
     def receive_data(self, data: ConsensusData):
         if data in self.received_data:

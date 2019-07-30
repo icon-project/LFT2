@@ -1,2 +1,2 @@
 from .node import Node
-from .app import App
+from .app import App, InstantApp, RecordApp, ReplayApp

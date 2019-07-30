@@ -15,3 +15,9 @@ class Consensus:
         self.id = id_
 
         self._async_layer = AsyncLayer(id_, event_system, data_factory, vote_factory)
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        self._async_layer.close()

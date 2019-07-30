@@ -1,12 +1,27 @@
 import argparse
-from lft.app import App
+from pathlib import Path
+from lft.app import InstantApp, RecordApp, ReplayApp
+from lft.app.app import Mode
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("number", type=int, help="The number of nodes")
+    parser.add_argument("mode", type=Mode, default=Mode.instant.value, nargs='?',
+                        help="App running mode, [instant|record|replay], (default: %(default)s)")
+    parser.add_argument("--number", "-n", type=int, default=4, required=False,
+                        help="Number of nodes(ignored on replay mode), (default: %(default)s)")
+    parser.add_argument("--data", "-d", type=Path, default=Path("data"), required=False,
+                        help="Record data path(ignored on instant mode), (default: %(default)s)")
+
     args = parser.parse_args()
-    app = App(args.number)
+    if args.mode == Mode.instant:
+        app = InstantApp(args.number)
+    elif args.mode == Mode.record:
+        app = RecordApp(args.number, args.data)
+    elif args.mode == Mode.replay:
+        app = ReplayApp(args.data)
+    else:
+        raise RuntimeError("Invalid mode, {args.mode}")
     app.start()
 
 
