@@ -12,6 +12,8 @@ def main():
                         help="Number of nodes(ignored on replay mode), (default: %(default)s)")
     parser.add_argument("--data", "-d", type=Path, default=Path("data"), required=False,
                         help="Record data path(ignored on instant mode), (default: %(default)s)")
+    parser.add_argument("--target", "-target", type=bytes.fromhex, default=b"", required=False,
+                        help="Target node ID for replay(only for replay mode)")
 
     args = parser.parse_args()
     if args.mode == Mode.instant:
@@ -19,7 +21,7 @@ def main():
     elif args.mode == Mode.record:
         app = RecordApp(args.number, args.data)
     elif args.mode == Mode.replay:
-        app = ReplayApp(args.data)
+        app = ReplayApp(args.data, args.target)
     else:
         raise RuntimeError("Invalid mode, {args.mode}")
     app.start()

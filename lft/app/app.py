@@ -1,5 +1,4 @@
 import asyncio
-import itertools
 import os
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -73,34 +72,19 @@ class RecordApp(App):
             node.event_system.simulator.raise_event(event)
 
     def _gen_nodes(self) -> List[Node]:
-        self.path = self._next_dir_rotation(self.path)
         self.path.mkdir(parents=True, exist_ok=True)
-
         return [Node(os.urandom(16)) for _ in range(self.number)]
-
-    def _next_dir_rotation(self, path: Path):
-        new_path = path
-        if new_path.exists():
-            for i in itertools.count():
-                new_path = Path(f"{path}{i}")
-                if not new_path.exists():
-                    break
-        return new_path
 
 
 class ReplayApp(App):
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, node: bytes):
         self.path = path
+        self.node = node
 
     def _gen_nodes(self) -> List[Node]:
-        nodes = []
-        for dir_path in self._get_nodes_id():
-            node = Node(bytes.fromhex(dir_path.name))
-            nodes.append(node)
-        return nodes
+        return [Node(self.node)]
 
     def _get_nodes_id(self):
-        self.path = self._last_dir_rotation(self.path)
         return [Path(path) for path in os.listdir(str(self.path))]
 
     def _start(self, nodes: List[Node]):
@@ -109,16 +93,6 @@ class ReplayApp(App):
             record_io = open(str(node_path.joinpath(RECORD_PATH)), 'r')
 
             node.start_replay(record_io, blocking=False)
-
-    def _last_dir_rotation(self, path: Path):
-        last_path = path
-        if last_path.exists():
-            for i in itertools.count():
-                next_path = Path(f"{path}{i}")
-                if not next_path.exists():
-                    break
-                last_path = next_path
-        return last_path
 
 
 class Mode(Enum):
