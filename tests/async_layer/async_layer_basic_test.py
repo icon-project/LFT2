@@ -14,7 +14,7 @@ async def test_async_layer_basic(async_layer_items, init_round_num, voter_num: i
     event_system.simulator.raise_event(event)
 
     votes = []
-    for voter, vote_factory in zip(voters[1:], vote_factories[1:]):
+    for vote_factory in vote_factories[1:]:
         vote = await vote_factory.create_vote(data.id, data.term_num, data.round_num)
         votes.append(vote)
         event = ReceivedConsensusVoteEvent(vote)

@@ -17,8 +17,6 @@ parameters = list(zip(voter_nums, init_round_nums, data_round_nums))
 @pytest.mark.asyncio
 @pytest.mark.parametrize("voter_num, init_round_num, data_round_num", parameters)
 async def test_async_layer_past_round_data(async_layer_items,
-                                           voter_num: int,
-                                           init_round_num: int,
                                            data_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
@@ -37,8 +35,6 @@ parameters = list(zip(voter_nums, init_round_nums, vote_round_nums))
 @pytest.mark.asyncio
 @pytest.mark.parametrize("voter_num, init_round_num, vote_round_num", parameters)
 async def test_async_layer_past_round_vote(async_layer_items,
-                                           voter_num: int,
-                                           init_round_num: int,
                                            vote_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
@@ -63,8 +59,6 @@ parameters = list(zip(voter_nums, init_round_nums, data_round_nums))
 @pytest.mark.asyncio
 @pytest.mark.parametrize("voter_num, init_round_num, data_round_num", parameters)
 async def test_async_layer_future_round_data(async_layer_items,
-                                             voter_num: int,
-                                             init_round_num: int,
                                              data_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
@@ -84,7 +78,6 @@ parameters = list(zip(voter_nums, init_round_nums, vote_round_nums))
 @pytest.mark.parametrize("voter_num, init_round_num, vote_round_num", parameters)
 async def test_async_layer_future_round_vote(async_layer_items,
                                              voter_num: int,
-                                             init_round_num: int,
                                              vote_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 

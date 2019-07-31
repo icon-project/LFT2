@@ -57,7 +57,7 @@ async def test_async_layer_past_duplicate_vote(async_layer_items,
     await start_event_system(event_system)
     assert len(async_layer._vote_dict) == 1
     assert len(async_layer._vote_dict[init_round_num]) == voter_num
-    for vote_values, voter in zip(async_layer._vote_dict[init_round_num].values(), voters):
+    for vote_values in async_layer._vote_dict[init_round_num].values():
         vote_values = list(vote_values)
         assert len(vote_values) == vote_count
 
