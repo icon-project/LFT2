@@ -16,24 +16,41 @@
 import pytest
 
 from lft.consensus.events import DoneRoundEvent
-from tests.sync_layer.setup_sync_layer import BASIC_CANDIDATE_DATA
-from tests.test_utils.test_datas import MockConsensusData
-now_data = MockConsensusData(propose_id, propose_prev_id, vote_factory.voter_id,
-                                    0, 2, 1, None)
+from tests.sync_layer.setup_sync_layer import BASIC_CANDIDATE_DATA, setup_sync_layer
+from tests.test_utils.test_datas import MockConsensusData, MockVote
+from tests.test_utils.test_factories import MockVoteFactory
 
-# TODO need vote
-success_end = DoneRoundEvent(term_num=0,
+QUORUM = 7
+LEADER_ID = bytes([0])
+PROPOSE_ID = b'propose'
+
+now_data = MockConsensusData(id_=PROPOSE_ID,
+                             prev_id=BASIC_CANDIDATE_DATA.id,
+                             proposer=LEADER_ID,
+                             term_num=0,
+                             number=1,
                              round_num=1,
-                             is_success=True,
-                             candidate_data=now_data,
-                             commit_data=BASIC_CANDIDATE_DATA)
-
-fail_end = DoneRoundEvent(term_num=0,
-                          round_num=1,
-                          is_success=False)
+                             votes=[])
 
 
-@pytest.mark.parametrize("round_end", [(success_end), (fail_end)])
-def test_on_vote_sequence(round_end):
-    print(round_end)
+
+@pytest.mark.parametrize("success_vote_num, none_vote_num, not_vote_num, is_success, is_complete",
+                         [(5, 2, 0, True, True),
+                          (5, 0, 0, True, True),
+                          (2, 5, 0, False, True),
+                          (0, 5, 0, False, True),
+                          (3, 4, 0, False, True),
+                          (4, 0, 0, False, False),
+                          (4, 0, 3, False, True)]
+                         )
+def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, is_success, is_complete):
+    """ GIVEN SyncRound and propose data,
+    WHEN repeats _on_add_votes amount of vote_num
+    THEN raised expected DoneRoundEvent
+    """
+    async def testcase():
+        mock_vote_factory = MockVoteFactory()
+        event_system, sync_layer, voters = await setup_sync_layer(QUORUM)
+        for i in range(success_vote_num):
+            sync_layer._on_sequence_vote(MockVote())
 

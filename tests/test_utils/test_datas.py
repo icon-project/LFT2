@@ -23,12 +23,18 @@ NONE_ID = b"0"
 
 
 class MockVote(ConsensusVote):
-    def __init__(self, id_: bytes, data_id: bytes, term_num: int, voter_id: bytes, round_num: int):
-        self._id = id_
+    def is_not(self) -> bool:
+        pass
+
+    def is_none(self) -> bool:
+        pass
+
+    def __init__(self, data_id: bytes, term_num: int, voter_id: bytes, round_num: int):
         self._data_id = data_id
         self._term_num = term_num
         self._voter_id = voter_id
         self._round_num = round_num
+        self._id = self._create_id()
 
     @property
     def id(self) -> bytes:
@@ -52,6 +58,9 @@ class MockVote(ConsensusVote):
 
     async def verify(self) -> bool:
         return True
+
+    def _create_id(self) -> bytes:
+        return self._voter_id + self._data_id + bytes([self._term_num]) + bytes([self._round_num])
 
 
 class MockConsensusData(ConsensusData):

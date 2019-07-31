@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Tuple
+from typing import Tuple, Sequence
 
 from lft.consensus.events import InitializeEvent
 from lft.consensus.layers.sync.sync_layer import SyncLayer
@@ -27,12 +27,19 @@ BASIC_CANDIDATE_DATA = MockConsensusData(CANDIDATE_ID, None, b"leader", 0, 1, 0,
                                          None)
 
 
-async def setup_sync_layer() -> Tuple[EventSystem, MockVoteFactory, SyncLayer]:
+async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, Sequence[bytes]]:
     event_system = EventSystem(True)
     vote_factory = MockVoteFactory(SELF_ID)
     sync_layer = SyncLayer(event_system, MockDataFactory(), vote_factory)
-    init_event = InitializeEvent(candidate_data=BASIC_CANDIDATE_DATA, voters=[])
+    voters = [bytes([x]) for x in range(quorum)]
+
+    init_event = InitializeEvent(
+        term_num=0,
+        round_num=1,
+        candidate_data=BASIC_CANDIDATE_DATA,
+        voters=voters
+    )
 
     await sync_layer._on_init(init_event)
 
-    return event_system, vote_factory, sync_layer
+    return event_system, sync_layer, voters

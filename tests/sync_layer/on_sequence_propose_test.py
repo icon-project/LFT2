@@ -28,6 +28,9 @@ from tests.test_utils.test_datas import MockConsensusData, NONE_ID
 from tests.test_utils.test_factories import MockVoteFactory, MockDataFactory
 
 
+LEADER_ID = bytes([0])
+
+
 @pytest.mark.parametrize("candidate_id,propose_id,propose_prev_id,expected_vote_data_id",
                          [(b"a", b"b", b"a", b"b"),
                           (b"a", b"b", b"c", NONE_ID),
@@ -39,9 +42,9 @@ def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_dat
     """
     async def async_on_propose():
         # GIVEN
-        event_system, vote_factory, sync_layer = await setup_sync_layer()
+        event_system, sync_layer, voters = await setup_sync_layer(quorum=7)
 
-        propose = MockConsensusData(propose_id, propose_prev_id, vote_factory.voter_id,
+        propose = MockConsensusData(propose_id, propose_prev_id, LEADER_ID,
                                     0, 2, 1, None)
         propose_event = ProposeSequence(propose)
 
@@ -54,7 +57,7 @@ def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_dat
 
         # Test double propose
         # GIVEN
-        second_propose = MockConsensusData(b'b', b'a', vote_factory.voter_id, 0, 2, 1, None)
+        second_propose = MockConsensusData(b'b', b'a', LEADER_ID, 0, 2, 1, None)
         # WHEN
         await sync_layer._on_sequence_propose(ProposeSequence(data=second_propose))
         with pytest.raises(QueueEmpty):
@@ -63,5 +66,3 @@ def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_dat
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(async_on_propose())
-
-
