@@ -46,7 +46,7 @@ class InstantApp(App):
         for node in nodes:
             node.start(False)
 
-            event = InitializeEvent(None, 0, None, tuple(node.id for node in nodes))
+            event = InitializeEvent(0, 0, None, tuple(node.id for node in nodes))
             event.deterministic = False
             node.event_system.simulator.raise_event(event)
 
@@ -67,7 +67,7 @@ class RecordApp(App):
             record_io = open(str(node_path.joinpath(RECORD_PATH)), 'w')
             node.start_record(record_io, blocking=False)
 
-            event = InitializeEvent(None, 0, None, tuple(node.id for node in nodes))
+            event = InitializeEvent(0, 0, None, tuple(node.id for node in nodes))
             event.deterministic = False
             node.event_system.simulator.raise_event(event)
 
