@@ -2,13 +2,14 @@ import json
 from lft.consensus.events import (Event, InitializeEvent, DoneRoundEvent,
                                   ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent)
 from lft.event import EventSimulator
+from lft.serialization import Serializable
 
 
 class Logger:
     def __init__(self, node_id: bytes, event_simulator: EventSimulator):
         self._node_id = node_id
         self._simulator = event_simulator
-        self._encoder = JSONEncoder()
+        self._encoder = _JSONEncoder()
 
         self._handlers = {
             InitializeEvent:
@@ -42,18 +43,20 @@ class Logger:
         self._print_log(event)
 
     def _print_log(self, event: Event):
-        event_serialized = self._encoder.encode(event.serialize())
-        event_serialized = event_serialized.replace("\\", "").replace("lft.consensus.events.", "")
+        event_serialized = self._encoder.encode(event)
         print(f"{shorten(self._node_id)}, {event_serialized}")
 
 
-class JSONEncoder(json.JSONEncoder):
+class _JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, bytes):
-            return shorten(o)
-        if isinstance(o, list) or isinstance(o, dict):
+            return "0x" + shorten(o)
+        elif isinstance(o, str):
+            return "0r" + o
+        elif isinstance(o, Serializable):
+            return o.serialize()
+        else:
             return super().encode(o)
-        return self.encode(o.__dict__)
 
 
 def shorten(b: bytes):
