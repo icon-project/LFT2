@@ -2,19 +2,19 @@ import asyncio
 import time
 import traceback
 from collections import defaultdict
-from typing import DefaultDict, Type, List, Callable, Coroutine, Union, Optional
+from typing import DefaultDict, Type, List, Callable, Awaitable, Union, Optional
 from lft.event import Event, AnyEvent
 
-HandlerCoroutine = Callable[[Event], Coroutine]
-HandlerFunc = Callable[[Event], None],
-HandlerCallable = Union['HandlerFunc', 'HandlerCoroutine']
+HandlerAwaitable = Callable[[Event], Awaitable]
+HandlerFunction = Callable[[Event], None]
+HandlerCallable = Union[HandlerFunction, HandlerAwaitable]
 
 
 class EventSimulator:
     def __init__(self, use_priority=True):
         self._event_tasks = asyncio.PriorityQueue() if use_priority else asyncio.Queue()
         self._running = False
-        self._handlers: DefaultDict[Type, List[HandlerCoroutine]] = defaultdict(list)
+        self._handlers: DefaultDict[Type[Event], List[HandlerAwaitable]] = defaultdict(list)
 
     def __del__(self):
         self.stop()
@@ -24,7 +24,7 @@ class EventSimulator:
         self._handlers[event_type].append(handler)
         return handler
 
-    def unregister_handler(self, event_type: Type, handler: HandlerCoroutine):
+    def unregister_handler(self, event_type: Type, handler: HandlerAwaitable):
         self._handlers[event_type].remove(handler)
 
     def raise_event(self, event: Event):

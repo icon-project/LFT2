@@ -1,6 +1,5 @@
-from collections import defaultdict, OrderedDict
-from typing import DefaultDict, Dict, Optional, Sequence
-
+from collections import defaultdict
+from typing import Dict, DefaultDict, OrderedDict, Optional, Sequence
 from lft.consensus.events import (ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, ProposeSequence, VoteSequence,
                                   DoneRoundEvent, InitializeEvent)
 from lft.consensus.factories import ConsensusData, ConsensusDataFactory, ConsensusVote, ConsensusVoteFactory
@@ -11,12 +10,12 @@ from lft.event.mediators import DelayedEventMediator
 TIMEOUT_PROPOSE = 2.0
 TIMEOUT_VOTE = 2.0
 
-DataByID = 'Dict[bytes, ConsensusData]'  # dict[id] = ConsensusData
-DataByRound = 'DefaultDict[int, DataByID]'  # dict[round][id] = ConsensusData
+DataByID = Dict[bytes, ConsensusData]  # dict[id] = ConsensusData
+DataByRound = DefaultDict[int, DataByID]  # dict[round][id] = ConsensusData
 
-VoteByID = 'OrderedDict[bytes, ConsensusVote]'  # dict[id] = ConsensusVote
-VoteByVoterID = 'DefaultDict[bytes, VoteByID]'  # dict[voter_id][id] = ConsensusVote
-VoteByRound = 'DefaultDict[int, VoteByVoterID]'  # dict[round][voter_id][id] = ConsensusVote
+VoteByID = OrderedDict[bytes, ConsensusVote]  # dict[id] = ConsensusVote
+VoteByVoterID = DefaultDict[bytes, VoteByID]  # dict[voter_id][id] = ConsensusVote
+VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = ConsensusVote
 
 
 class AsyncLayer:
