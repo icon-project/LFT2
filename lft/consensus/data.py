@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Type, Sequence
+from lft.serialization import Serializable
 
 
 class ConsensusDataFactory(ABC):
@@ -49,7 +50,7 @@ class ConsensusVoteVerifier(ABC):
         raise NotImplementedError
 
 
-class ConsensusVote(ABC):
+class ConsensusVote(Serializable):
     @property
     @abstractmethod
     def id(self) -> bytes:
@@ -84,7 +85,7 @@ class ConsensusVote(ABC):
         raise NotImplementedError
 
 
-class ConsensusData(ABC):
+class ConsensusData(Serializable):
     @property
     @abstractmethod
     def id(self) -> bytes:

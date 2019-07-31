@@ -18,7 +18,7 @@ class App(ABC):
             for peer in (peer for peer in nodes if peer != node):
                 node.register_peer(peer.id, peer)
         self._start(nodes)
-        self._run_forever()
+        self._run_forever(nodes)
 
     @abstractmethod
     def _start(self, nodes: List[Node]):
@@ -28,12 +28,15 @@ class App(ABC):
     def _gen_nodes(self) -> List[Node]:
         raise NotImplementedError
 
-    def _run_forever(self):
+    def _run_forever(self, nodes: List[Node]):
         try:
             asyncio.get_event_loop().run_forever()
         except KeyboardInterrupt:
             print()
             print("Keyboard Interrupt")
+        finally:
+            for node in nodes:
+                node.close()
 
 
 class InstantApp(App):
@@ -98,7 +101,7 @@ class ReplayApp(App):
 
     def _get_nodes_id(self):
         self.path = self._last_dir_rotation(self.path)
-        return [Path(path) for path in os.listdir(str(self.path)) if os.path.isdir(path)]
+        return [Path(path) for path in os.listdir(str(self.path))]
 
     def _start(self, nodes: List[Node]):
         for node in nodes:
