@@ -16,7 +16,8 @@ class ConsensusDataFactory(ABC):
     async def create_not_data(self,
                               data_number: int,
                               term_num: int,
-                              round_num: int) -> 'ConsensusData':
+                              round_num: int,
+                              proposer_id: bytes) -> 'ConsensusData':
         raise NotImplementedError
 
     @abstractmethod

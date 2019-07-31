@@ -22,8 +22,9 @@ class DefaultConsensusDataFactory(ConsensusDataFactory):
     async def create_not_data(self,
                               data_number: int,
                               term_num: int,
-                              round_num: int) -> DefaultConsensusData:
-        return DefaultConsensusData(self._node_id, self._node_id, self._node_id, data_number, term_num, round_num)
+                              round_num: int,
+                              proposer_id: bytes) -> DefaultConsensusData:
+        return DefaultConsensusData(proposer_id, proposer_id, proposer_id, data_number, term_num, round_num)
 
     async def create_data_verifier(self) -> DefaultConsensusDataVerifier:
         return DefaultConsensusDataVerifier()
