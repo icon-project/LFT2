@@ -18,15 +18,15 @@ class EventMediatorRecorderMixin:
             type_ = "exception"
             pickle_dumped = pickle.dumps(result)
             base64_encoded = base64.encodebytes(pickle_dumped)
-            contents = base64_encoded.decode()
+            data = base64_encoded.decode()
         else:
-            type_ = str(type(result))
-            contents = result
+            type_ = str(type(result).__qualname__)
+            data = result
 
         return {
-            "number": number,
-            "type": type_,
-            "contents": contents
+            "!number": number,
+            "!type": type_,
+            "!data": data
         }
 
     def _read(self, io: IO, number: int) -> Any:
@@ -50,11 +50,11 @@ class EventMediatorRecorderMixin:
         return self._deserialize(serialized)
 
     def _deserialize(self, serialized: dict) -> (int, Any):
-        if serialized["type"] == "exception":
-            utf8_decoded: str = serialized["contents"]
+        if serialized["!type"] == "exception":
+            utf8_decoded: str = serialized["!data"]
             base64_encoded = utf8_decoded.encode()
             pickle_dumped = base64.decodebytes(base64_encoded)
             contents = pickle.loads(pickle_dumped)
         else:
-            contents = serialized["contents"]
-        return serialized["number"], contents
+            contents = serialized["!data"]
+        return serialized["!number"], contents
