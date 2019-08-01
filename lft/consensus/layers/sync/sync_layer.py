@@ -52,7 +52,7 @@ class SyncLayer:
         """
         data = propose_event.data
         vote = None
-        if self._verify_is_connect_to_candidate(data) and await self._verify_data(data):
+        if self._verify_is_connect_to_candidate(data) and await self._verify_data(data) and not data.is_not():
             # TODO Broadcast Correct Vote
             vote = await self._vote_factory.create_vote(data_id=data.id,
                                                         term_num=self._sync_round.term_num,
@@ -70,9 +70,10 @@ class SyncLayer:
         self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
 
     def _verify_is_connect_to_candidate(self, data: ConsensusData) -> bool:
-        print(f"candidate id : {self._candidate_data.id} data prev_id : {data.prev_id} ")
+
         if self._candidate_data.id == data.prev_id:
             return True
+        print(f"candidate id : {self._candidate_data.id} but data prev_id : {data.prev_id} ")
         return False
 
     async def _verify_data(self, data):
