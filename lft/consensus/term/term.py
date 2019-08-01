@@ -47,11 +47,11 @@ class Term(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_voter(self, vote_index: int) -> bytes:
+    def get_voter_id(self, vote_index: int) -> bytes:
         raise NotImplementedError
 
     @abstractmethod
-    def get_voters(self) -> Sequence[bytes]:
+    def get_voters_id(self) -> Sequence[bytes]:
         raise NotImplementedError
 
 

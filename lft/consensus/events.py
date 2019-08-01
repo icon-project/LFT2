@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Sequence
 
 from lft.event import Event
 
@@ -13,36 +13,36 @@ class InitializeEvent(Event):
     """
     term_num: int
     round_num: int
-    candidate_data: ConsensusData
-    voters: Tuple[bytes]
+    candidate_data: 'ConsensusData'
+    voters: Sequence[bytes]
 
 
 @dataclass
 class ReceivedConsensusDataEvent(Event):
     """ from application to async layer
     """
-    data: ConsensusData
+    data: 'ConsensusData'
 
 
 @dataclass
 class ReceivedConsensusVoteEvent(Event):
     """ from application to async layer
     """
-    vote: ConsensusVote
+    vote: 'ConsensusVote'
 
 
 @dataclass
 class BroadcastConsensusDataEvent(Event):
     """ from sync layer to application
     """
-    data: ConsensusData
+    data: 'ConsensusData'
 
 
 @dataclass
 class BroadcastConsensusVoteEvent(Event):
     """ from sync layer to application
     """
-    vote: ConsensusVote
+    vote: 'ConsensusVote'
 
 
 @dataclass
@@ -51,19 +51,19 @@ class DoneRoundEvent(Event):
     """
     term_num: int
     round_num: int
-    candidate_data: ConsensusData
-    commit_data: ConsensusData
+    candidate_data: 'ConsensusData'
+    commit_data: 'ConsensusData'
 
 
 @dataclass
 class ProposeSequence(Event):
     """ from async layer to sync layer
     """
-    data: ConsensusData
+    data: 'ConsensusData'
 
 
 @dataclass
 class VoteSequence(Event):
     """ from async layer to sync layer
     """
-    vote: ConsensusVote
+    vote: 'ConsensusVote'

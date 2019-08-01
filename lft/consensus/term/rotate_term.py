@@ -50,7 +50,7 @@ class RotateTerm(Term):
 
     def verify_voter(self, voter: bytes, vote_index: int = -1):
         if vote_index >= 0:
-            expected = self.get_voter(vote_index)
+            expected = self.get_voter_id(vote_index)
             if voter != expected:
                 raise InvalidVoter(voter, expected)
         else:
@@ -60,8 +60,8 @@ class RotateTerm(Term):
     def get_proposer_id(self, round_num: int) -> bytes:
         return self._voters[round_num // self._rotate_bound % len(self._voters)]
 
-    def get_voter(self, vote_index: int):
+    def get_voter_id(self, vote_index: int):
         return self._voters[vote_index]
 
-    def get_voters(self) -> Sequence[bytes]:
+    def get_voters_id(self) -> Sequence[bytes]:
         return self._voters

@@ -22,7 +22,7 @@ class EventSystem:
             else:
                 mediator.switch_recorder(self.recorder)
         self.recorder.start(record_io)
-        self.simulator.start(blocking, loop)
+        return self.simulator.start(blocking, loop)
 
     def start_replay(self,
                      record_io: IO, mediator_ios: Dict[Type[EventMediator], IO]=None,
@@ -36,10 +36,12 @@ class EventSystem:
             else:
                 mediator.switch_replayer(self.replayer)
         self.replayer.start(record_io)
-        self.simulator.start(blocking, loop)
+        return self.simulator.start(blocking, loop)
 
     def start(self, blocking=True, loop: asyncio.AbstractEventLoop=None):
-        self.simulator.start(blocking, loop)
+        for mediator in self.mediators.values():
+            mediator.switch_instant(self)
+        return self.simulator.start(blocking, loop)
 
     def stop(self):
         self.simulator.stop()
