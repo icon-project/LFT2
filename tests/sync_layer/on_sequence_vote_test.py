@@ -15,23 +15,16 @@
 # limitations under the License.
 import pytest
 
-from lft.consensus.events import DoneRoundEvent
-from tests.sync_layer.setup_sync_layer import BASIC_CANDIDATE_DATA, setup_sync_layer
-from tests.test_utils.test_datas import MockConsensusData, MockVote
-from tests.test_utils.test_factories import MockVoteFactory
+from lft.consensus.default_data.data import DefaultConsensusData
+from lft.consensus.events import DoneRoundEvent, ProposeSequence
+from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID
 
 QUORUM = 7
-LEADER_ID = bytes([0])
 PROPOSE_ID = b'propose'
 
-now_data = MockConsensusData(id_=PROPOSE_ID,
-                             prev_id=BASIC_CANDIDATE_DATA.id,
-                             proposer=LEADER_ID,
-                             term_num=0,
-                             number=1,
-                             round_num=1,
-                             votes=[])
 
+class VoteEvent(object):
+    pass
 
 
 @pytest.mark.parametrize("success_vote_num, none_vote_num, not_vote_num, is_success, is_complete",
@@ -49,8 +42,22 @@ def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, is_succ
     THEN raised expected DoneRoundEvent
     """
     async def testcase():
-        mock_vote_factory = MockVoteFactory()
-        event_system, sync_layer, voters = await setup_sync_layer(QUORUM)
+        event_system, sync_layer, voters, data_factory, vote_factory = await setup_sync_layer(QUORUM)
+        await sync_layer._on_sequence_propose(
+            ProposeSequence(
+                DefaultConsensusData(
+                    id_=PROPOSE_ID,
+                    prev_id=CANDIDATE_ID,
+                    proposer_id=LEADER_ID,
+                    number=1,
+                    term_num=0,
+                    round_num=1,
+                    prev_votes=None
+                )
+            )
+        )
         for i in range(success_vote_num):
-            sync_layer._on_sequence_vote(MockVote())
+            await sync_layer._on_sequence_vote(VoteEvent(
+                
+            ))
 
