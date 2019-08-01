@@ -26,6 +26,11 @@ class RotateTerm(Term):
         self._num = num
         self._rotate_bound = rotate_bound
         self._voters = tuple(voters)
+        self._voters_num = len(self._voters)
+
+    @property
+    def voters_num(self) -> int:
+        return self._voters_num
 
     @property
     def num(self) -> int:
@@ -33,7 +38,7 @@ class RotateTerm(Term):
 
     @property
     def quorum_num(self) -> int:
-        return math.ceil(len(self._voters) * 0.67)
+        return math.ceil(self.voters_num * 0.67)
 
     def verify_data(self, data: ConsensusData):
         self.verify_proposer(data.proposer_id, data.round_num)

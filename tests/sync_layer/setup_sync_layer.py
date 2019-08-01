@@ -15,31 +15,45 @@
 # limitations under the License.
 from typing import Tuple, Sequence
 
+from lft.consensus.default_data.data import DefaultConsensusData
+from lft.consensus.default_data.factories import DefaultConsensusVoteFactory, DefaultConsensusDataFactory
 from lft.consensus.events import InitializeEvent
+from lft.consensus.factories import ConsensusData, ConsensusDataFactory, ConsensusVoteFactory
 from lft.consensus.layers.sync.sync_layer import SyncLayer
+from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem
-from tests.test_utils.test_datas import MockConsensusData
-from tests.test_utils.test_factories import MockVoteFactory, MockDataFactory
 
 CANDIDATE_ID = b'a'
-SELF_ID = b'my_id'
-BASIC_CANDIDATE_DATA = MockConsensusData(CANDIDATE_ID, None, b"leader", 0, 1, 0,
-                                         None)
+SELF_ID = bytes([0])
+LEADER_ID = bytes([1])
 
 
-async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, Sequence[bytes]]:
+async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, Sequence[bytes],
+                                                 ConsensusDataFactory, ConsensusVoteFactory]:
     event_system = EventSystem(True)
-    vote_factory = MockVoteFactory(SELF_ID)
-    sync_layer = SyncLayer(event_system, MockDataFactory(), vote_factory)
     voters = [bytes([x]) for x in range(quorum)]
+    vote_factory = DefaultConsensusVoteFactory(SELF_ID)
+    data_factory = DefaultConsensusDataFactory(SELF_ID)
+    term_factory = RotateTermFactory(1)
+    candidate_data = DefaultConsensusData(
+        id_=CANDIDATE_ID,
+        prev_id=None,
+        proposer_id=SELF_ID,
+        number=0,
+        term_num=0,
+        round_num=0,
+        prev_votes=None
+    )
+
+    sync_layer = SyncLayer(event_system, data_factory, vote_factory, term_factory)
 
     init_event = InitializeEvent(
         term_num=0,
         round_num=1,
-        candidate_data=BASIC_CANDIDATE_DATA,
+        candidate_data=candidate_data,
         voters=voters
     )
 
     await sync_layer._on_init(init_event)
 
-    return event_system, sync_layer, voters
+    return event_system, sync_layer, voters, data_factory, vote_factory

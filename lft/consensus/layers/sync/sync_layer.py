@@ -1,18 +1,27 @@
-from lft.consensus.factories import ConsensusData, ConsensusDataFactory, ConsensusVoteFactory, ConsensusVote
+from lft.consensus.factories import ConsensusData, ConsensusDataFactory, ConsensusVoteFactory, ConsensusVote, \
+    ConsensusDataVerifier, ConsensusVoteVerifier
 from lft.consensus.layers.sync.sync_round import SyncRound
 from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent, DoneRoundEvent,\
     InitializeEvent, ProposeSequence, VoteSequence
+from lft.consensus.term import Term
+from lft.consensus.term.factories import TermFactory
 from lft.event import EventSystem
 
 
 class SyncLayer:
-    def __init__(self, event_system, data_factory, vote_factory):
+    def __init__(self, event_system: EventSystem, data_factory: ConsensusDataFactory,
+                 vote_factory: ConsensusVoteFactory, term_factory: TermFactory):
         self._event_system: EventSystem = event_system
         self._data_factory: ConsensusDataFactory = data_factory
         self._vote_factory: ConsensusVoteFactory = vote_factory
-        self._candidate_data: ConsensusData = None
-        self._sync_round: SyncRound
+        self._term_factory: TermFactory = term_factory
 
+        self._data_verifier: ConsensusDataVerifier = None
+        self._vote_verifier: ConsensusVoteVerifier = None
+
+        self._candidate_data: ConsensusData = None
+        self._sync_round: SyncRound = None
+        self._term: Term = None
         self._register_handler()
 
     def _register_handler(self):
@@ -23,12 +32,17 @@ class SyncLayer:
     async def _on_init(self, init_event: InitializeEvent):
         print("start init event")
         self._candidate_data = init_event.candidate_data
+        self._term = self._term_factory.create_term(term_num=init_event.term_num,
+                                                    voters=init_event.voters)
 
-        self._sync_round = SyncRound(term_num=self._candidate_data.term_num,
-                                     round_num=self._candidate_data.round_num + 1,
+        self._sync_round = SyncRound(term=self._term,
+                                     round_num=init_event.round_num,
                                      datas=None,
                                      votes=None
                                      )
+
+        self._data_verifier = await self._data_factory.create_data_verifier()
+        self._vote_verifier = await self._vote_factory.create_vote_verifier()
 
     async def _on_sequence_propose(self, propose_event: ProposeSequence):
         """ Receive propose
@@ -56,15 +70,16 @@ class SyncLayer:
         self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
 
     def _verify_is_connect_to_candidate(self, data: ConsensusData) -> bool:
+        print(f"candidate id : {self._candidate_data.id} data prev_id : {data.prev_id} ")
         if self._candidate_data.id == data.prev_id:
             return True
         return False
 
     async def _verify_data(self, data):
-        data_verifier = await self._data_factory.create_data_verifier(data)
         try:
-            await data_verifier.verify()
-        except:
+            await self._data_verifier.verify(data)
+        except Exception as e:
+            print(f"verify Exception : {e}")
             return False
         else:
             return True

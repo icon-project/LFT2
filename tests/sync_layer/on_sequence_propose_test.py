@@ -15,37 +15,38 @@
 # limitations under the License.
 import asyncio
 from asyncio import QueueEmpty
-from io import StringIO
 
 import pytest
 
-from lft.consensus.events import BroadcastConsensusVoteEvent, InitializeEvent, \
-    ProposeSequence
-from lft.consensus.layers.sync.sync_layer import SyncLayer
-from lft.event import EventSystem
-from tests.sync_layer.setup_sync_layer import setup_sync_layer
-from tests.test_utils.test_datas import MockConsensusData, NONE_ID
-from tests.test_utils.test_factories import MockVoteFactory, MockDataFactory
+from lft.consensus.default_data.data import DefaultConsensusVote, DefaultConsensusData
+from lft.consensus.default_data.factories import DefaultConsensusDataFactory
+from lft.consensus.events import BroadcastConsensusVoteEvent, ProposeSequence
+from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID
+from tests.test_utils.test_datas import MockConsensusData
 
 
-LEADER_ID = bytes([0])
-
-
-@pytest.mark.parametrize("candidate_id,propose_id,propose_prev_id,expected_vote_data_id",
-                         [(b"a", b"b", b"a", b"b"),
-                          (b"a", b"b", b"c", NONE_ID),
-                          (b"a", NONE_ID, None, NONE_ID)])
-def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_data_id):
+PROPOSE_ID = b"b"
+@pytest.mark.parametrize("propose_id,propose_prev_id,expected_vote_data_id",
+                         [(b"b", CANDIDATE_ID, b"b"),
+                          (b"b", b"other_id", DefaultConsensusVote.NoneVote),
+                          (LEADER_ID, None, DefaultConsensusVote.NoneVote)])
+def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
+    # TODO propose not data, correct data, non_connection_data
     """ GIVEN SyncLayer with candidate_data and ProposeSequence, setup
     WHEN raise ProposeSequence
     THEN Receive VoteEvent about ProposeSequence
     """
     async def async_on_propose():
         # GIVEN
-        event_system, sync_layer, voters = await setup_sync_layer(quorum=7)
-
-        propose = MockConsensusData(propose_id, propose_prev_id, LEADER_ID,
-                                    0, 2, 1, None)
+        event_system, sync_layer, voters, data_factory, vote_factory = await setup_sync_layer(quorum=7)
+        leader_data_factory = DefaultConsensusDataFactory(LEADER_ID)
+        propose = DefaultConsensusData(id_=PROPOSE_ID,
+                                       prev_id=propose_prev_id,
+                                       proposer_id=LEADER_ID,
+                                       number=1,
+                                       term_num=0,
+                                       round_num=0,
+                                       prev_votes=None)
         propose_event = ProposeSequence(propose)
 
         # WHEN
@@ -57,7 +58,14 @@ def test_on_propose(candidate_id, propose_id, propose_prev_id, expected_vote_dat
 
         # Test double propose
         # GIVEN
-        second_propose = MockConsensusData(b'b', b'a', LEADER_ID, 0, 2, 1, None)
+        second_propose = DefaultConsensusData(id_=PROPOSE_ID,
+                                              prev_id=propose_prev_id,
+                                              proposer_id=LEADER_ID,
+                                              number=1,
+                                              term_num=0,
+                                              round_num=0,
+                                              prev_votes=None)
+
         # WHEN
         await sync_layer._on_sequence_propose(ProposeSequence(data=second_propose))
         with pytest.raises(QueueEmpty):
