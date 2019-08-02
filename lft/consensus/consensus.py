@@ -1,33 +1,17 @@
-from typing import Optional, TYPE_CHECKING
-from lft.state import StateMachine
-from lft.consensus.states import ProposeState, VoteState, CommitState
-from lft.consensus.events import ProposeResultEvent, CommitResultEvent, VoteResultEvent
+from typing import TYPE_CHECKING
+from lft.consensus.layers.async_.async_layer import AsyncLayer
+
 if TYPE_CHECKING:
-    from lft.event import EventSimulator
-    from lft.consensus.factories import ConsensusDataFactory, ConsensusVoteFactory, ConsensusData
+    from lft.event import EventSystem
+    from lft.consensus.factories import ConsensusDataFactory, ConsensusVoteFactory
 
 
 class Consensus:
-    def __init__(self, event_system: 'EventSimulator', leader_id: bytes,
+    def __init__(self, event_system: 'EventSystem', id_: bytes,
                  data_factory: 'ConsensusDataFactory', vote_factory: 'ConsensusVoteFactory'):
         self.event_system = event_system
         self.data_factory = data_factory
         self.vote_factory = vote_factory
-        self.leader_id = leader_id
+        self.id = id_
 
-        self.round: Optional[int] = 0
-        self.voters = []
-
-        self.locked_data: Optional['ConsensusData'] = None
-        self.preferred_data: Optional['ConsensusData'] = None
-
-        self._state_machine = StateMachine()
-        self._state_machine.add_state("propose", ProposeState(self))
-        self._state_machine.add_state("vote", VoteState(self))
-        self._state_machine.add_state("commit", CommitState(self))
-        self._state_machine.add_transition("propose", "vote", ProposeResultEvent)
-        self._state_machine.add_transition("vote", "propose", VoteResultEvent, lambda e: e.votes.get_result() is False)
-        self._state_machine.add_transition("vote", "commit", VoteResultEvent, lambda e: e.votes.get_result() is True)
-        self._state_machine.add_transition("commit", "propose", CommitResultEvent)
-
-        # 비동기 상황에서의 고려가 필요하다
+        self._async_layer = AsyncLayer(id_, event_system, data_factory, vote_factory)
