@@ -1,8 +1,7 @@
-import os
 from typing import IO, Dict, Type
-from lft.app.communication import Gossiper
+from lft.app.event import Gossiper
 from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
-from lft.app.logger import Logger
+from lft.app.event.logger import Logger
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
