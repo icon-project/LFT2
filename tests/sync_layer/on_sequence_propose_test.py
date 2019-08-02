@@ -36,7 +36,7 @@ def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     """
     async def async_on_propose():
         # GIVEN
-        event_system, sync_layer, voters, data_factory, vote_factory = await setup_sync_layer(quorum=7)
+        event_system, sync_layer, voters = await setup_sync_layer(quorum=7)
         propose = DefaultConsensusData(id_=PROPOSE_ID,
                                        prev_id=propose_prev_id,
                                        proposer_id=LEADER_ID,
