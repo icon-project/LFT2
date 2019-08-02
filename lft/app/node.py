@@ -38,6 +38,10 @@ class Node:
             self._consensus.close()
             self._consensus = None
 
+        if self.event_system:
+            self.event_system.close()
+            self.event_system = None
+
     def start(self, blocking=True):
         self.event_system.start(blocking)
 
