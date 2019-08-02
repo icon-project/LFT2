@@ -28,14 +28,14 @@ SELF_ID = bytes([2])
 LEADER_ID = bytes([1])
 
 
-async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[bytes]]:
+async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[bytes], ConsensusData]:
 
     event_system = EventSystem(True)
     voters = [bytes([x]) for x in range(quorum)]
     vote_factory = DefaultConsensusVoteFactory(SELF_ID)
     data_factory = DefaultConsensusDataFactory(SELF_ID)
     term_factory = RotateTermFactory(1)
-    candidate_data = DefaultConsensusData(
+    genesis_data = DefaultConsensusData(
         id_=CANDIDATE_ID,
         prev_id=None,
         proposer_id=SELF_ID,
@@ -50,10 +50,10 @@ async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[by
     init_event = InitializeEvent(
         term_num=0,
         round_num=1,
-        candidate_data=candidate_data,
+        candidate_data=genesis_data,
         voters=voters
     )
 
     await sync_layer._on_init(init_event)
 
-    return event_system, sync_layer, voters
+    return event_system, sync_layer, voters, genesis_data

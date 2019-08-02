@@ -13,12 +13,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from asyncio import QueueEmpty
+
 import pytest
 
 from lft.consensus.default_data.data import DefaultConsensusData, DefaultConsensusVote
 from lft.consensus.default_data.factories import DefaultConsensusVoteFactory
-from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastConsensusVoteEvent
-from lft.consensus.factories import ConsensusVoteFactory
+from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastConsensusVoteEvent, \
+    BroadcastConsensusDataEvent, ReceivedConsensusDataEvent
+from lft.consensus.factories import ConsensusVoteFactory, ConsensusData
+from lft.event import Event
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, SELF_ID
 
 QUORUM = 7
@@ -44,40 +48,41 @@ def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, is_succ
     THEN raised expected DoneRoundEvent
     """
     async def testcase():
-        event_system, sync_layer, voters = await setup_sync_layer(QUORUM)
+        event_system, sync_layer, prev_voters, genesis_data = await setup_sync_layer(QUORUM)
         success_propose_is_come = success_vote_num != 0
+
+        consensus_data = None
         if success_propose_is_come:
-            await sync_layer._on_sequence_propose(
-                ProposeSequence(
-                    DefaultConsensusData(
-                        id_=PROPOSE_ID,
-                        prev_id=CANDIDATE_ID,
-                        proposer_id=LEADER_ID,
-                        number=1,
-                        term_num=0,
-                        round_num=1,
-                        prev_votes=None
-                    )
-                )
+            consensus_data = DefaultConsensusData(
+                id_=PROPOSE_ID,
+                prev_id=CANDIDATE_ID,
+                proposer_id=LEADER_ID,
+                number=1,
+                term_num=0,
+                round_num=1,
+                prev_votes=None
             )
         else:
-            await sync_layer._on_sequence_propose(
-                ProposeSequence(
-                    DefaultConsensusData(
-                        id_=LEADER_ID,
-                        prev_id=LEADER_ID,
-                        proposer_id=LEADER_ID,
-                        number=1,
-                        term_num=0,
-                        round_num=1,
-                        prev_votes=None
-                    )
-                )
+            consensus_data = DefaultConsensusData(
+                id_=LEADER_ID,
+                prev_id=LEADER_ID,
+                proposer_id=LEADER_ID,
+                number=1,
+                term_num=0,
+                round_num=1,
+                prev_votes=None
             )
+
+        await sync_layer._on_sequence_propose(
+            ProposeSequence(
+                data=consensus_data
+            )
+        )
+
         # Remove LEADER and SELF
-        voters.remove(LEADER_ID)
-        voters.remove(SELF_ID)
-        validator_vote_factories = [DefaultConsensusVoteFactory(x) for x in voters]
+        prev_voters.remove(LEADER_ID)
+        prev_voters.remove(SELF_ID)
+        validator_vote_factories = [DefaultConsensusVoteFactory(x) for x in prev_voters]
 
         async def do_success_vote(vote_factory: ConsensusVoteFactory):
             await sync_layer._on_sequence_vote(
@@ -111,7 +116,7 @@ def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, is_succ
                 )
             )
 
-        my_vote: BroadcastConsensusVoteEvent = event_system.simulator._event_tasks.get_nowait()
+        my_vote: BroadcastConsensusVoteEvent = await get_event(event_system)
         await sync_layer._on_sequence_vote(VoteSequence(
             my_vote.vote
         ))
@@ -126,13 +131,56 @@ def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, is_succ
 
         # TODO Count not vote
         for i in range(not_vote_num):
-            await do_not_vote(voters[success_voter_count + none_vote_num + i])
+            await do_not_vote(prev_voters[success_voter_count + none_vote_num + i])
 
         # THEN
-        # DoneVoteEvent
-        event_system.simulator._event_tasks.get_nowait()
+        if is_complete:
+            done_round: DoneRoundEvent = await get_event(event_system)
+            if is_success:
+                assert done_round.is_success
+                check_round_num(done_round)
+                assert done_round.candidate_data == consensus_data
+                assert done_round.commit_data == genesis_data
 
-        # BroadcastProposeEvent -> New Propose
-        event_system.simulator._event_tasks.get_nowait()
+                broadcast_propose: BroadcastConsensusDataEvent = await get_event(event_system)
+                check_new_consensus_data(broadcast_propose.data, consensus_data.id, 2)
+                check_prev_votes(broadcast_propose.data.prev_votes, consensus_data)
 
-        # Receive Event는 만들까 말까 고민중 (Gossip을 보아야 할듯?)
+
+                recieve_propose: ReceivedConsensusDataEvent = await get_event(event_system)
+
+                check_new_consensus_data(recieve_propose.data, consensus_data.id, 2)
+                check_prev_votes(recieve_propose.data.prev_votes, consensus_data)
+            else:
+                assert not done_round.is_success
+                await check_round_num(done_round)
+                assert not done_round.candidate_data
+                assert not done_round.commit_data
+                broadcast_propose: BroadcastConsensusDataEvent = await get_event(event_system)
+                check_new_consensus_data(broadcast_propose.data, genesis_data.id, 1)
+                recieve_propose: ReceivedConsensusDataEvent = await get_event(event_system)
+                check_new_consensus_data(recieve_propose.data, genesis_data.id, 1)
+
+        with pytest.raises(QueueEmpty):
+            await get_event(event_system)
+
+    async def get_event(event_system) -> Event:
+        return event_system.simulator._event_tasks.get_nowait()
+
+    def check_round_num(done_round):
+        assert done_round.round_num == 1
+        assert done_round.term_num == 0
+
+    def check_new_consensus_data(data: ConsensusData, prev_id, number):
+        assert data.proposer_id == SELF_ID
+        assert data.term_num == 0
+        assert data.round_num == 2
+        assert data.prev_id == prev_id
+        assert data.number == number
+
+    def check_prev_votes(prev_votes, consensus_data):
+        prev_voters = []
+        for vote in prev_votes:
+            assert vote.data_id == consensus_data.id
+            assert vote.voter_id not in prev_voters
+            prev_voters.append(vote.voter_id)
