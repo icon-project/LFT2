@@ -28,14 +28,19 @@ class App(ABC):
         raise NotImplementedError
 
     def _run_forever(self, nodes: List[Node]):
+        loop = asyncio.get_event_loop()
         try:
-            asyncio.get_event_loop().run_forever()
+            loop.run_forever()
         except KeyboardInterrupt:
             print()
             print("Keyboard Interrupt")
         finally:
             for node in nodes:
                 node.close()
+            for task in asyncio.Task.all_tasks():
+                task.cancel()
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
 
 class InstantApp(App):
