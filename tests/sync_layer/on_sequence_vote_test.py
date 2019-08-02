@@ -17,9 +17,9 @@ import pytest
 
 from lft.consensus.default_data.data import DefaultConsensusData, DefaultConsensusVote
 from lft.consensus.default_data.factories import DefaultConsensusVoteFactory
-from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence
+from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastConsensusVoteEvent
 from lft.consensus.factories import ConsensusVoteFactory
-from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID
+from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, SELF_ID
 
 QUORUM = 7
 PROPOSE_ID = b'propose'
@@ -60,7 +60,24 @@ def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, is_succ
                     )
                 )
             )
-        validator_vote_factories = [DefaultConsensusVoteFactory(x) for x in voters[2:]]
+        else:
+            await sync_layer._on_sequence_propose(
+                ProposeSequence(
+                    DefaultConsensusData(
+                        id_=LEADER_ID,
+                        prev_id=LEADER_ID,
+                        proposer_id=LEADER_ID,
+                        number=1,
+                        term_num=0,
+                        round_num=1,
+                        prev_votes=None
+                    )
+                )
+            )
+        # Remove LEADER and SELF
+        voters.remove(LEADER_ID)
+        voters.remove(SELF_ID)
+        validator_vote_factories = [DefaultConsensusVoteFactory(x) for x in voters]
 
         async def do_success_vote(vote_factory: ConsensusVoteFactory):
             await sync_layer._on_sequence_vote(
@@ -86,7 +103,7 @@ def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, is_succ
         async def do_not_vote(voter_id: bytes):
             await sync_layer._on_sequence_vote(
                 VoteSequence(
-                    vote=await vote_factory.create_not_vote(
+                    vote=await validator_vote_factories[0].create_not_vote(
                         voter_id=voter_id,
                         term_num=0,
                         round_num=1
@@ -94,23 +111,28 @@ def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, is_succ
                 )
             )
 
-        # do self vote
-        if success_propose_is_come:
-            await do_success_vote(vote_factory)
-        else:
-            await do_none_vote(vote_factory)
+        my_vote: BroadcastConsensusVoteEvent = event_system.simulator._event_tasks.get_nowait()
+        await sync_layer._on_sequence_vote(VoteSequence(
+            my_vote.vote
+        ))
 
-        for i in range(success_vote_num-2):
+        success_voter_count = success_vote_num -2
+
+        for i in range(success_voter_count):
             await do_success_vote(validator_vote_factories[i])
 
         for i in range(none_vote_num):
-            await do_none_vote(validator_vote_factories[success_vote_num - 2 + i])
+            await do_none_vote(validator_vote_factories[success_voter_count + i])
 
         # TODO Count not vote
         for i in range(not_vote_num):
-            await do_not_vote(voters[success_vote_num -2 + none_vote_num + i])
+            await do_not_vote(voters[success_voter_count + none_vote_num + i])
 
         # THEN
-        if success_propose_is_come:
-            propose = event_system.simulator._event_tasks.get_nowait()
-        if
+        # DoneVoteEvent
+        event_system.simulator._event_tasks.get_nowait()
+
+        # BroadcastProposeEvent -> New Propose
+        event_system.simulator._event_tasks.get_nowait()
+
+        # Receive Event는 만들까 말까 고민중 (Gossip을 보아야 할듯?)

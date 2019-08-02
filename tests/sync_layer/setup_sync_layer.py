@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Tuple, Sequence
+from typing import Tuple, Sequence, List
 
 from lft.consensus.default_data.data import DefaultConsensusData
 from lft.consensus.default_data.factories import DefaultConsensusVoteFactory, DefaultConsensusDataFactory
@@ -28,7 +28,7 @@ SELF_ID = bytes([2])
 LEADER_ID = bytes([1])
 
 
-async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, Sequence[bytes]]:
+async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[bytes]]:
 
     event_system = EventSystem(True)
     voters = [bytes([x]) for x in range(quorum)]
