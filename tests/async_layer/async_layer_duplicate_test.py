@@ -2,7 +2,7 @@ import os
 import random
 import pytest
 
-from lft.consensus.default_data.factories import DefaultConsensusDataFactory
+from lft.app.data import DefaultConsensusDataFactory
 from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
 from lft.consensus.term import RotateTerm
 from .conftest import start_event_system

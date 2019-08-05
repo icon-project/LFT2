@@ -2,6 +2,7 @@ import json
 import os
 from typing import IO
 from lft.event import EventSimulator, EventRecord, Event, AnyEvent
+from lft.serialization import Serializer
 
 
 class EventReplayer:
@@ -11,6 +12,7 @@ class EventReplayer:
         self.event_simulator = event_simulator
         self.number = -self.INIT_EVENT_COUNT  # EventReplayer raises a trash event(AnyEvent) first to start event system
 
+        self._serializer = Serializer()
         self._record: EventRecord = None
         self._records: IO = None
         self._handler = None
@@ -57,6 +59,5 @@ class EventReplayer:
             elif line == os.linesep:
                 continue
             else:
-                record_serialized = json.loads(line)
-                return EventRecord.deserialize(record_serialized)
+                return self._serializer.deserialize(line)
 

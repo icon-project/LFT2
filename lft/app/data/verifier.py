@@ -1,4 +1,4 @@
-from lft.consensus.factories import ConsensusDataVerifier, ConsensusVoteVerifier
+from lft.consensus.data import ConsensusDataVerifier, ConsensusVoteVerifier
 
 
 class DefaultConsensusDataVerifier(ConsensusDataVerifier):

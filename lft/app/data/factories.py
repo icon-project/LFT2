@@ -1,8 +1,8 @@
 import os
 
-from lft.consensus.default_data.data import DefaultConsensusData, DefaultConsensusVote
-from lft.consensus.default_data.verifier import DefaultConsensusDataVerifier, DefaultConsensusVoteVerifier
-from lft.consensus.factories import *
+from lft.app.data.data import DefaultConsensusData, DefaultConsensusVote
+from lft.app.data import DefaultConsensusDataVerifier, DefaultConsensusVoteVerifier
+from lft.consensus.data import *
 
 
 class DefaultConsensusDataFactory(ConsensusDataFactory):

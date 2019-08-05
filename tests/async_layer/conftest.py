@@ -1,7 +1,7 @@
 import os
 import pytest
 from functools import partial
-from lft.consensus.default_data.factories import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
+from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
 from lft.consensus.events import InitializeEvent
 from lft.consensus.layers.async_.async_layer import AsyncLayer
 from lft.event import EventSystem, Event

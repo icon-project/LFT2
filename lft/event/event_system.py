@@ -40,7 +40,7 @@ class EventSystem:
 
     def start(self, blocking=True, loop: asyncio.AbstractEventLoop=None):
         for mediator in self.mediators.values():
-            mediator.switch_instant(self)
+            mediator.switch_instant(self.simulator)
         return self.simulator.start(blocking, loop)
 
     def stop(self):

@@ -1,6 +1,7 @@
-from typing import Sequence
+from typing import Sequence, Type, TypeVar
+from lft.consensus.data import ConsensusVote, ConsensusData
 
-from lft.consensus.factories import ConsensusVote, ConsensusData
+T = TypeVar("T")
 
 
 class DefaultConsensusData(ConsensusData):
@@ -51,6 +52,29 @@ class DefaultConsensusData(ConsensusData):
     def is_not(self) -> bool:
         return self._id == self._proposer_id
 
+    def _serialize(self) -> dict:
+        return {
+            "id": self.id,
+            "prev_id": self.prev_id,
+            "proposer_id": self.proposer_id,
+            "number": self.number,
+            "term": self.term_num,
+            "round": self.round_num,
+            "prev_votes": list(self.prev_votes)
+        }
+
+    @classmethod
+    def _deserialize(cls: Type[T], **kwargs) -> T:
+        return DefaultConsensusData(
+            id_=kwargs["id"],
+            prev_id=kwargs["prev_id"],
+            proposer_id=kwargs["proposer_id"],
+            number=kwargs["number"],
+            term_num=kwargs["term"],
+            round_num=kwargs["round"],
+            prev_votes=tuple(kwargs["prev_votes"])
+        )
+
 
 class DefaultConsensusVote(ConsensusVote):
     NoneVote = bytes(16)
@@ -87,3 +111,22 @@ class DefaultConsensusVote(ConsensusVote):
 
     def is_none(self) -> bool:
         return self._data_id == self.NoneVote
+
+    def _serialize(self) -> dict:
+        return {
+            "id": self.id,
+            "data_id": self.data_id,
+            "voter_id": self.voter_id,
+            "term": self.term_num,
+            "round": self.round_num,
+        }
+
+    @classmethod
+    def _deserialize(cls: Type[T], **kwargs) -> T:
+        return DefaultConsensusVote(
+            id_=kwargs["id"],
+            data_id=kwargs["data_id"],
+            voter_id=kwargs["voter_id"],
+            term_num=kwargs["term"],
+            round_num=kwargs["round"]
+        )

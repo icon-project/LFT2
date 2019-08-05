@@ -2,7 +2,7 @@ import asyncio
 import random
 from typing import TYPE_CHECKING
 from lft.event import EventSystem
-from lft.consensus.factories import ConsensusData, ConsensusVote
+from lft.consensus.data import ConsensusData, ConsensusVote
 from lft.consensus.events import ProposeSequence, VoteSequence
 
 
