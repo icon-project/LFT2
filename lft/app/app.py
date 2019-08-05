@@ -15,7 +15,7 @@ class App(ABC):
         nodes = self._gen_nodes()
         for node in nodes:
             for peer in (peer for peer in nodes if peer != node):
-                node.register_peer(peer.id, peer)
+                node.register_peer(peer.node_id, peer)
         self._start(nodes)
         self._run_forever(nodes)
 
@@ -51,7 +51,7 @@ class InstantApp(App):
         for node in nodes:
             node.start(False)
 
-            event = InitializeEvent(0, 0, None, tuple(node.id for node in nodes))
+            event = InitializeEvent(0, 0, None, tuple(node.node_id for node in nodes))
             event.deterministic = False
             node.event_system.simulator.raise_event(event)
 
@@ -66,13 +66,13 @@ class RecordApp(App):
 
     def _start(self, nodes: List[Node]):
         for node in nodes:
-            node_path = self.path.joinpath(node.id.hex())
+            node_path = self.path.joinpath(node.node_id.hex())
             node_path.mkdir()
 
             record_io = open(str(node_path.joinpath(RECORD_PATH)), 'w')
             node.start_record(record_io, blocking=False)
 
-            event = InitializeEvent(0, 0, None, tuple(node.id for node in nodes))
+            event = InitializeEvent(0, 0, None, tuple(node.node_id for node in nodes))
             event.deterministic = False
             node.event_system.simulator.raise_event(event)
 
@@ -94,7 +94,7 @@ class ReplayApp(App):
 
     def _start(self, nodes: List[Node]):
         for node in nodes:
-            node_path = self.path.joinpath(node.id.hex())
+            node_path = self.path.joinpath(node.node_id.hex())
             record_io = open(str(node_path.joinpath(RECORD_PATH)), 'r')
 
             node.start_replay(record_io, blocking=False)

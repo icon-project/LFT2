@@ -20,11 +20,11 @@ VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = Con
 
 class AsyncLayer:
     def __init__(self,
-                 id_: bytes,
+                 node_id: bytes,
                  event_system: EventSystem,
                  data_factory: ConsensusDataFactory,
                  vote_factory: ConsensusVoteFactory):
-        self._id = id_
+        self._node_id = node_id
         self._event_system = event_system
         self._data_factory = data_factory
         self._vote_factory = vote_factory
@@ -152,7 +152,7 @@ class AsyncLayer:
 
     async def _new_data(self):
         expected_proposer = self._term.get_proposer_id(self._round_num)
-        if expected_proposer != self._id:
+        if expected_proposer != self._node_id:
             data = await self._data_factory.create_not_data(self._data_num,
                                                             self._term.num,
                                                             self._round_num)

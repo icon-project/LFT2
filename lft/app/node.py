@@ -10,8 +10,8 @@ from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVo
 
 
 class Node:
-    def __init__(self, id_: bytes):
-        self.id = id_
+    def __init__(self, node_id: bytes):
+        self.node_id = node_id
         self.event_system = EventSystem()
         self.event_system.set_mediator(DelayedEventMediator)
 
@@ -19,12 +19,12 @@ class Node:
         self.received_votes = set()
 
         self._gossipers = {}
-        self._logger = Logger(self.id, self.event_system.simulator)
+        self._logger = Logger(self.node_id, self.event_system.simulator)
         self._consensus = Consensus(
             self.event_system,
-            self.id,
-            DefaultConsensusDataFactory(self.id),
-            DefaultConsensusVoteFactory(self.id))
+            self.node_id,
+            DefaultConsensusDataFactory(self.node_id),
+            DefaultConsensusVoteFactory(self.node_id))
 
     def __del__(self):
         self.close()
@@ -53,9 +53,9 @@ class Node:
 
     def receive_data(self, data: ConsensusData):
         if data in self.received_data:
-            print(f"{self.id} : receive data but ignored : {data}")
+            print(f"{self.node_id} : receive data but ignored : {data}")
         else:
-            print(f"{self.id} : receive data : {data}")
+            print(f"{self.node_id} : receive data : {data}")
             self.received_data.add(data)
 
             event = ReceivedConsensusDataEvent(data)
@@ -63,9 +63,9 @@ class Node:
 
     def receive_vote(self, vote: ConsensusVote):
         if vote in self.received_votes:
-            print(f"{self.id} : receive vote but ignored : {vote}")
+            print(f"{self.node_id} : receive vote but ignored : {vote}")
         else:
-            print(f"{self.id} : receive vote : {vote}")
+            print(f"{self.node_id} : receive vote : {vote}")
             self.received_votes.add(vote)
 
             event = ReceivedConsensusVoteEvent(vote)
