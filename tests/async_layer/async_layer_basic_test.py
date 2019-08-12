@@ -33,7 +33,7 @@ async def test_async_layer_basic(async_layer_items, init_round_num, voter_num: i
     assert len(async_layer._vote_dict) == 1
     assert len(async_layer._vote_dict[init_round_num]) == voter_num - 1
 
-    event = DoneRoundEvent(0, init_round_num + 3, data, data)
+    event = DoneRoundEvent(True, 0, init_round_num + 3, data, data, None)
     event_system.simulator.raise_event(event)
 
     await start_event_system(event_system)

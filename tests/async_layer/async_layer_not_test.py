@@ -20,7 +20,7 @@ async def test_async_layer_not_data_early(async_layer_items,
                                           init_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
-    not_data = await data_factory.create_not_data(0, 0, init_round_num)
+    not_data = await data_factory.create_not_data(0, 0, init_round_num, voters[0])
     event = ReceivedConsensusDataEvent(not_data)
     event_system.simulator.raise_event(event)
 
@@ -50,7 +50,7 @@ async def test_async_layer_not_data_later(async_layer_items,
     await start_event_system(event_system)
     assert data is async_layer._data_dict[init_round_num][data.id]
 
-    not_data = await data_factory.create_not_data(0, 0, init_round_num)
+    not_data = await data_factory.create_not_data(0, 0, init_round_num, voters[0])
     event = ReceivedConsensusDataEvent(not_data)
     event_system.simulator.raise_event(event)
 
