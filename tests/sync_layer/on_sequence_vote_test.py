@@ -18,11 +18,10 @@ from asyncio import QueueEmpty
 
 import pytest
 
-from lft.consensus.default_data.data import DefaultConsensusData
-from lft.consensus.default_data.factories import DefaultConsensusVoteFactory
+from lft.app.data import DefaultConsensusData, DefaultConsensusVoteFactory
+from lft.consensus.data import ConsensusVoteFactory, ConsensusData
 from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastConsensusVoteEvent, \
     BroadcastConsensusDataEvent, ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
-from lft.consensus.factories import ConsensusVoteFactory, ConsensusData
 from lft.event import Event
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, TEST_NODE_ID
 

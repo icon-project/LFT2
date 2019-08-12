@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Optional, Sequence, Set
 
-from lft.consensus.factories import ConsensusData, ConsensusVote
+from lft.consensus.data import ConsensusData, ConsensusVote
 from lft.consensus.term import Term
 from lft.consensus.vote_counter import VoteCounter
 

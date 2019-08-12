@@ -1,5 +1,5 @@
-from lft.consensus.factories import ConsensusData, ConsensusDataFactory, ConsensusVoteFactory, ConsensusVote, \
-    ConsensusDataVerifier, ConsensusVoteVerifier
+from lft.consensus.data import ConsensusDataFactory, ConsensusVoteFactory, ConsensusDataVerifier, ConsensusVoteVerifier, \
+    ConsensusData, ConsensusVote
 from lft.consensus.layers.sync.sync_round import SyncRound, RoundResult
 from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent, DoneRoundEvent, \
     InitializeEvent, ProposeSequence, VoteSequence, ReceivedConsensusVoteEvent, ReceivedConsensusDataEvent

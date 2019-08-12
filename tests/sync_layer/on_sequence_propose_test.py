@@ -18,7 +18,7 @@ from asyncio import QueueEmpty
 
 import pytest
 
-from lft.consensus.default_data.data import DefaultConsensusVote, DefaultConsensusData
+from lft.app.data import DefaultConsensusVote, DefaultConsensusData
 from lft.consensus.events import BroadcastConsensusVoteEvent, ProposeSequence, ReceivedConsensusVoteEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID
 

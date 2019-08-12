@@ -15,10 +15,9 @@
 # limitations under the License.
 from typing import Tuple, Sequence, List
 
-from lft.consensus.default_data.data import DefaultConsensusData
-from lft.consensus.default_data.factories import DefaultConsensusVoteFactory, DefaultConsensusDataFactory
+from lft.app.data import DefaultConsensusVoteFactory, DefaultConsensusDataFactory, DefaultConsensusData
+from lft.consensus.data import ConsensusData
 from lft.consensus.events import InitializeEvent
-from lft.consensus.factories import ConsensusData, ConsensusDataFactory, ConsensusVoteFactory
 from lft.consensus.layers.sync.sync_layer import SyncLayer
 from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem

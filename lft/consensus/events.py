@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Sequence, Optional
 
-from lft.consensus.layers.sync.sync_round import SyncRound
 from lft.event import Event
 from lft.consensus.data import ConsensusData, ConsensusVote
 

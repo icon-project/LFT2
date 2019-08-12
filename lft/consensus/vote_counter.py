@@ -16,7 +16,7 @@
 from collections import defaultdict
 from typing import Dict, Set, Sequence
 
-from lft.consensus.factories import ConsensusVote, ConsensusData
+from lft.consensus.data import ConsensusVote, ConsensusData
 
 
 class VoteCounter:
