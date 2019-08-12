@@ -49,12 +49,13 @@ def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
         # WHEN
         await sync_layer._on_sequence_propose(propose_event)
         # THEN
-        non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
-        assert isinstance(event, ReceivedConsensusVoteEvent)
-        assert event.vote.data_id == expected_vote_data_id
 
         non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
         assert isinstance(event, BroadcastConsensusVoteEvent)
+        assert event.vote.data_id == expected_vote_data_id
+
+        non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
+        assert isinstance(event, ReceivedConsensusVoteEvent)
         assert event.vote.data_id == expected_vote_data_id
 
         # Test double propose
