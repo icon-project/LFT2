@@ -1,8 +1,8 @@
 from lft.consensus.factories import ConsensusData, ConsensusDataFactory, ConsensusVoteFactory, ConsensusVote, \
     ConsensusDataVerifier, ConsensusVoteVerifier
-from lft.consensus.layers.sync.sync_round import SyncRound
-from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent, DoneRoundEvent,\
-    InitializeEvent, ProposeSequence, VoteSequence
+from lft.consensus.layers.sync.sync_round import SyncRound, RoundResult
+from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent, DoneRoundEvent, \
+    InitializeEvent, ProposeSequence, VoteSequence, ReceivedConsensusVoteEvent, ReceivedConsensusDataEvent
 from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory
 from lft.event import EventSystem
@@ -22,6 +22,7 @@ class SyncLayer:
         self._candidate_data: ConsensusData = None
         self._sync_round: SyncRound = None
         self._term: Term = None
+        self._node_id: bytes = None
         self._register_handler()
 
     def _register_handler(self):
@@ -30,8 +31,8 @@ class SyncLayer:
         self._event_system.simulator.register_handler(VoteSequence, self._on_sequence_vote)
 
     async def _on_init(self, init_event: InitializeEvent):
-        print("start init event")
         self._candidate_data = init_event.candidate_data
+        self._node_id = init_event.node_id
         self._term = self._term_factory.create_term(term_num=init_event.term_num,
                                                     voters=init_event.voters)
 
@@ -44,16 +45,15 @@ class SyncLayer:
         self._data_verifier = await self._data_factory.create_data_verifier()
         self._vote_verifier = await self._vote_factory.create_vote_verifier()
 
-    async def _on_sequence_propose(self, propose_event: ProposeSequence):
+    async def _on_sequence_propose(self, propose_sequence: ProposeSequence):
         """ Receive propose
 
-        :param propose_event:
+        :param propose_sequence:
         :return:
         """
-        data = propose_event.data
+        data = propose_sequence.data
         vote = None
         if self._verify_is_connect_to_candidate(data) and await self._verify_data(data) and not data.is_not():
-            # TODO Broadcast Correct Vote
             vote = await self._vote_factory.create_vote(data_id=data.id,
                                                         term_num=self._sync_round.term_num,
                                                         round_num=self._sync_round.round_num)
@@ -68,6 +68,10 @@ class SyncLayer:
 
     def _raise_broadcast_vote(self, vote: ConsensusVote):
         self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
+
+        receive_vote_event = ReceivedConsensusVoteEvent(vote=vote)
+        receive_vote_event.deterministic = True
+        self._event_system.simulator.raise_event(receive_vote_event)
 
     def _verify_is_connect_to_candidate(self, data: ConsensusData) -> bool:
 
@@ -85,48 +89,55 @@ class SyncLayer:
         else:
             return True
 
-    def _raise_event_quorum(self):
-        precommit_event = DoneRoundEvent(self._sync_round.votes.get_result(), self._sync_round.data)
-        self._event_system.raise_event(precommit_event)
+    async def _on_sequence_vote(self, vote_sequence: VoteSequence):
+        self._sync_round.add_vote(vote_sequence.vote)
+        round_result = self._sync_round.get_result()
+        if round_result:
+            await self._raise_done_round(round_result)
+            await self._start_new_round(round_result)
 
-    async def _on_sequence_vote(self, vote_event: VoteSequence):
-        # if self._sync_round.expired:
-        #     return
-        #
-        # # 투표를 아예 하지 녀석들에 대한 vote도 만들어서 보내준다. 역시 async layer 에서 보내준다.
-        # self._sync_round.votes.add_vote(sequence.vote)
-        #
-        # result = self._sync_round.votes.get_result()
-        # if result is None:
-        #     return
-        #
-        # if result is True:
-        #     self._raise_event_quorum()
-        # elif result is False:
-        #     # if I am a leader
-        #     self._raise_event_propose()
-        # self._sync_round.expired = True
-        pass
+    async def _start_new_round(self, round_result: RoundResult):
+        if round_result.is_success:
+            self._candidate_data = round_result.candidate_data
+        self._sync_round = SyncRound(
+            term=self._term,
+            round_num=self._sync_round.round_num + 1
+        )
+        if self._term.get_proposer_id(self._sync_round.round_num) == self._node_id:
+            proposer = await self._data_factory.create_data(
+                data_number=self._candidate_data.number + 1,
+                prev_id=self._candidate_data.id,
+                term_num=self._sync_round.term_num,
+                round_num=self._sync_round.round_num
+            )
 
-    def _new_round(self, term: int, round_: int, data):
-        self._sync_round = SyncRound(term, round_, data, self._vote_factory.create_votes())
+            self._event_system.simulator.raise_event(BroadcastConsensusDataEvent(
+                data=proposer
+            ))
 
-    # def _raise_event_vote(self):
-    #     verifier = self._data_factory.create_verifier()
-    #     try:
-    #         verifier.verify(self._sync_round.data)
-    #     except:
-    #         vote_event = VoteEvent(None, self._sync_round.term_num, self._sync_round.round_num)
-    #     else:
-    #         vote_event = VoteEvent(self._sync_round.data.id, self._sync_round.term_num, self._sync_round.round_num)
-    #     finally:
-    #         self._event_system.raise_event(vote_event)
-    #
-    # def _raise_event_quorum(self):
-    #     precommit_event = QuorumEvent(self._sync_round.votes.get_result(), self._sync_round.data)
-    #     self._event_system.raise_event(precommit_event)
-    #
-    # def _raise_event_propose(self):
-    #     new_data = self._data_factory.create(self._sync_round.term_num, self._sync_round.round_num + 1)
-    #     propose_event = BroadcastConsensusDataEvent(new_data)
-    #     self._event_system.raise_event(propose_event)
+            received_event = ReceivedConsensusDataEvent(
+                data=proposer
+            )
+            received_event.deterministic = True
+            self._event_system.simulator.raise_event(received_event)
+
+    async def _raise_done_round(self, round_result: RoundResult):
+        if round_result.is_success:
+            done_round = DoneRoundEvent(
+                is_success=True,
+                term_num=round_result.term_num,
+                round_num=round_result.round_num,
+                votes=round_result.votes,
+                candidate_data=round_result.candidate_data,
+                commit_data=self._candidate_data
+           )
+        else:
+            done_round = DoneRoundEvent(
+                is_success=False,
+                term_num=round_result.term_num,
+                round_num=round_result.round_num,
+                votes=round_result.votes,
+                candidate_data=None,
+                commit_data=None
+            )
+        self._event_system.simulator.raise_event(done_round)

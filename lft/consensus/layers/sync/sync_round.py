@@ -1,21 +1,39 @@
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Dict, Optional, Sequence, Set
 
 from lft.consensus.factories import ConsensusData, ConsensusVote
 from lft.consensus.term import Term
+from lft.consensus.vote_counter import VoteCounter
+
+
+@dataclass
+class RoundResult:
+    is_success: bool
+    term_num: int
+    round_num: int
+    candidate_data: Optional[ConsensusData]
+    votes: Sequence[ConsensusVote]
 
 
 class SyncRound:
+    _NOT_ID = b"Not"
+
     def __init__(self,
                  term: Term,
                  round_num: int,
                  datas: Optional[Dict[bytes, ConsensusData]] = None,
-                 votes: Optional[Sequence[ConsensusData]] = None):
+                 votes: Optional[Sequence[ConsensusVote]] = None):
         self.term: Term = term
         self.round_num: int = round_num
 
         self._datas: Dict[bytes, ConsensusData] = datas if datas else {}
-        self._votes: ConsensusVotes = ConsensusVotes(votes)
+        self._votes: VoteCounter = VoteCounter()
+        for data in self._datas.values():
+            self._votes.inform_receive_data(data)
+        if votes:
+            for vote in votes:
+                self._votes.add_vote(vote)
         self.is_voted = False
 
     @property
@@ -23,37 +41,48 @@ class SyncRound:
         return self.term.num
 
     def add_data(self, data: ConsensusData):
-        self._datas[data.id] = data
+        if data.is_not():
+            self._datas[self._NOT_ID] = data
+        else:
+            self._datas[data.id] = data
+            self._votes.inform_receive_data(data)
 
     def add_vote(self, vote: ConsensusVote):
         self._votes.add_vote(vote)
 
-    @property
-    def is_complete(self) -> bool:
-        if self.term.quorum_num <= self._votes.majority_vote_num:
+    def get_result(self) -> Optional[RoundResult]:
+        if self._is_complete():
+            if self._is_success():
+                return RoundResult(
+                    is_success=True,
+                    term_num=self.term_num,
+                    round_num=self.round_num,
+                    candidate_data=self._datas[self._votes.majority_id],
+                    votes=self._votes.majority_votes
+                )
+            else:
+                return RoundResult(
+                    is_success=False,
+                    term_num=self.term_num,
+                    round_num=self.round_num,
+                    candidate_data=None,
+                    votes=self._votes.majority_votes
+                )
+        else:
+            return None
+
+    def _is_complete(self) -> bool:
+        if self.term.quorum_num <= self._votes.majority_counts:
             return True
-        elif self.term.voters_num == self._votes.voter_num:
+        elif self.term.voters_num == self._votes.voter_counts:
+            return True
+        elif self._votes.voter_counts == self.term.voters_num - 1 and self._datas.get(self._NOT_ID):
             return True
         return False
 
-
-class ConsensusVotes:
-    def __init__(self, votes: Optional[Sequence[ConsensusVote]] = None):
-        self.majority_vote_num = 0
-        self.majority_id = b''
-        self._voters: Set[bytes] = ()
-        self._votes: Dict[bytes, Dict[bytes, ConsensusVote]] = defaultdict(lambda: {})
-        if votes:
-            for vote in votes:
-                self.add_vote(vote)
-
-    def add_vote(self, vote: ConsensusVote):
-        self._voters.add(vote.voter_id)
-        self._votes[vote.data_id][vote.voter_id] = vote
-        if len(self._votes[vote.data_id]) > self.majority_vote_num:
-            self.majority_vote_num = len(self._votes[vote.data_id])
-            self.majority_id = vote.data_id
-
-    @property
-    def voter_num(self) -> int:
-        return len(self._voters)
+    def _is_success(self) -> bool:
+        if self._votes.majority_counts >= self.term.quorum_num:
+            sample_vote = self._votes.majority_votes[0]
+            if not sample_vote.is_none():
+                return True
+        return False

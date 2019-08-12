@@ -24,7 +24,7 @@ from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem
 
 CANDIDATE_ID = b'a'
-SELF_ID = bytes([2])
+TEST_NODE_ID = bytes([2])
 LEADER_ID = bytes([1])
 
 
@@ -32,13 +32,13 @@ async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[by
 
     event_system = EventSystem(True)
     voters = [bytes([x]) for x in range(quorum)]
-    vote_factory = DefaultConsensusVoteFactory(SELF_ID)
-    data_factory = DefaultConsensusDataFactory(SELF_ID)
+    vote_factory = DefaultConsensusVoteFactory(TEST_NODE_ID)
+    data_factory = DefaultConsensusDataFactory(TEST_NODE_ID)
     term_factory = RotateTermFactory(1)
     genesis_data = DefaultConsensusData(
         id_=CANDIDATE_ID,
         prev_id=None,
-        proposer_id=SELF_ID,
+        proposer_id=TEST_NODE_ID,
         number=0,
         term_num=0,
         round_num=0,
@@ -50,6 +50,7 @@ async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[by
     init_event = InitializeEvent(
         term_num=0,
         round_num=1,
+        node_id=TEST_NODE_ID,
         candidate_data=genesis_data,
         voters=voters
     )

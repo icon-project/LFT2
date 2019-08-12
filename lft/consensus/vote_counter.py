@@ -18,9 +18,6 @@ from typing import Dict, Set, Sequence
 
 from lft.consensus.factories import ConsensusVote, ConsensusData
 
-NOT_ID = b'not'
-NONE_ID = b'none'
-
 
 class VoteCounter:
     def __init__(self):

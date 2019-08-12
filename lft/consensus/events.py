@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Sequence, Optional
 
 from lft.consensus.layers.sync.sync_round import SyncRound
 from lft.event import Event
@@ -9,10 +9,9 @@ from lft.consensus.data import ConsensusData, ConsensusVote
 class InitializeEvent(Event):
     """ application to async layer
     """
-    deterministic = False
-
     term_num: int
     round_num: int
+    node_id: bytes
     candidate_data: 'ConsensusData'
     voters: Sequence[bytes]
 
@@ -21,8 +20,6 @@ class InitializeEvent(Event):
 class ReceivedConsensusDataEvent(Event):
     """ from application to async layer
     """
-    deterministic = False
-
     data: 'ConsensusData'
 
 
@@ -30,8 +27,6 @@ class ReceivedConsensusDataEvent(Event):
 class ReceivedConsensusVoteEvent(Event):
     """ from application to async layer
     """
-    deterministic = False
-
     vote: 'ConsensusVote'
 
 
@@ -53,10 +48,12 @@ class BroadcastConsensusVoteEvent(Event):
 class DoneRoundEvent(Event):
     """ from sync layer to its async layer and application
     """
+    is_success: bool
     term_num: int
     round_num: int
-    candidate_data: 'ConsensusData'
-    commit_data: 'ConsensusData'
+    candidate_data: Optional['ConsensusData']
+    commit_data: Optional['ConsensusData']
+    votes: Sequence['ConsensusVote']
 
 
 @dataclass
@@ -71,11 +68,3 @@ class VoteSequence(Event):
     """ from async layer to sync layer
     """
     vote: 'ConsensusVote'
-
-
-@dataclass
-class DoneRoundEvent(Event):
-    """ When the round is done sync layer raises this event
-    """
-    sync_round: SyncRound
-
