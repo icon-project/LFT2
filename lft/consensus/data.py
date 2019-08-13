@@ -128,3 +128,12 @@ class ConsensusData(Serializable):
     @abstractmethod
     def is_not(self) -> bool:
         raise NotImplementedError
+
+    def __eq__(self, other):
+        return self.id == other.id \
+               and self.number == other.number \
+               and self.prev_id == other.prev_id \
+               and self.proposer_id == other.proposer_id \
+               and self.term_num == other.term_num \
+               and self.round_num == other.round_num \
+               and self.prev_votes == other.prev_votes

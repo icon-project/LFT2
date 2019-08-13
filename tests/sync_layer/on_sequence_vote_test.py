@@ -121,7 +121,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, i
         my_vote.vote
     ))
 
-    success_voter_count = success_vote_num -2
+    success_voter_count = success_vote_num - 2
 
     for i in range(success_voter_count):
         await do_success_vote(validator_vote_factories[i])
@@ -129,7 +129,6 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, i
     for i in range(none_vote_num):
         await do_none_vote(validator_vote_factories[success_voter_count + i])
 
-    # TODO Count not vote
     for i in range(not_vote_num):
         await do_not_vote(prev_voters[success_voter_count + none_vote_num + i])
 
