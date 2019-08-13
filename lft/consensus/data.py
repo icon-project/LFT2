@@ -88,6 +88,13 @@ class ConsensusVote(Serializable):
     def is_none(self) -> bool:
         raise NotImplementedError
 
+    def __eq__(self, other):
+        return self.id == other.id \
+               and self.data_id == other.data_id \
+               and self.voter_id == other.voter_id \
+               and self.term_num == other.term_num \
+               and self.round_num == other.round_num
+
 
 class ConsensusData(Serializable):
     @property
