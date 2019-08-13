@@ -78,9 +78,6 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, i
             data=consensus_data
         )
     )
-
-    prev_voters.remove(LEADER_ID)
-    prev_voters.remove(TEST_NODE_ID)
     validator_vote_factories = [DefaultConsensusVoteFactory(x) for x in prev_voters]
 
     async def do_success_vote(vote_factory: ConsensusVoteFactory):
@@ -115,22 +112,18 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, i
             )
         )
 
+    # pop votes
     my_vote: ReceivedConsensusVoteEvent = await get_event(event_system)
     my_vote: BroadcastConsensusVoteEvent = await get_event(event_system)
-    await sync_layer._on_sequence_vote(VoteSequence(
-        my_vote.vote
-    ))
 
-    success_voter_count = success_vote_num - 2
-
-    for i in range(success_voter_count):
+    for i in range(success_vote_num):
         await do_success_vote(validator_vote_factories[i])
 
     for i in range(none_vote_num):
-        await do_none_vote(validator_vote_factories[success_voter_count + i])
+        await do_none_vote(validator_vote_factories[success_vote_num + i])
 
     for i in range(not_vote_num):
-        await do_not_vote(prev_voters[success_voter_count + none_vote_num + i])
+        await do_not_vote(prev_voters[success_vote_num + none_vote_num + i])
 
     # THEN
     if is_complete:
