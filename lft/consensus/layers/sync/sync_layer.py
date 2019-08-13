@@ -55,6 +55,7 @@ class SyncLayer:
         vote = None
         if self._verify_is_connect_to_candidate(data) and await self._verify_data(data) and not data.is_not():
             vote = await self._vote_factory.create_vote(data_id=data.id,
+                                                        commit_id=self._candidate_data.id,
                                                         term_num=self._sync_round.term_num,
                                                         round_num=self._sync_round.round_num)
         else:

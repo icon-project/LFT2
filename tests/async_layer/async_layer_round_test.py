@@ -40,7 +40,7 @@ async def test_async_layer_past_round_vote(async_layer_items,
 
     for vote_factory in vote_factories:
         vote_factory = cast(DefaultConsensusVoteFactory, vote_factory)
-        vote = await vote_factory.create_vote(os.urandom(16), 0, vote_round_num)
+        vote = await vote_factory.create_vote(os.urandom(16), b'', 0, vote_round_num)
 
         event = ReceivedConsensusVoteEvent(vote)
         event_system.simulator.raise_event(event)
@@ -84,7 +84,7 @@ async def test_async_layer_future_round_vote(async_layer_items,
     votes = []
     for vote_factory in vote_factories:
         vote_factory = cast(DefaultConsensusVoteFactory, vote_factory)
-        vote = await vote_factory.create_vote(os.urandom(16), 0, vote_round_num)
+        vote = await vote_factory.create_vote(os.urandom(16), b'', 0, vote_round_num)
         votes.append(vote)
 
         event = ReceivedConsensusVoteEvent(vote)

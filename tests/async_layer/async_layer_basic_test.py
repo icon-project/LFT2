@@ -15,7 +15,7 @@ async def test_async_layer_basic(async_layer_items, init_round_num, voter_num: i
 
     votes = []
     for vote_factory in vote_factories[1:]:
-        vote = await vote_factory.create_vote(data.id, data.term_num, data.round_num)
+        vote = await vote_factory.create_vote(data.id, b'', data.term_num, data.round_num)
         votes.append(vote)
         event = ReceivedConsensusVoteEvent(vote)
         event.deterministic = False

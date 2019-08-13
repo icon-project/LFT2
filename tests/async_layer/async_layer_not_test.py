@@ -74,7 +74,7 @@ async def test_async_layer_not_vote_early(async_layer_items,
         await start_event_system(event_system)
         assert not_vote is async_layer._vote_dict[init_round_num][voter][not_vote.id]
 
-        vote = await vote_factory.create_vote(os.urandom(16), 0, init_round_num)
+        vote = await vote_factory.create_vote(os.urandom(16), b'', 0, init_round_num)
         event = ReceivedConsensusVoteEvent(vote)
         event_system.simulator.raise_event(event)
 
@@ -92,7 +92,7 @@ async def test_async_layer_not_vote_later(async_layer_items,
 
     for voter, vote_factory in zip(voters, vote_factories):
         vote_factory = cast(DefaultConsensusVoteFactory, vote_factory)
-        vote = await vote_factory.create_vote(os.urandom(16), 0, init_round_num)
+        vote = await vote_factory.create_vote(os.urandom(16), b'', 0, init_round_num)
         event = ReceivedConsensusVoteEvent(vote)
         event_system.simulator.raise_event(event)
 

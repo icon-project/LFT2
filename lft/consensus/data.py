@@ -26,7 +26,7 @@ class ConsensusDataFactory(ABC):
 
 
 class ConsensusVoteFactory(ABC):
-    async def create_vote(self, data_id: bytes, term_num: int, round_num: int) -> 'ConsensusVote':
+    async def create_vote(self, data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> 'ConsensusVote':
         raise NotImplementedError
 
     async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> 'ConsensusVote':
@@ -67,6 +67,11 @@ class ConsensusVote(Serializable):
 
     @property
     @abstractmethod
+    def commit_id(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
     def voter_id(self) -> bytes:
         raise NotImplementedError
 
@@ -91,6 +96,7 @@ class ConsensusVote(Serializable):
     def __eq__(self, other):
         return self.id == other.id \
                and self.data_id == other.data_id \
+               and self.commit_id == other.commit_id \
                and self.voter_id == other.voter_id \
                and self.term_num == other.term_num \
                and self.round_num == other.round_num

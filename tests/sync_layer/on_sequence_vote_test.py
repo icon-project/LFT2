@@ -85,6 +85,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, i
             VoteSequence(
                 vote=await vote_factory.create_vote(
                     data_id=PROPOSE_ID,
+                    commit_id=CANDIDATE_ID,
                     term_num=0,
                     round_num=1
                 )

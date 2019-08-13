@@ -37,14 +37,16 @@ class DefaultConsensusVoteFactory(ConsensusVoteFactory):
     def _create_id(self) -> bytes:
         return os.urandom(16)
 
-    async def create_vote(self, data_id: bytes, term_num: int, round_num: int) -> DefaultConsensusVote:
-        return DefaultConsensusVote(self._create_id(), data_id, self._node_id, term_num, round_num)
+    async def create_vote(self, data_id: bytes, commit_id: bytes, term_num: int, round_num: int)\
+            -> DefaultConsensusVote:
+        return DefaultConsensusVote(self._create_id(), data_id, commit_id, self._node_id, term_num, round_num)
 
     async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> DefaultConsensusVote:
-        return DefaultConsensusVote(self._create_id(), voter_id, voter_id, term_num, round_num)
+        return DefaultConsensusVote(self._create_id(), voter_id, voter_id, voter_id, term_num, round_num)
 
     async def create_none_vote(self, term_num: int, round_num: int) -> DefaultConsensusVote:
         return DefaultConsensusVote(self._create_id(),
+                                    DefaultConsensusVote.NoneVote,
                                     DefaultConsensusVote.NoneVote,
                                     self._node_id,
                                     term_num,
