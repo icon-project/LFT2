@@ -57,14 +57,6 @@ class VoteCounter:
 
         self._check_majority_is_change(vote.data_id)
 
-    def inform_receive_data(self, data: ConsensusData):
-        if data.is_not():
-            return
-        self._vote_counts[data.id] += 1
-        self._voters.add(data.proposer_id)
-
-        self._check_majority_is_change(data.id)
-
     def _check_majority_is_change(self, data_id: bytes):
         if self._vote_counts[data_id] > self.majority_counts:
             self._majority_id = data_id

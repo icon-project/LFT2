@@ -29,23 +29,28 @@ class SyncRound:
 
         self._datas: Dict[bytes, ConsensusData] = datas if datas else {}
         self._votes: VoteCounter = VoteCounter()
-        for data in self._datas.values():
-            self._votes.inform_receive_data(data)
         if votes:
             for vote in votes:
                 self._votes.add_vote(vote)
         self.is_voted = False
+        self._apply = False
 
     @property
     def term_num(self) -> int:
         return self.term.num
+
+    @property
+    def is_apply(self) -> bool:
+        return self._apply
+
+    def apply(self):
+        self._apply = True
 
     def add_data(self, data: ConsensusData):
         if data.is_not():
             self._datas[self._NOT_ID] = data
         else:
             self._datas[data.id] = data
-            self._votes.inform_receive_data(data)
 
     def add_vote(self, vote: ConsensusVote):
         self._votes.add_vote(vote)

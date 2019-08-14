@@ -92,10 +92,11 @@ class SyncLayer:
 
     async def _on_sequence_vote(self, vote_sequence: VoteSequence):
         self._sync_round.add_vote(vote_sequence.vote)
-        round_result = self._sync_round.get_result()
-        if round_result:
-            await self._raise_done_round(round_result)
-            await self._start_new_round(round_result)
+        if not self._sync_round.is_apply:
+            round_result = self._sync_round.get_result()
+            if round_result:
+                self._sync_round.apply()
+                await self._raise_done_round(round_result)
 
     async def _start_new_round(self, round_result: RoundResult):
         if round_result.is_success:
