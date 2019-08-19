@@ -12,6 +12,7 @@ class InitializeEvent(Event):
     round_num: int
     node_id: bytes
     candidate_data: 'ConsensusData'
+    votes: Sequence['ConsensusVote']
     voters: Sequence[bytes]
 
 

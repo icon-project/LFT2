@@ -16,8 +16,10 @@ class DefaultConsensusDataFactory(ConsensusDataFactory):
                           data_number: int,
                           prev_id: bytes,
                           term_num: int,
-                          round_num: int) -> DefaultConsensusData:
-        return DefaultConsensusData(self._create_id(), prev_id, self._node_id, data_number, term_num, round_num)
+                          round_num: int,
+                          prev_votes: Sequence['DefaultConsensusVote']) -> DefaultConsensusData:
+        return DefaultConsensusData(self._create_id(), prev_id, self._node_id, data_number, term_num, round_num,
+                                    prev_votes=prev_votes)
 
     async def create_not_data(self,
                               data_number: int,

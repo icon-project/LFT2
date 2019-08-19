@@ -51,7 +51,8 @@ async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[by
         round_num=1,
         node_id=TEST_NODE_ID,
         candidate_data=genesis_data,
-        voters=voters
+        voters=voters,
+        votes=None
     )
 
     await sync_layer._on_init(init_event)

@@ -9,7 +9,8 @@ class ConsensusDataFactory(ABC):
                           data_number: int,
                           prev_id: bytes,
                           term_num: int,
-                          round_num: int) -> 'ConsensusData':
+                          round_num: int,
+                          prev_votes: Sequence['ConsensusVote']) -> 'ConsensusData':
         raise NotImplementedError
 
     @abstractmethod
