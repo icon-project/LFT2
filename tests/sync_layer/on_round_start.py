@@ -19,7 +19,7 @@ import pytest
 
 from lft.app.data import DefaultConsensusData, DefaultConsensusDataFactory, DefaultConsensusVoteFactory
 from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastConsensusDataEvent, ReceivedConsensusDataEvent, \
-    BroadcastConsensusVoteEvent, ReceivedConsensusVoteEvent
+    BroadcastConsensusVoteEvent, ReceivedConsensusVoteEvent, StartRoundEvent
 from tests.sync_layer.on_sequence_vote_test import get_event
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID
 
@@ -59,10 +59,10 @@ async def test_on_round_start():
         )
 
     # WHEN
-    await sync_layer._on_sequence_start_round(
+    await sync_layer._on_start_round(
         StartRoundEvent(
-            term=0,
-            round_num=1,
+            term_num=0,
+            round_num=2,
             voters=voters
         )
     )

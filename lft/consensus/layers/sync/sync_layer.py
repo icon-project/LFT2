@@ -143,3 +143,6 @@ class SyncLayer:
                 commit_data=None
             )
         self._event_system.simulator.raise_event(done_round)
+
+    async def _on_start_round(self, param):
+        pass

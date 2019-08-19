@@ -67,3 +67,10 @@ class VoteSequence(Event):
     """ from async layer to sync layer
     """
     vote: 'ConsensusVote'
+
+
+@dataclass
+class StartRoundEvent(Event):
+    term_num: int
+    round_num: int
+    voters: Sequence[bytes]
