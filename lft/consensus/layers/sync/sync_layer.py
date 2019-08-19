@@ -147,7 +147,16 @@ class SyncLayer:
             term=self._term,
             round_num=start_round_event.round_num
         )
-        if self._term.verify_proposer(self._node_id, self._sync_round.round_num):
+        print("on_start_round")
+        print(self._node_id)
+        print(self._sync_round.round_num)
+        print(self._term.get_proposer_id(self._sync_round.round_num))
+        try:
+            self._term.verify_proposer(self._node_id, self._sync_round.round_num)
+        except Exception:
+            pass
+        else:
+            print("is leader")
             new_data = await self._data_factory.create_data(
                 data_number=self._candidate_info.candidate_data.number + 1,
                 prev_id=self._candidate_info.candidate_data.id,
@@ -181,4 +190,5 @@ class SyncLayer:
                     vote=vote
                 )
             )
+
 

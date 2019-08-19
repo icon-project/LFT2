@@ -41,7 +41,7 @@ async def test_on_round_start():
             DefaultConsensusData(
                 id_=b'data',
                 prev_id=CANDIDATE_ID,
-                proposer_id=voters[0],
+                proposer_id=voters[1],
                 number=1,
                 term_num=0,
                 round_num=1,
@@ -80,7 +80,7 @@ async def test_on_round_start():
         event_system=event_system,
         prev_id=b'data',
         round_num=2,
-        proposer_id=voters[1],
+        proposer_id=voters[2],
         term_num=0,
         number=2
     )
@@ -131,7 +131,7 @@ def verify_prev_votes(consensus_data: ConsensusData, prev_id, round_num, term_nu
         assert vote.data_id == consensus_data.prev_id
         assert vote.voter_id in voters
         compare_voters.append(vote.voter_id)
-    assert len(compare_voters) == len(voters)
+    assert len(compare_voters) >= (2 * len(voters)) / 3
 
 
 async def verify_vote_events(event_system, data_id, commit_id, round_num, term_num):
