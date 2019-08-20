@@ -83,6 +83,8 @@ class SyncLayer:
         return False
 
     async def _verify_data(self, data):
+        if data.proposer_id == self._node_id:
+            return True
         try:
             await self._data_verifier.verify(data)
         except Exception as e:
