@@ -23,7 +23,7 @@ def async_layer_items(init_round_num: int, voter_num: int):
     data_factory = DefaultConsensusDataFactory(node_id)
     voters_factories = [DefaultConsensusVoteFactory(voter) for voter in voters]
 
-    event = InitializeEvent(0, init_round_num, voters[0], None, voters)
+    event = InitializeEvent(0, init_round_num, voters[0], None, None, voters)
     event_system.simulator.raise_event(event)
 
     return node_id, event_system, async_layer, voters, data_factory, voters_factories

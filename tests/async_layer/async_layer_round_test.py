@@ -20,7 +20,7 @@ async def test_async_layer_past_round_data(async_layer_items,
                                            data_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
-    data = await data_factory.create_data(0, os.urandom(16), 0, data_round_num)
+    data = await data_factory.create_data(0, os.urandom(16), 0, data_round_num, [])
     event = ReceivedConsensusDataEvent(data)
     event_system.simulator.raise_event(event)
 
@@ -62,7 +62,7 @@ async def test_async_layer_future_round_data(async_layer_items,
                                              data_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
-    data = await data_factory.create_data(0, os.urandom(16), 0, data_round_num)
+    data = await data_factory.create_data(0, os.urandom(16), 0, data_round_num, [])
     event = ReceivedConsensusDataEvent(data)
     event_system.simulator.raise_event(event)
 
@@ -97,4 +97,3 @@ async def test_async_layer_future_round_vote(async_layer_items,
     for voter, vote in zip(voters, votes):
         assert len(async_layer._vote_dict[vote_round_num][voter]) == 1
         assert vote is async_layer._vote_dict[vote_round_num][voter][vote.id]
-

@@ -9,7 +9,7 @@ from .conftest import start_event_system
 async def test_async_layer_basic(async_layer_items, init_round_num, voter_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
-    data = await data_factory.create_data(0, os.urandom(16), 0, 0)
+    data = await data_factory.create_data(0, os.urandom(16), 0, 0, [])
     event = ReceivedConsensusDataEvent(data)
     event_system.simulator.raise_event(event)
 
