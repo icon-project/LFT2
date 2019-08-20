@@ -38,16 +38,7 @@ async def test_on_round_start():
     event_system, sync_layer, voters, genesis_data = await setup_sync_layer(QUORUM)
     await add_propose(event_system, sync_layer, voters)
 
-    for voter in voters:
-        vote = await DefaultConsensusVoteFactory(voter).create_vote(
-            data_id=b'data',
-            commit_id=CANDIDATE_ID,
-            term_num=0,
-            round_num=1
-        )
-        await sync_layer._on_sequence_vote(
-            VoteSequence(vote)
-        )
+    await do_success_vote(sync_layer, voters)
 
     # WHEN
     await sync_layer._on_start_round(
@@ -90,6 +81,19 @@ async def test_on_round_start():
         print("remain event: " + event)
 
     return sync_layer, event_system, voters
+
+
+async def do_success_vote(sync_layer, voters):
+    for voter in voters:
+        vote = await DefaultConsensusVoteFactory(voter).create_vote(
+            data_id=b'data',
+            commit_id=CANDIDATE_ID,
+            term_num=0,
+            round_num=1
+        )
+        await sync_layer._on_sequence_vote(
+            VoteSequence(vote)
+        )
 
 
 @pytest.mark.asyncio
@@ -152,6 +156,27 @@ async def test_start_past_round():
     with pytest.raises(QueueEmpty):
         event = await get_event(event_system)
         print("remain event: " + event)
+
+
+@pytest.mark.asyncio
+async def test_start_future_round():
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(QUORUM)
+    await add_propose(event_system, sync_layer, voters)
+    await do_success_vote(sync_layer, voters)
+    event = await get_event(event_system)
+
+    await sync_layer._on_start_round(
+        StartRoundEvent(
+            term_num=0,
+            round_num=9,
+            voters=voters
+        )
+    )
+    with pytest.raises(QueueEmpty):
+        event = await get_event(event_system)
+        print("remain event: " + event)
+
+    assert sync_layer._sync_round.round_num == 1
 
 
 async def add_propose(event_system, sync_layer, voters):

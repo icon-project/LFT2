@@ -125,7 +125,7 @@ class SyncLayer:
         self._event_system.simulator.raise_event(done_round)
 
     async def _on_start_round(self, start_round_event: StartRoundEvent):
-        if self._term.num >= start_round_event.term_num and self._sync_round.round_num >= start_round_event.round_num:
+        if not self._is_next_round(start_round_event):
             return
         if self._term.num != start_round_event.term_num:
             self._term = self._term_factory.create_term(start_round_event.term_num, start_round_event.voters)
@@ -171,3 +171,12 @@ class SyncLayer:
                     vote=vote
                 )
             )
+
+    def _is_next_round(self, start_round_event: StartRoundEvent) -> bool:
+        if start_round_event.term_num == self._sync_round.term_num \
+                and start_round_event.round_num == self._sync_round.round_num + 1:
+            return True
+        elif start_round_event.term_num == self._sync_round.term_num + 1 \
+                and start_round_event.round_num == 0:
+            return True
+        return False
