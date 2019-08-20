@@ -36,22 +36,7 @@ async def test_on_round_start():
     """
     # GIVEN
     event_system, sync_layer, voters, genesis_data = await setup_sync_layer(QUORUM)
-    await sync_layer._on_sequence_propose(
-        ProposeSequence(
-            DefaultConsensusData(
-                id_=b'data',
-                prev_id=CANDIDATE_ID,
-                proposer_id=voters[1],
-                number=1,
-                term_num=0,
-                round_num=1,
-                prev_votes=None
-            )
-        )
-    )
-    # pop vote
-    event = await get_event(event_system)
-    event = await get_event(event_system)
+    await add_propose(event_system, sync_layer, voters)
 
     for voter in voters:
         vote = await DefaultConsensusVoteFactory(voter).create_vote(
@@ -103,6 +88,89 @@ async def test_on_round_start():
     with pytest.raises(QueueEmpty):
         event = await get_event(event_system)
         print("remain event: " + event)
+
+    return sync_layer, event_system, voters
+
+
+@pytest.mark.asyncio
+async def test_prev_round_is_failed():
+    # GIVEN
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(QUORUM)
+    await add_propose(event_system, sync_layer, voters)
+
+    for voter in voters:
+        vote = await DefaultConsensusVoteFactory(voter).create_none_vote(
+            term_num=0,
+            round_num=1
+        )
+        await sync_layer._on_sequence_vote(
+            VoteSequence(vote)
+        )
+
+    # WHEN
+    await sync_layer._on_start_round(
+        StartRoundEvent(
+            term_num=0,
+            round_num=2,
+            voters=voters
+        )
+    )
+    event = await get_event(event_system)
+
+    # THEN
+    consensus_data = await verify_data_events(
+        event_system=event_system,
+        prev_id=CANDIDATE_ID,
+        round_num=2,
+        proposer_id=voters[2],
+        term_num=0,
+        number=1
+    )
+    await verify_vote_events(
+        event_system=event_system,
+        data_id=consensus_data.id,
+        commit_id=CANDIDATE_ID,
+        round_num=2,
+        term_num=0
+    )
+
+    with pytest.raises(QueueEmpty):
+        event = await get_event(event_system)
+        print("remain event: " + event)
+
+
+@pytest.mark.asyncio
+async def test_start_past_round():
+    sync_layer, event_system, voters = await test_on_round_start()
+    await sync_layer._on_start_round(
+        StartRoundEvent(
+            term_num=0,
+            round_num=1,
+            voters=voters
+        )
+    )
+    with pytest.raises(QueueEmpty):
+        event = await get_event(event_system)
+        print("remain event: " + event)
+
+
+async def add_propose(event_system, sync_layer, voters):
+    await sync_layer._on_sequence_propose(
+        ProposeSequence(
+            DefaultConsensusData(
+                id_=b'data',
+                prev_id=CANDIDATE_ID,
+                proposer_id=voters[1],
+                number=1,
+                term_num=0,
+                round_num=1,
+                prev_votes=None
+            )
+        )
+    )
+    # pop vote
+    event = await get_event(event_system)
+    event = await get_event(event_system)
 
 
 async def verify_data_events(event_system, prev_id, round_num, proposer_id, term_num, number) -> ConsensusData:

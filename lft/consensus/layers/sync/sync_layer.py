@@ -103,22 +103,6 @@ class SyncLayer:
                        votes=round_result.votes
                    )
 
-    async def _start_new_round(self):
-        self._sync_round = SyncRound(
-            term=self._term,
-            round_num=self._sync_round.round_num + 1
-        )
-        if self._term.get_proposer_id(self._sync_round.round_num) == self._node_id:
-            self._event_system.simulator.raise_event(BroadcastConsensusDataEvent(
-                data=proposer
-            ))
-
-            received_event = ReceivedConsensusDataEvent(
-                data=proposer
-            )
-            received_event.deterministic = True
-            self._event_system.simulator.raise_event(received_event)
-
     async def _raise_done_round(self, round_result: RoundResult):
         if round_result.is_success:
             done_round = DoneRoundEvent(
@@ -141,22 +125,19 @@ class SyncLayer:
         self._event_system.simulator.raise_event(done_round)
 
     async def _on_start_round(self, start_round_event: StartRoundEvent):
+        if self._term.num >= start_round_event.term_num and self._sync_round.round_num >= start_round_event.round_num:
+            return
         if self._term.num != start_round_event.term_num:
             self._term = self._term_factory.create_term(start_round_event.term_num, start_round_event.voters)
         self._sync_round = SyncRound(
             term=self._term,
             round_num=start_round_event.round_num
         )
-        print("on_start_round")
-        print(self._node_id)
-        print(self._sync_round.round_num)
-        print(self._term.get_proposer_id(self._sync_round.round_num))
         try:
             self._term.verify_proposer(self._node_id, self._sync_round.round_num)
         except Exception:
             pass
         else:
-            print("is leader")
             new_data = await self._data_factory.create_data(
                 data_number=self._candidate_info.candidate_data.number + 1,
                 prev_id=self._candidate_info.candidate_data.id,
@@ -190,5 +171,3 @@ class SyncLayer:
                     vote=vote
                 )
             )
-
-
