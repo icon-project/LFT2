@@ -20,8 +20,7 @@ import pytest
 
 from lft.app.data import DefaultConsensusVote, DefaultConsensusData
 from lft.consensus.events import BroadcastConsensusVoteEvent, ProposeSequence, ReceivedConsensusVoteEvent
-from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID
-
+from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, verify_no_events
 
 PROPOSE_ID = b"b"
 
@@ -72,6 +71,5 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
 
     # WHEN
     await sync_layer._on_sequence_propose(ProposeSequence(data=second_propose))
-    with pytest.raises(QueueEmpty):
-        event_system.simulator._event_tasks.get_nowait()
+    await verify_no_events(event_system)
     print("Success")

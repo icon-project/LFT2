@@ -13,16 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import asyncio
-from asyncio import QueueEmpty
 
 import pytest
 
 from lft.app.data import DefaultConsensusData, DefaultConsensusVoteFactory
 from lft.consensus.data import ConsensusData
 from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastConsensusVoteEvent, \
-    BroadcastConsensusDataEvent, ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
-from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, TEST_NODE_ID
+    ReceivedConsensusVoteEvent
+from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 
 QUORUM = 7
 PROPOSE_ID = b'propose'
@@ -111,14 +109,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
         else:
             verify_fail_done_round(done_round=done_round)
 
-    with pytest.raises(QueueEmpty):
-        event = await get_event(event_system)
-        print("remain event: " + event)
-
-
-async def get_event(event_system):
-    non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
-    return event
+    await verify_no_events(event_system)
 
 
 def verify_fail_done_round(done_round: DoneRoundEvent):

@@ -13,7 +13,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from asyncio.queues import QueueEmpty
 from typing import Tuple, Sequence, List
+
+import pytest
 
 from lft.app.data import DefaultConsensusVoteFactory, DefaultConsensusDataFactory, DefaultConsensusData
 from lft.consensus.data import ConsensusData
@@ -54,7 +57,17 @@ async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[by
         voters=voters,
         votes=None
     )
-
     await sync_layer._on_init(init_event)
 
     return event_system, sync_layer, voters, genesis_data
+
+
+async def get_event(event_system):
+    non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
+    return event
+
+
+async def verify_no_events(event_system):
+    with pytest.raises(QueueEmpty):
+        event = await get_event(event_system)
+        print("remain event: " + event)

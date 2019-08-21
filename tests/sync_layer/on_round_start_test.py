@@ -22,8 +22,7 @@ from lft.app.data import DefaultConsensusData, DefaultConsensusDataFactory, Defa
 from lft.consensus.data import ConsensusData
 from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastConsensusDataEvent, ReceivedConsensusDataEvent, \
     BroadcastConsensusVoteEvent, ReceivedConsensusVoteEvent, StartRoundEvent
-from tests.sync_layer.on_sequence_vote_test import get_event
-from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID
+from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, get_event, verify_no_events
 
 QUORUM = 7
 
@@ -75,25 +74,9 @@ async def test_on_round_start():
         round_num=2,
         term_num=0
     )
-
-    with pytest.raises(QueueEmpty):
-        event = await get_event(event_system)
-        print("remain event: " + event)
+    await verify_no_events(event_system)
 
     return sync_layer, event_system, voters
-
-
-async def do_success_vote(sync_layer, voters):
-    for voter in voters:
-        vote = await DefaultConsensusVoteFactory(voter).create_vote(
-            data_id=b'data',
-            commit_id=CANDIDATE_ID,
-            term_num=0,
-            round_num=1
-        )
-        await sync_layer._on_sequence_vote(
-            VoteSequence(vote)
-        )
 
 
 @pytest.mark.asyncio
@@ -138,9 +121,7 @@ async def test_prev_round_is_failed():
         term_num=0
     )
 
-    with pytest.raises(QueueEmpty):
-        event = await get_event(event_system)
-        print("remain event: " + event)
+    await verify_no_events(event_system)
 
 
 @pytest.mark.asyncio
@@ -153,9 +134,7 @@ async def test_start_past_round():
             voters=voters
         )
     )
-    with pytest.raises(QueueEmpty):
-        event = await get_event(event_system)
-        print("remain event: " + event)
+    await verify_no_events(event_system)
 
 
 @pytest.mark.asyncio
@@ -172,11 +151,22 @@ async def test_start_future_round():
             voters=voters
         )
     )
-    with pytest.raises(QueueEmpty):
-        event = await get_event(event_system)
-        print("remain event: " + event)
+    await verify_no_events(event_system)
 
     assert sync_layer._sync_round.round_num == 1
+
+
+async def do_success_vote(sync_layer, voters):
+    for voter in voters:
+        vote = await DefaultConsensusVoteFactory(voter).create_vote(
+            data_id=b'data',
+            commit_id=CANDIDATE_ID,
+            term_num=0,
+            round_num=1
+        )
+        await sync_layer._on_sequence_vote(
+            VoteSequence(vote)
+        )
 
 
 async def add_propose(event_system, sync_layer, voters):
