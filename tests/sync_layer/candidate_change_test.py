@@ -16,7 +16,8 @@
 import pytest
 
 from lft.app.data import DefaultConsensusData, DefaultConsensusVoteFactory
-from lft.consensus.events import ProposeSequence, VoteSequence, DoneRoundEvent
+from lft.consensus.events import ProposeSequence, VoteSequence, DoneRoundEvent, StartRoundEvent, \
+    BroadcastConsensusVoteEvent
 from tests.sync_layer.setup_sync_layer import *
 
 
@@ -59,6 +60,18 @@ async def test_candidate_change_by_vote():
     # pop done_round_event
     await get_event(event_system)
     # WHEN
+    await sync_layer._on_start_round(
+        StartRoundEvent(
+            term_num=0,
+            round_num=2,
+            voters=voters
+        )
+    )
+    await get_event(event_system)
+    await get_event(event_system)
+    await get_event(event_system)
+    await get_event(event_system)
+
     second_candidate_id = b'second_candidate'
     second_candidate_data = DefaultConsensusData(
         id_=second_candidate_id,
@@ -72,7 +85,13 @@ async def test_candidate_change_by_vote():
     await sync_layer._on_sequence_propose(
         ProposeSequence(second_candidate_data)
     )
+    event: BroadcastConsensusVoteEvent = await get_event(event_system)
+    assert event.vote.is_none()
+    # Pop received event
+    await get_event(event_system)
+
     await verify_no_events(event_system)
+
     for voter in voters:
          await sync_layer._on_sequence_vote(
              VoteSequence(
@@ -85,7 +104,7 @@ async def test_candidate_change_by_vote():
              )
          )
 
-    #THEN
+    # THEN
     event: DoneRoundEvent = await get_event(event_system)
     assert isinstance(event, DoneRoundEvent)
     assert event.candidate_data == second_candidate_data
