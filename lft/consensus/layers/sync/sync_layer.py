@@ -1,3 +1,6 @@
+from collections import defaultdict
+from typing import Dict
+
 from lft.consensus.data import ConsensusDataFactory, ConsensusVoteFactory, ConsensusDataVerifier, ConsensusVoteVerifier, \
     ConsensusData, ConsensusVote
 from lft.consensus.layers.sync.candidate_info import CandidateInfo
@@ -22,6 +25,7 @@ class SyncLayer:
         self._vote_verifier: ConsensusVoteVerifier = None
 
         self._candidate_info: CandidateInfo = None
+        self._data_pool: Dict[int, Dict[bytes, ConsensusData]]= defaultdict(dict)
         self._sync_round: SyncRound = None
         self._term: Term = None
         self._node_id: bytes = None
@@ -38,6 +42,7 @@ class SyncLayer:
             candidate_data=init_event.candidate_data,
             votes=init_event.votes
         )
+        self._data_pool[init_event.candidate_data.number][init_event.candidate_data.id] = init_event.candidate_data
         self._node_id = init_event.node_id
         self._term = self._term_factory.create_term(term_num=init_event.term_num,
                                                     voters=init_event.voters)
@@ -55,6 +60,25 @@ class SyncLayer:
         :return:
         """
         data = propose_sequence.data
+        if data.number == self._candidate_info.candidate_data.number or \
+            data.number == self._candidate_info.candidate_data.number + 1:
+            self._data_pool[data.number][data.id] = data
+        try:
+            if data.prev_votes[0].data_id != self._candidate_info.candidate_data.id:
+                if data.prev_votes[0].term_num == self._candidate_info.candidate_data.term_num:
+                    if data.prev_votes[0].round_num > self._candidate_info.candidate_data.round_num:
+                        self._candidate_info = CandidateInfo(
+                            candidate_data=self._data_pool[data.number - 1][data.prev_votes[0].data_id],
+                            votes=data.prev_votes
+                        )
+                elif data.prev_votes[0].term_num > self._candidate_info.candidate_data.term_num:
+                    self._candidate_info = CandidateInfo(
+                        candidate_data=self._data_pool[data.number - 1][data.prev_votes[0].data_id],
+                        votes=data.prev_votes
+                    )
+        except:
+            pass
+
         vote = None
         if self._verify_is_connect_to_candidate(data) and await self._verify_data(data) and not data.is_not():
             vote = await self._vote_factory.create_vote(data_id=data.id,
@@ -64,7 +88,6 @@ class SyncLayer:
         else:
             vote = await self._vote_factory.create_none_vote(term_num=self._sync_round.term_num,
                                                              round_num=self._sync_round.round_num)
-
         self._sync_round.add_data(data)
         if not self._sync_round.is_voted:
             self._sync_round.is_voted = True
@@ -100,10 +123,17 @@ class SyncLayer:
                 self._sync_round.apply()
                 await self._raise_done_round(round_result)
                 if round_result.is_success:
-                   self._candidate_info = CandidateInfo(
-                       candidate_data=round_result.candidate_data,
-                       votes=round_result.votes
-                   )
+                    self._candidate_info = CandidateInfo(
+                        candidate_data=round_result.candidate_data,
+                        votes=round_result.votes
+                    )
+                    del_keys = []
+                    for number in self._data_pool.keys():
+                        print(number)
+                        if number < self._candidate_info.candidate_data.number - 1:
+                            del_keys.append(number)
+                    for number in del_keys:
+                        del self._data_pool[number]
 
     async def _raise_done_round(self, round_result: RoundResult):
         if round_result.is_success:
