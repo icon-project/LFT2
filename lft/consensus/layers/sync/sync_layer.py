@@ -113,7 +113,7 @@ class SyncLayer:
                 round_num=round_result.round_num,
                 votes=round_result.votes,
                 candidate_data=round_result.candidate_data,
-                commit_data=self._candidate_info.candidate_data
+                commit_id=round_result.candidate_data.prev_id
            )
         else:
             done_round = DoneRoundEvent(
@@ -122,7 +122,7 @@ class SyncLayer:
                 round_num=round_result.round_num,
                 votes=round_result.votes,
                 candidate_data=None,
-                commit_data=None
+                commit_id=None
             )
         self._event_system.simulator.raise_event(done_round)
 

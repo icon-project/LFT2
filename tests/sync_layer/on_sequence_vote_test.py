@@ -116,7 +116,7 @@ def verify_fail_done_round(done_round: DoneRoundEvent):
     assert not done_round.is_success
     verify_round_num_is_correct(done_round)
     assert not done_round.candidate_data
-    assert not done_round.commit_data
+    assert not done_round.commit_id
 
 
 def verify_success_done_round(done_round: DoneRoundEvent,
@@ -125,7 +125,7 @@ def verify_success_done_round(done_round: DoneRoundEvent,
     assert done_round.is_success
     verify_round_num_is_correct(done_round)
     assert done_round.candidate_data == expected_candidate
-    assert done_round.commit_data == expected_commit
+    assert done_round.commit_id == expected_commit.id
 
 
 def verify_round_num_is_correct(done_round):

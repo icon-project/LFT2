@@ -108,7 +108,7 @@ async def test_candidate_change_by_vote():
     event: DoneRoundEvent = await get_event(event_system)
     assert isinstance(event, DoneRoundEvent)
     assert event.candidate_data == second_candidate_data
-    assert event.commit_data == genesis_data
+    assert event.commit_id == genesis_data.id
     assert event.round_num == 2
     assert event.term_num == 0
 

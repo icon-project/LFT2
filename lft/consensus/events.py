@@ -4,6 +4,7 @@ from typing import Sequence, Optional
 from lft.event import Event
 from lft.consensus.data import ConsensusData, ConsensusVote
 
+
 @dataclass
 class InitializeEvent(Event):
     """ application to async layer
@@ -52,7 +53,7 @@ class DoneRoundEvent(Event):
     term_num: int
     round_num: int
     candidate_data: Optional['ConsensusData']
-    commit_data: Optional['ConsensusData']
+    commit_id: Optional['bytes']
     votes: Sequence['ConsensusVote']
 
 
