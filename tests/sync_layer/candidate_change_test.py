@@ -29,23 +29,7 @@ async def test_candidate_change_by_vote():
     """
     # GIVEN
     event_system, sync_layer, voters, genesis_data = await setup_sync_layer(quorum=7)
-    first_candidate_id = b'first_candidate'
-    await sync_layer._on_sequence_propose(
-        ProposeSequence(
-            DefaultConsensusData(
-                id_=first_candidate_id,
-                prev_id=CANDIDATE_ID,
-                proposer_id=voters[1],
-                number=1,
-                term_num=0,
-                round_num=1,
-                prev_votes=[]
-            )
-        )
-    )
-    # pop vote event
-    await get_event(event_system)
-    await get_event(event_system)
+    first_candidate_id = await add_first_candidate(event_system, sync_layer, voters)
     for voter in voters:
         await sync_layer._on_sequence_vote(
             VoteSequence(
@@ -113,6 +97,96 @@ async def test_candidate_change_by_vote():
     assert event.term_num == 0
 
 
+async def add_first_candidate(event_system, sync_layer, voters):
+    first_candidate_id = b'first_candidate'
+    await sync_layer._on_sequence_propose(
+        ProposeSequence(
+            DefaultConsensusData(
+                id_=first_candidate_id,
+                prev_id=CANDIDATE_ID,
+                proposer_id=voters[1],
+                number=1,
+                term_num=0,
+                round_num=1,
+                prev_votes=[]
+            )
+        )
+    )
+    # pop vote event
+    await get_event(event_system)
+    await get_event(event_system)
+    return first_candidate_id
+
+
 @pytest.mark.asyncio
 async def test_candidate_change_by_data():
-    pass
+    """ GIVEN sync_layer that has failed candidate data
+    WHEN add new propose with success votes for prev round
+    THEN sync_layer change candidate data to that data
+    """
+    # GIVEN
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(quorum=7)
+    first_candidate_id = await add_first_candidate(event_system, sync_layer, voters)
+
+    for voter in voters[:2]:
+        await sync_layer._on_sequence_vote(
+            VoteSequence(
+                await DefaultConsensusVoteFactory(voter).create_vote(
+                    data_id=first_candidate_id,
+                    commit_id=CANDIDATE_ID,
+                    term_num=0,
+                    round_num=1
+                )
+            )
+        )
+    for voter in voters[2:]:
+        await sync_layer._on_sequence_vote(
+            VoteSequence(
+                await DefaultConsensusVoteFactory(voter).create_not_vote(
+                    voter_id=voter,
+                    term_num=0,
+                    round_num=1
+                )
+            )
+        )
+    await get_event(event_system)
+    # WHEN
+
+    await sync_layer._on_start_round(
+        StartRoundEvent(
+            term_num=0,
+            round_num=2,
+            voters=voters
+        )
+    )
+    await get_event(event_system)
+    await get_event(event_system)
+    await get_event(event_system)
+    await get_event(event_system)
+
+    success_votes = [await DefaultConsensusVoteFactory(voter).create_vote(first_candidate_id, CANDIDATE_ID, 0, 1)
+                     for voter in voters]
+
+    second_data_id = b'second_data'
+    await sync_layer._on_sequence_propose(
+        ProposeSequence(
+            DefaultConsensusData(
+                id_=second_data_id,
+                prev_id=first_candidate_id,
+                proposer_id=voters[2],
+                number=2,
+                term_num=0,
+                round_num=2,
+                prev_votes=success_votes
+            )
+        )
+    )
+
+    # THEN
+    event: BroadcastConsensusVoteEvent = await get_event(event_system)
+    assert isinstance(event, BroadcastConsensusVoteEvent)
+    assert event.vote.data_id == second_data_id
+    assert event.vote.commit_id == first_candidate_id
+
+    event: BroadcastConsensusVoteEvent = await get_event(event_system)
+    await verify_no_events(event_system)
