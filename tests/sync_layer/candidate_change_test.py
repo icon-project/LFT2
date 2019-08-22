@@ -53,8 +53,6 @@ async def test_candidate_change_by_vote():
     )
     await get_event(event_system)
     await get_event(event_system)
-    await get_event(event_system)
-    await get_event(event_system)
 
     second_candidate_id = b'second_candidate'
     second_candidate_data = DefaultConsensusData(
@@ -70,7 +68,7 @@ async def test_candidate_change_by_vote():
         ProposeSequence(second_candidate_data)
     )
     event: BroadcastConsensusVoteEvent = await get_event(event_system)
-    assert event.vote.is_none()
+
     # Pop received event
     await get_event(event_system)
 
@@ -159,8 +157,6 @@ async def test_candidate_change_by_data():
             voters=voters
         )
     )
-    await get_event(event_system)
-    await get_event(event_system)
     await get_event(event_system)
     await get_event(event_system)
 

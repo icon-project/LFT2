@@ -80,7 +80,12 @@ class SyncLayer:
             pass
 
         vote = None
-        if self._verify_is_connect_to_candidate(data) and await self._verify_data(data) and not data.is_not():
+        if self._node_id == data.proposer_id:
+            vote = await self._vote_factory.create_vote(data_id=data.id,
+                                                        commit_id=self._candidate_info.candidate_data.id,
+                                                        term_num=self._sync_round.term_num,
+                                                        round_num=self._sync_round.round_num)
+        elif self._verify_is_connect_to_candidate(data) and await self._verify_data(data) and not data.is_not():
             vote = await self._vote_factory.create_vote(data_id=data.id,
                                                         commit_id=self._candidate_info.candidate_data.id,
                                                         term_num=self._sync_round.term_num,
@@ -185,22 +190,6 @@ class SyncLayer:
             self._event_system.simulator.raise_event(
                 ReceivedConsensusDataEvent(
                     data=new_data
-                )
-            )
-            vote = await self._vote_factory.create_vote(
-                data_id=new_data.id,
-                commit_id=self._candidate_info.candidate_data.id,
-                term_num=self._term.num,
-                round_num=self._sync_round.round_num
-            )
-            self._event_system.simulator.raise_event(
-                BroadcastConsensusVoteEvent(
-                    vote=vote
-                )
-            )
-            self._event_system.simulator.raise_event(
-                ReceivedConsensusVoteEvent(
-                    vote=vote
                 )
             )
 

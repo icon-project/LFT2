@@ -67,13 +67,6 @@ async def test_on_round_start():
         commit_id=CANDIDATE_ID,
         voters=voters
     )
-    await verify_vote_events(
-        event_system=event_system,
-        data_id=consensus_data.id,
-        commit_id=b'data',
-        round_num=2,
-        term_num=0
-    )
     await verify_no_events(event_system)
 
     return sync_layer, event_system, voters
@@ -112,13 +105,6 @@ async def test_prev_round_is_failed():
         proposer_id=voters[2],
         term_num=0,
         number=1
-    )
-    await verify_vote_events(
-        event_system=event_system,
-        data_id=consensus_data.id,
-        commit_id=CANDIDATE_ID,
-        round_num=2,
-        term_num=0
     )
 
     await verify_no_events(event_system)
@@ -215,17 +201,3 @@ def verify_prev_votes(consensus_data: ConsensusData, prev_id, round_num, term_nu
         assert vote.voter_id in voters
         compare_voters.append(vote.voter_id)
     assert len(compare_voters) >= (2 * len(voters)) / 3
-
-
-async def verify_vote_events(event_system, data_id, commit_id, round_num, term_num):
-    broadcast_vote_event: BroadcastConsensusVoteEvent = await get_event(event_system)
-    assert isinstance(broadcast_vote_event, BroadcastConsensusVoteEvent)
-
-    assert broadcast_vote_event.vote.data_id == data_id
-    assert broadcast_vote_event.vote.commit_id == commit_id
-    assert broadcast_vote_event.vote.term_num == term_num
-    assert broadcast_vote_event.vote.round_num == round_num
-
-    received_vote_event: ReceivedConsensusVoteEvent = await get_event(event_system)
-    assert isinstance(received_vote_event, ReceivedConsensusVoteEvent)
-    assert received_vote_event.vote == broadcast_vote_event.vote
