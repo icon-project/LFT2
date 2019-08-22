@@ -8,6 +8,7 @@ from lft.consensus.layers.sync.sync_round import SyncRound, RoundResult
 from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent, DoneRoundEvent, \
     InitializeEvent, ProposeSequence, VoteSequence, ReceivedConsensusVoteEvent, ReceivedConsensusDataEvent, \
     StartRoundEvent
+from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalConsensusDataContainer
 from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory
 from lft.event import EventSystem
@@ -25,7 +26,7 @@ class SyncLayer:
         self._vote_verifier: ConsensusVoteVerifier = None
 
         self._candidate_info: CandidateInfo = None
-        self._data_pool: Dict[int, Dict[bytes, ConsensusData]]= defaultdict(dict)
+        self._temporal_data_container: TemporalConsensusDataContainer = None
         self._sync_round: SyncRound = None
         self._term: Term = None
         self._node_id: bytes = None
@@ -38,11 +39,12 @@ class SyncLayer:
         self._event_system.simulator.register_handler(StartRoundEvent, self._on_start_round)
 
     async def _on_init(self, init_event: InitializeEvent):
+        self._temporal_data_container = TemporalConsensusDataContainer(init_event.candidate_data.number)
+        self._temporal_data_container.add_data(init_event.candidate_data)
         self._candidate_info = CandidateInfo(
             candidate_data=init_event.candidate_data,
             votes=init_event.votes
         )
-        self._data_pool[init_event.candidate_data.number][init_event.candidate_data.id] = init_event.candidate_data
         self._node_id = init_event.node_id
         self._term = self._term_factory.create_term(term_num=init_event.term_num,
                                                     voters=init_event.voters)
@@ -60,20 +62,18 @@ class SyncLayer:
         :return:
         """
         data = propose_sequence.data
-        if data.number == self._candidate_info.candidate_data.number or \
-            data.number == self._candidate_info.candidate_data.number + 1:
-            self._data_pool[data.number][data.id] = data
+        self._temporal_data_container.add_data(data)
         try:
             if data.prev_votes[0].data_id != self._candidate_info.candidate_data.id:
                 if data.prev_votes[0].term_num == self._candidate_info.candidate_data.term_num:
                     if data.prev_votes[0].round_num > self._candidate_info.candidate_data.round_num:
                         self._candidate_info = CandidateInfo(
-                            candidate_data=self._data_pool[data.number - 1][data.prev_votes[0].data_id],
+                            candidate_data=self._temporal_data_container.get_data(data.number - 1, data.prev_votes[0].data_id),
                             votes=data.prev_votes
                         )
                 elif data.prev_votes[0].term_num > self._candidate_info.candidate_data.term_num:
                     self._candidate_info = CandidateInfo(
-                        candidate_data=self._data_pool[data.number - 1][data.prev_votes[0].data_id],
+                        candidate_data=self._temporal_data_container.get_data(data.number - 1, data.prev_votes[0].data_id),
                         votes=data.prev_votes
                     )
         except:
@@ -132,13 +132,7 @@ class SyncLayer:
                         candidate_data=round_result.candidate_data,
                         votes=round_result.votes
                     )
-                    del_keys = []
-                    for number in self._data_pool.keys():
-                        print(number)
-                        if number < self._candidate_info.candidate_data.number - 1:
-                            del_keys.append(number)
-                    for number in del_keys:
-                        del self._data_pool[number]
+                    self._temporal_data_container.update_criteria(self._candidate_info.candidate_data.number)
 
     async def _raise_done_round(self, round_result: RoundResult):
         if round_result.is_success:
