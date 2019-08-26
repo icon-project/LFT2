@@ -1,6 +1,3 @@
-from collections import defaultdict
-from typing import Dict
-
 from lft.app.data.consensus_votes import ConsensusVotes
 from lft.consensus.data import ConsensusDataFactory, ConsensusVoteFactory, ConsensusDataVerifier, ConsensusVoteVerifier, \
     ConsensusData, ConsensusVote
@@ -12,6 +9,7 @@ from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensus
 from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalConsensusDataContainer
 from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory
+from lft.consensus.term.term import InvalidProposer
 from lft.event import EventSystem
 from lft.event.event_handler_manager import EventHandlerManager
 
@@ -69,7 +67,7 @@ class SyncLayer(EventHandlerManager):
         )
         try:
             self._term.verify_proposer(self._node_id, self._sync_round.round_num)
-        except Exception:
+        except InvalidProposer:
             pass
         else:
             new_data = await self._data_factory.create_data(
@@ -79,16 +77,7 @@ class SyncLayer(EventHandlerManager):
                 round_num=self._sync_round.round_num,
                 prev_votes=self._candidate_info.votes
             )
-            self._event_system.simulator.raise_event(
-                BroadcastConsensusDataEvent(
-                    data=new_data
-                )
-            )
-            self._event_system.simulator.raise_event(
-                ReceivedConsensusDataEvent(
-                    data=new_data
-                )
-            )
+            await self._raise_new_data_events(new_data)
 
     async def _on_sequence_propose(self, propose_sequence: ProposeSequence):
         """ Receive propose
@@ -133,6 +122,46 @@ class SyncLayer(EventHandlerManager):
                     )
                     self._temporal_data_container.update_criteria(self._candidate_info.candidate_data.number)
 
+    async def _raise_new_data_events(self, new_data):
+        self._event_system.simulator.raise_event(
+            BroadcastConsensusDataEvent(
+                data=new_data
+            )
+        )
+        self._event_system.simulator.raise_event(
+            ReceivedConsensusDataEvent(
+                data=new_data
+            )
+        )
+
+    def _raise_broadcast_vote(self, vote: ConsensusVote):
+        self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
+
+        receive_vote_event = ReceivedConsensusVoteEvent(vote=vote)
+        receive_vote_event.deterministic = True
+        self._event_system.simulator.raise_event(receive_vote_event)
+
+    async def _raise_done_round(self, round_result: RoundResult):
+        if round_result.is_success:
+            done_round = DoneRoundEvent(
+                is_success=True,
+                term_num=round_result.term_num,
+                round_num=round_result.round_num,
+                votes=round_result.votes,
+                candidate_data=round_result.candidate_data,
+                commit_id=round_result.candidate_data.prev_id
+            )
+        else:
+            done_round = DoneRoundEvent(
+                is_success=False,
+                term_num=round_result.term_num,
+                round_num=round_result.round_num,
+                votes=round_result.votes,
+                candidate_data=None,
+                commit_id=None
+            )
+        self._event_system.simulator.raise_event(done_round)
+
     async def _check_and_update_candidate(self, data):
         prev_votes = ConsensusVotes.from_list(data.prev_votes)
         if prev_votes.data_id != self._candidate_info.candidate_data.id:
@@ -148,13 +177,6 @@ class SyncLayer(EventHandlerManager):
                     votes=prev_votes.votes
                 )
 
-    def _raise_broadcast_vote(self, vote: ConsensusVote):
-        self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
-
-        receive_vote_event = ReceivedConsensusVoteEvent(vote=vote)
-        receive_vote_event.deterministic = True
-        self._event_system.simulator.raise_event(receive_vote_event)
-
     def _verify_is_connect_to_candidate(self, data: ConsensusData) -> bool:
         if self._candidate_info.candidate_data.id == data.prev_id:
             return True
@@ -169,27 +191,6 @@ class SyncLayer(EventHandlerManager):
             return False
         else:
             return True
-
-    async def _raise_done_round(self, round_result: RoundResult):
-        if round_result.is_success:
-            done_round = DoneRoundEvent(
-                is_success=True,
-                term_num=round_result.term_num,
-                round_num=round_result.round_num,
-                votes=round_result.votes,
-                candidate_data=round_result.candidate_data,
-                commit_id=round_result.candidate_data.prev_id
-           )
-        else:
-            done_round = DoneRoundEvent(
-                is_success=False,
-                term_num=round_result.term_num,
-                round_num=round_result.round_num,
-                votes=round_result.votes,
-                candidate_data=None,
-                commit_id=None
-            )
-        self._event_system.simulator.raise_event(done_round)
 
     def _is_next_round(self, start_round_event: StartRoundEvent) -> bool:
         if start_round_event.term_num == self._sync_round.term_num \
