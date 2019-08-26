@@ -13,11 +13,13 @@ from lft.consensus.layers.sync.temporal_consensus_data_container import Temporal
 from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory
 from lft.event import EventSystem
+from lft.event.event_handler_manager import EventHandlerManager
 
 
-class SyncLayer:
+class SyncLayer(EventHandlerManager):
     def __init__(self, event_system: EventSystem, data_factory: ConsensusDataFactory,
                  vote_factory: ConsensusVoteFactory, term_factory: TermFactory):
+        super().__init__(event_system)
         self._event_system: EventSystem = event_system
         self._data_factory: ConsensusDataFactory = data_factory
         self._vote_factory: ConsensusVoteFactory = vote_factory
@@ -34,10 +36,10 @@ class SyncLayer:
         self._register_handler()
 
     def _register_handler(self):
-        self._event_system.simulator.register_handler(InitializeEvent, self._on_init)
-        self._event_system.simulator.register_handler(ProposeSequence, self._on_sequence_propose)
-        self._event_system.simulator.register_handler(VoteSequence, self._on_sequence_vote)
-        self._event_system.simulator.register_handler(StartRoundEvent, self._on_start_round)
+        self._add_handler(InitializeEvent, self._on_init)
+        self._add_handler(StartRoundEvent, self._on_start_round)
+        self._add_handler(ProposeSequence, self._on_sequence_propose)
+        self._add_handler(VoteSequence, self._on_sequence_vote)
 
     async def _on_init(self, init_event: InitializeEvent):
         self._temporal_data_container = TemporalConsensusDataContainer(init_event.candidate_data.number)

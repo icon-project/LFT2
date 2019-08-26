@@ -5,6 +5,7 @@ from lft.consensus.events import (ReceivedConsensusDataEvent, ReceivedConsensusV
 from lft.consensus.data import ConsensusData, ConsensusDataFactory, ConsensusVote, ConsensusVoteFactory
 from lft.consensus.term import Term, RotateTerm
 from lft.event import EventSystem
+from lft.event.event_handler_manager import EventHandlerManager
 from lft.event.mediators import DelayedEventMediator
 
 TIMEOUT_PROPOSE = 2.0
@@ -18,12 +19,13 @@ VoteByVoterID = DefaultDict[bytes, VoteByID]  # dict[voter_id][id] = ConsensusVo
 VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = ConsensusVote
 
 
-class AsyncLayer:
+class AsyncLayer(EventHandlerManager):
     def __init__(self,
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: ConsensusDataFactory,
                  vote_factory: ConsensusVoteFactory):
+        super().__init__(event_system)
         self._node_id = node_id
         self._event_system = event_system
         self._data_factory = data_factory
@@ -36,26 +38,7 @@ class AsyncLayer:
         self._data_num = -1
 
         self._vote_timeout_started = False
-
-        simulator = event_system.simulator
-        self._handlers = {
-            InitializeEvent:
-                simulator.register_handler(InitializeEvent, self._on_event_initialize),
-            DoneRoundEvent:
-                simulator.register_handler(DoneRoundEvent, self._on_event_done_round),
-            ReceivedConsensusDataEvent:
-                simulator.register_handler(ReceivedConsensusDataEvent, self._on_event_received_consensus_data),
-            ReceivedConsensusVoteEvent:
-                simulator.register_handler(ReceivedConsensusVoteEvent, self._on_event_received_consensus_vote)
-        }
-
-    def __del__(self):
-        self.close()
-
-    def close(self):
-        for event_type, handler in self._handlers.items():
-            self._event_system.simulator.unregister_handler(event_type, handler)
-        self._handlers.clear()
+        self._register_handlers()
 
     async def _on_event_initialize(self, event: InitializeEvent):
         new_data_num = event.candidate_data.number + 1 if event.candidate_data else 0
@@ -157,6 +140,12 @@ class AsyncLayer:
                                                             self._term.num,
                                                             self._round_num)
             await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
+
+    def _register_handlers(self):
+        self._add_handler(InitializeEvent, self._on_event_initialize)
+        self._add_handler(DoneRoundEvent, self._on_event_done_round)
+        self._add_handler(ReceivedConsensusDataEvent, self._on_event_received_consensus_data)
+        self._add_handler(ReceivedConsensusVoteEvent, self._on_event_received_consensus_vote)
 
     def _is_acceptable_data(self, data: ConsensusData):
         if self._term.num != data.term_num:

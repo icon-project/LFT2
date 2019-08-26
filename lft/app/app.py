@@ -42,6 +42,11 @@ class App(ABC):
             loop.run_until_complete(loop.shutdown_asyncgens())
             loop.close()
 
+    def _raise_init_event(self, init_node: Node, nodes: List[Node]):
+        event = InitializeEvent(0, 0, None, tuple(node.node_id for node in nodes))
+        event.deterministic = False
+        init_node.event_system.simulator.raise_event(event)
+
 
 class InstantApp(App):
     def __init__(self, number: int):
@@ -51,9 +56,7 @@ class InstantApp(App):
         for node in nodes:
             node.start(False)
 
-            event = InitializeEvent(0, 0, None, tuple(node.node_id for node in nodes))
-            event.deterministic = False
-            node.event_system.simulator.raise_event(event)
+            self._raise_init_event(node, nodes)
 
     def _gen_nodes(self) -> List[Node]:
         return [Node(os.urandom(16)) for _ in range(self.number)]
@@ -72,9 +75,7 @@ class RecordApp(App):
             record_io = open(str(node_path.joinpath(RECORD_PATH)), 'w')
             node.start_record(record_io, blocking=False)
 
-            event = InitializeEvent(0, 0, None, tuple(node.node_id for node in nodes))
-            event.deterministic = False
-            node.event_system.simulator.raise_event(event)
+            self._raise_init_event(node, nodes)
 
     def _gen_nodes(self) -> List[Node]:
         self.path.mkdir(parents=True, exist_ok=True)
