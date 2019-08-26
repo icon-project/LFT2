@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Dict
 
+from lft.app.data.consensus_votes import ConsensusVotes
 from lft.consensus.data import ConsensusDataFactory, ConsensusVoteFactory, ConsensusDataVerifier, ConsensusVoteVerifier, \
     ConsensusData, ConsensusVote
 from lft.consensus.layers.sync.candidate_info import CandidateInfo
@@ -63,22 +64,8 @@ class SyncLayer:
         """
         data = propose_sequence.data
         self._temporal_data_container.add_data(data)
-        try:
-            if data.prev_votes[0].data_id != self._candidate_info.candidate_data.id:
-                if data.prev_votes[0].term_num == self._candidate_info.candidate_data.term_num:
-                    if data.prev_votes[0].round_num > self._candidate_info.candidate_data.round_num:
-                        self._candidate_info = CandidateInfo(
-                            candidate_data=self._temporal_data_container.get_data(data.number - 1, data.prev_votes[0].data_id),
-                            votes=data.prev_votes
-                        )
-                elif data.prev_votes[0].term_num > self._candidate_info.candidate_data.term_num:
-                    self._candidate_info = CandidateInfo(
-                        candidate_data=self._temporal_data_container.get_data(data.number - 1, data.prev_votes[0].data_id),
-                        votes=data.prev_votes
-                    )
-        except:
-            pass
-
+        if data.prev_votes:
+            await self._check_and_update_candidate(data)
         vote = None
         if self._node_id == data.proposer_id:
             vote = await self._vote_factory.create_vote(data_id=data.id,
@@ -97,6 +84,21 @@ class SyncLayer:
         if not self._sync_round.is_voted:
             self._sync_round.is_voted = True
             self._raise_broadcast_vote(vote)
+
+    async def _check_and_update_candidate(self, data):
+        prev_votes = ConsensusVotes.from_list(data.prev_votes)
+        if prev_votes.data_id != self._candidate_info.candidate_data.id:
+            if prev_votes.term_num == self._candidate_info.candidate_data.term_num:
+                if prev_votes.round_num > self._candidate_info.candidate_data.round_num:
+                    self._candidate_info = CandidateInfo(
+                        candidate_data=self._temporal_data_container.get_data(data.number - 1, prev_votes.data_id),
+                        votes=prev_votes.votes
+                    )
+            elif prev_votes.term_num > self._candidate_info.candidate_data.term_num:
+                self._candidate_info = CandidateInfo(
+                    candidate_data=self._temporal_data_container.get_data(data.number - 1, prev_votes.data_id),
+                    votes=prev_votes.votes
+                )
 
     def _raise_broadcast_vote(self, vote: ConsensusVote):
         self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))

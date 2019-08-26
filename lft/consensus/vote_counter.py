@@ -13,16 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from collections import defaultdict
 from typing import Dict, Set, Sequence
 
 from lft.app.data.consensus_votes import ConsensusVotes
-from lft.consensus.data import ConsensusVote, ConsensusData
+from lft.consensus.data import ConsensusVote
 
 
 class VoteCounter:
     def __init__(self):
-        self._votes: Dict[bytes, 'ConsensusVotes'] = PramsDefaultDict(ConsensusVotes)
+        self._votes: Dict[bytes, 'ConsensusVotes'] = {}
         self._voters: Set[bytes] = set()
         self._majority_id: bytes = b''
 
@@ -32,11 +31,14 @@ class VoteCounter:
 
     @property
     def majority_votes(self) -> Sequence['ConsensusVote']:
-        return self._votes[self._majority_id].votes
+        try:
+            return self._votes[self._majority_id].votes
+        except KeyError:
+            return []
 
     @property
     def majority_counts(self) -> int:
-        return len(self._votes[self._majority_id])
+        return len(self.majority_votes)
 
     @property
     def voter_counts(self) -> int:
@@ -51,19 +53,14 @@ class VoteCounter:
 
     def add_vote(self, vote: ConsensusVote):
         if not vote.is_not():
-            self._votes[vote.data_id].add_vote(vote)
+            votes = self._votes.get(vote.data_id)
+            if not votes:
+                self._votes[vote.data_id] = ConsensusVotes(vote.data_id, vote.term_num, vote.round_num)
+                votes = self._votes.get(vote.data_id)
+            votes.add_vote(vote)
+            self._update_majority(vote.data_id)
         self._voters.add(vote.voter_id)
-        self._update_majority(vote.data_id)
 
     def _update_majority(self, data_id: bytes):
         if len(self._votes[data_id]) > self.majority_counts:
             self._majority_id = data_id
-
-
-class PramsDefaultDict(defaultdict):
-    def __missing__(self, key):
-        if self.default_factory is None:
-            raise KeyError(key)
-        else:
-            ret = self[key] = self.default_factory(key)
-            return ret

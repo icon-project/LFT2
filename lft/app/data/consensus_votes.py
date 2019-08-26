@@ -19,14 +19,24 @@ from lft.consensus.data import ConsensusVote
 
 
 class ConsensusVotes:
-    def __init__(self, data_id: bytes):
+    def __init__(self, data_id: bytes, term_num: int, round_num: int):
         self._data_id: bytes = data_id
+        self._term_num: int = term_num
+        self._round_num: int = round_num
         self._voters = set()
         self._votes: List['ConsensusVote'] = []
 
     @property
     def data_id(self) -> bytes:
         return self._data_id
+
+    @property
+    def term_num(self) -> int:
+        return self._term_num
+
+    @property
+    def round_num(self) -> int:
+        return self._round_num
 
     @property
     def votes(self) -> Sequence['ConsensusVote']:
@@ -42,9 +52,8 @@ class ConsensusVotes:
                 self._voters.add(vote.voter_id)
 
     @classmethod
-    def from_list(cls, consensus_votes: List['ConsensusVote']) -> 'ConsensusVotes':
-        data_id = consensus_votes[0].data_id
-        new_object = cls(data_id)
+    def from_list(cls, consensus_votes: Sequence['ConsensusVote']) -> 'ConsensusVotes':
+        new_object = cls(consensus_votes[0].data_id, consensus_votes[0].term_num, consensus_votes[0].round_num)
         for vote in consensus_votes:
             new_object.add_vote(vote)
         return new_object
