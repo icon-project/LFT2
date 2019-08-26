@@ -59,25 +59,16 @@ class SyncLayer(EventHandlerManager):
     async def _on_start_round(self, start_round_event: StartRoundEvent):
         if not self._is_next_round(start_round_event):
             return
+
         if self._term.num != start_round_event.term_num:
             self._term = self._term_factory.create_term(start_round_event.term_num, start_round_event.voters)
+
         self._sync_round = SyncRound(
             term=self._term,
             round_num=start_round_event.round_num
         )
-        try:
-            self._term.verify_proposer(self._node_id, self._sync_round.round_num)
-        except InvalidProposer:
-            pass
-        else:
-            new_data = await self._data_factory.create_data(
-                data_number=self._candidate_info.candidate_data.number + 1,
-                prev_id=self._candidate_info.candidate_data.id,
-                term_num=self._sync_round.term_num,
-                round_num=self._sync_round.round_num,
-                prev_votes=self._candidate_info.votes
-            )
-            await self._raise_new_data_events(new_data)
+
+        await self._create_data_if_proposer()
 
     async def _on_sequence_propose(self, propose_sequence: ProposeSequence):
         """ Receive propose
@@ -147,6 +138,21 @@ class SyncLayer(EventHandlerManager):
                 commit_id=None
             )
         self._event_system.simulator.raise_event(done_round)
+
+    async def _create_data_if_proposer(self):
+        try:
+            self._term.verify_proposer(self._node_id, self._sync_round.round_num)
+        except InvalidProposer:
+            pass
+        else:
+            new_data = await self._data_factory.create_data(
+                data_number=self._candidate_info.candidate_data.number + 1,
+                prev_id=self._candidate_info.candidate_data.id,
+                term_num=self._sync_round.term_num,
+                round_num=self._sync_round.round_num,
+                prev_votes=self._candidate_info.votes
+            )
+            await self._raise_new_data_events(new_data)
 
     async def _check_and_update_candidate(self, data):
         prev_votes = ConsensusVotes.from_list(data.prev_votes)
