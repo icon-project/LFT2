@@ -56,6 +56,38 @@ class SyncLayer:
         self._data_verifier = await self._data_factory.create_data_verifier()
         self._vote_verifier = await self._vote_factory.create_vote_verifier()
 
+    async def _on_start_round(self, start_round_event: StartRoundEvent):
+        if not self._is_next_round(start_round_event):
+            return
+        if self._term.num != start_round_event.term_num:
+            self._term = self._term_factory.create_term(start_round_event.term_num, start_round_event.voters)
+        self._sync_round = SyncRound(
+            term=self._term,
+            round_num=start_round_event.round_num
+        )
+        try:
+            self._term.verify_proposer(self._node_id, self._sync_round.round_num)
+        except Exception:
+            pass
+        else:
+            new_data = await self._data_factory.create_data(
+                data_number=self._candidate_info.candidate_data.number + 1,
+                prev_id=self._candidate_info.candidate_data.id,
+                term_num=self._sync_round.term_num,
+                round_num=self._sync_round.round_num,
+                prev_votes=self._candidate_info.votes
+            )
+            self._event_system.simulator.raise_event(
+                BroadcastConsensusDataEvent(
+                    data=new_data
+                )
+            )
+            self._event_system.simulator.raise_event(
+                ReceivedConsensusDataEvent(
+                    data=new_data
+                )
+            )
+
     async def _on_sequence_propose(self, propose_sequence: ProposeSequence):
         """ Receive propose
 
@@ -84,6 +116,20 @@ class SyncLayer:
         if not self._sync_round.is_voted:
             self._sync_round.is_voted = True
             self._raise_broadcast_vote(vote)
+
+    async def _on_sequence_vote(self, vote_sequence: VoteSequence):
+        self._sync_round.add_vote(vote_sequence.vote)
+        if not self._sync_round.is_apply:
+            round_result = self._sync_round.get_result()
+            if round_result:
+                self._sync_round.apply()
+                await self._raise_done_round(round_result)
+                if round_result.is_success:
+                    self._candidate_info = CandidateInfo(
+                        candidate_data=round_result.candidate_data,
+                        votes=round_result.votes
+                    )
+                    self._temporal_data_container.update_criteria(self._candidate_info.candidate_data.number)
 
     async def _check_and_update_candidate(self, data):
         prev_votes = ConsensusVotes.from_list(data.prev_votes)
@@ -122,20 +168,6 @@ class SyncLayer:
         else:
             return True
 
-    async def _on_sequence_vote(self, vote_sequence: VoteSequence):
-        self._sync_round.add_vote(vote_sequence.vote)
-        if not self._sync_round.is_apply:
-            round_result = self._sync_round.get_result()
-            if round_result:
-                self._sync_round.apply()
-                await self._raise_done_round(round_result)
-                if round_result.is_success:
-                    self._candidate_info = CandidateInfo(
-                        candidate_data=round_result.candidate_data,
-                        votes=round_result.votes
-                    )
-                    self._temporal_data_container.update_criteria(self._candidate_info.candidate_data.number)
-
     async def _raise_done_round(self, round_result: RoundResult):
         if round_result.is_success:
             done_round = DoneRoundEvent(
@@ -156,38 +188,6 @@ class SyncLayer:
                 commit_id=None
             )
         self._event_system.simulator.raise_event(done_round)
-
-    async def _on_start_round(self, start_round_event: StartRoundEvent):
-        if not self._is_next_round(start_round_event):
-            return
-        if self._term.num != start_round_event.term_num:
-            self._term = self._term_factory.create_term(start_round_event.term_num, start_round_event.voters)
-        self._sync_round = SyncRound(
-            term=self._term,
-            round_num=start_round_event.round_num
-        )
-        try:
-            self._term.verify_proposer(self._node_id, self._sync_round.round_num)
-        except Exception:
-            pass
-        else:
-            new_data = await self._data_factory.create_data(
-                data_number=self._candidate_info.candidate_data.number + 1,
-                prev_id=self._candidate_info.candidate_data.id,
-                term_num=self._sync_round.term_num,
-                round_num=self._sync_round.round_num,
-                prev_votes=self._candidate_info.votes
-            )
-            self._event_system.simulator.raise_event(
-                BroadcastConsensusDataEvent(
-                    data=new_data
-                )
-            )
-            self._event_system.simulator.raise_event(
-                ReceivedConsensusDataEvent(
-                    data=new_data
-                )
-            )
 
     def _is_next_round(self, start_round_event: StartRoundEvent) -> bool:
         if start_round_event.term_num == self._sync_round.term_num \
