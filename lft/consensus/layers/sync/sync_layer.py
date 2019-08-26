@@ -89,24 +89,10 @@ class SyncLayer(EventHandlerManager):
         self._temporal_data_container.add_data(data)
         if data.prev_votes:
             await self._check_and_update_candidate(data)
-        vote = None
-        if self._node_id == data.proposer_id:
-            vote = await self._vote_factory.create_vote(data_id=data.id,
-                                                        commit_id=self._candidate_info.candidate_data.id,
-                                                        term_num=self._sync_round.term_num,
-                                                        round_num=self._sync_round.round_num)
-        elif self._verify_is_connect_to_candidate(data) and await self._verify_data(data) and not data.is_not():
-            vote = await self._vote_factory.create_vote(data_id=data.id,
-                                                        commit_id=self._candidate_info.candidate_data.id,
-                                                        term_num=self._sync_round.term_num,
-                                                        round_num=self._sync_round.round_num)
-        else:
-            vote = await self._vote_factory.create_none_vote(term_num=self._sync_round.term_num,
-                                                             round_num=self._sync_round.round_num)
         self._sync_round.add_data(data)
+
         if not self._sync_round.is_voted:
-            self._sync_round.is_voted = True
-            self._raise_broadcast_vote(vote)
+            await self._create_and_broadcast_vote(data)
 
     async def _on_sequence_vote(self, vote_sequence: VoteSequence):
         self._sync_round.add_vote(vote_sequence.vote)
@@ -176,6 +162,24 @@ class SyncLayer(EventHandlerManager):
                     candidate_data=self._temporal_data_container.get_data(data.number - 1, prev_votes.data_id),
                     votes=prev_votes.votes
                 )
+
+    async def _create_and_broadcast_vote(self, data):
+        vote = None
+        if self._node_id == data.proposer_id:
+            vote = await self._vote_factory.create_vote(data_id=data.id,
+                                                        commit_id=self._candidate_info.candidate_data.id,
+                                                        term_num=self._sync_round.term_num,
+                                                        round_num=self._sync_round.round_num)
+        elif self._verify_is_connect_to_candidate(data) and await self._verify_data(data) and not data.is_not():
+            vote = await self._vote_factory.create_vote(data_id=data.id,
+                                                        commit_id=self._candidate_info.candidate_data.id,
+                                                        term_num=self._sync_round.term_num,
+                                                        round_num=self._sync_round.round_num)
+        else:
+            vote = await self._vote_factory.create_none_vote(term_num=self._sync_round.term_num,
+                                                             round_num=self._sync_round.round_num)
+        self._raise_broadcast_vote(vote)
+        self._sync_round.is_voted = True
 
     def _verify_is_connect_to_candidate(self, data: ConsensusData) -> bool:
         if self._candidate_info.candidate_data.id == data.prev_id:
