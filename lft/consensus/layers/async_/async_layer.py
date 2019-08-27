@@ -4,6 +4,7 @@ from lft.consensus.events import (ReceivedConsensusDataEvent, ReceivedConsensusV
                                   DoneRoundEvent, InitializeEvent)
 from lft.consensus.data import ConsensusData, ConsensusDataFactory, ConsensusVote, ConsensusVoteFactory
 from lft.consensus.term import Term, RotateTerm
+from lft.consensus.term.factories import TermFactory
 from lft.event import EventSystem
 from lft.event.event_handler_manager import EventHandlerManager
 from lft.event.mediators import DelayedEventMediator
@@ -24,12 +25,14 @@ class AsyncLayer(EventHandlerManager):
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: ConsensusDataFactory,
-                 vote_factory: ConsensusVoteFactory):
+                 vote_factory: ConsensusVoteFactory,
+                 term_factory: TermFactory):
         super().__init__(event_system)
         self._node_id = node_id
         self._event_system = event_system
         self._data_factory = data_factory
         self._vote_factory = vote_factory
+        self._term_factory = term_factory
 
         self._data_dict: DataByRound = defaultdict(dict)
         self._vote_dict: VoteByRound = defaultdict(lambda: defaultdict(OrderedDict))
@@ -120,7 +123,7 @@ class AsyncLayer(EventHandlerManager):
         self._round_num = new_round_num
 
         if not self._term or self._term.num != new_term_num:
-            self._term = RotateTerm(new_term_num, voters)
+            self._term = self._term_factory.create_term(new_term_num, voters)
             self._data_dict.clear()
             self._vote_dict.clear()
         else:
