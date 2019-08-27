@@ -24,7 +24,7 @@ from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastConsens
     BroadcastConsensusVoteEvent, ReceivedConsensusVoteEvent, StartRoundEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, get_event, verify_no_events
 
-QUORUM = 7
+PEER_NUM = 7
 
 
 @pytest.mark.asyncio
@@ -34,7 +34,7 @@ async def test_on_round_start():
     THEN new round will be started and broadcast new data
     """
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(QUORUM)
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
     await add_propose(event_system, sync_layer, voters)
 
     await do_success_vote(sync_layer, voters)
@@ -75,7 +75,7 @@ async def test_on_round_start():
 @pytest.mark.asyncio
 async def test_prev_round_is_failed():
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(QUORUM)
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
     await add_propose(event_system, sync_layer, voters)
 
     for voter in voters:
@@ -125,7 +125,7 @@ async def test_start_past_round():
 
 @pytest.mark.asyncio
 async def test_start_future_round():
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(QUORUM)
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
     await add_propose(event_system, sync_layer, voters)
     await do_success_vote(sync_layer, voters)
     event = await get_event(event_system)

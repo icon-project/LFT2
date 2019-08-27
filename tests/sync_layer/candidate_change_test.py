@@ -28,7 +28,7 @@ async def test_candidate_change_by_vote():
     THEN SyncRound raises done_round with changed_candidate_data
     """
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(quorum=7)
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(peer_num=7)
     first_candidate_id = await add_first_candidate(event_system, sync_layer, voters)
     for voter in voters:
         await sync_layer._on_sequence_vote(
@@ -123,7 +123,7 @@ async def test_candidate_change_by_data():
     THEN sync_layer change candidate data to that data
     """
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(quorum=7)
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(peer_num=7)
     first_candidate_id = await add_first_candidate(event_system, sync_layer, voters)
 
     for voter in voters[:2]:

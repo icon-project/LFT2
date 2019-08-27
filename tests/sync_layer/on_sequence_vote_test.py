@@ -22,7 +22,7 @@ from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, 
     ReceivedConsensusVoteEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 
-QUORUM = 7
+PEER_NUM = 7
 PROPOSE_ID = b'propose'
 
 
@@ -43,7 +43,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
     """
 
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(QUORUM)
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
 
     consensus_data = DefaultConsensusData(
         id_=PROPOSE_ID,

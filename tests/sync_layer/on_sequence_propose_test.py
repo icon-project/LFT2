@@ -37,7 +37,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     THEN Receive VoteEvent about ProposeSequence
     """
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(quorum=7)
+    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(peer_num=7)
     propose = DefaultConsensusData(id_=PROPOSE_ID,
                                    prev_id=propose_prev_id,
                                    proposer_id=LEADER_ID,

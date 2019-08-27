@@ -30,10 +30,10 @@ TEST_NODE_ID = bytes([2])
 LEADER_ID = bytes([1])
 
 
-async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[bytes], ConsensusData]:
+async def setup_sync_layer(peer_num: int) -> Tuple[EventSystem, SyncLayer, List[bytes], ConsensusData]:
 
     event_system = EventSystem(True)
-    voters = [bytes([x]) for x in range(quorum)]
+    voters = [bytes([x]) for x in range(peer_num)]
     vote_factory = DefaultConsensusVoteFactory(TEST_NODE_ID)
     data_factory = DefaultConsensusDataFactory(TEST_NODE_ID)
     term_factory = RotateTermFactory(1)
