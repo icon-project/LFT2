@@ -44,7 +44,7 @@ async def test_candidate_change_by_vote():
     # pop done_round_event
     await get_event(event_system)
     # WHEN
-    await sync_layer._on_start_round(
+    await sync_layer._on_event_start_round(
         StartRoundEvent(
             term_num=0,
             round_num=2,
@@ -150,7 +150,7 @@ async def test_candidate_change_by_data():
     await get_event(event_system)
     # WHEN
 
-    await sync_layer._on_start_round(
+    await sync_layer._on_event_start_round(
         StartRoundEvent(
             term_num=0,
             round_num=2,

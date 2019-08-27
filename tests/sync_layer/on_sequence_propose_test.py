@@ -71,5 +71,5 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
 
     # WHEN
     await sync_layer._on_sequence_propose(ProposeSequence(data=second_propose))
+    # THEN
     await verify_no_events(event_system)
-    print("Success")

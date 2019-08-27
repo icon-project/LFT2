@@ -57,7 +57,7 @@ async def setup_sync_layer(quorum: int) -> Tuple[EventSystem, SyncLayer, List[by
         voters=voters,
         votes=None
     )
-    await sync_layer._on_init(init_event)
+    await sync_layer._on_event_initialize(init_event)
 
     return event_system, sync_layer, voters, genesis_data
 

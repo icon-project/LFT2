@@ -40,7 +40,7 @@ async def test_on_round_start():
     await do_success_vote(sync_layer, voters)
 
     # WHEN
-    await sync_layer._on_start_round(
+    await sync_layer._on_event_start_round(
         StartRoundEvent(
             term_num=0,
             round_num=2,
@@ -88,7 +88,7 @@ async def test_prev_round_is_failed():
         )
 
     # WHEN
-    await sync_layer._on_start_round(
+    await sync_layer._on_event_start_round(
         StartRoundEvent(
             term_num=0,
             round_num=2,
@@ -113,7 +113,7 @@ async def test_prev_round_is_failed():
 @pytest.mark.asyncio
 async def test_start_past_round():
     sync_layer, event_system, voters = await test_on_round_start()
-    await sync_layer._on_start_round(
+    await sync_layer._on_event_start_round(
         StartRoundEvent(
             term_num=0,
             round_num=1,
@@ -130,7 +130,7 @@ async def test_start_future_round():
     await do_success_vote(sync_layer, voters)
     event = await get_event(event_system)
 
-    await sync_layer._on_start_round(
+    await sync_layer._on_event_start_round(
         StartRoundEvent(
             term_num=0,
             round_num=9,
