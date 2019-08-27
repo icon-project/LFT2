@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from lft.consensus.layers.async_.async_layer import AsyncLayer
+from lft.consensus.layers.sync.sync_layer import SyncLayer
 
 if TYPE_CHECKING:
     from lft.event import EventSystem
@@ -15,6 +16,7 @@ class Consensus:
         self.node_id = node_id
 
         self._async_layer = AsyncLayer(node_id, event_system, data_factory, vote_factory)
+        self._sync_layer = SyncLayer()
 
     def __del__(self):
         self.close()

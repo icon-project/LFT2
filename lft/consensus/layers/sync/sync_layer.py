@@ -15,7 +15,7 @@ from lft.event.event_handler_manager import EventHandlerManager
 
 
 class SyncLayer(EventHandlerManager):
-    def __init__(self, event_system: EventSystem, data_factory: ConsensusDataFactory,
+    def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: ConsensusDataFactory,
                  vote_factory: ConsensusVoteFactory, term_factory: TermFactory):
         super().__init__(event_system)
         self._event_system: EventSystem = event_system
@@ -30,7 +30,7 @@ class SyncLayer(EventHandlerManager):
         self._temporal_data_container: TemporalConsensusDataContainer = None
         self._sync_round: SyncRound = None
         self._term: Term = None
-        self._node_id: bytes = None
+        self._node_id: bytes = node_id
         self._register_handler()
 
     def _register_handler(self):
@@ -46,7 +46,6 @@ class SyncLayer(EventHandlerManager):
             candidate_data=init_event.candidate_data,
             votes=init_event.votes
         )
-        self._node_id = init_event.node_id
         self._term = self._term_factory.create_term(term_num=init_event.term_num,
                                                     voters=init_event.voters)
 
