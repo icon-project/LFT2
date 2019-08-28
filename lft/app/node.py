@@ -1,17 +1,21 @@
-from typing import IO, Dict, Type
+from asyncio import sleep
+from typing import IO, Dict, Type, Sequence
 from lft.app.event import Gossiper
 from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
 from lft.app.event.logger import Logger
+from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
 from lft.consensus.data import ConsensusData, ConsensusVote
-from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
+from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, DoneRoundEvent, \
+    StartRoundEvent, InitializeEvent
 
 
 class Node:
     def __init__(self, node_id: bytes):
         self.node_id = node_id
+        self.nodes = None
         self.event_system = EventSystem()
         self.event_system.set_mediator(DelayedEventMediator)
 
@@ -24,7 +28,21 @@ class Node:
             self.event_system,
             self.node_id,
             DefaultConsensusDataFactory(self.node_id),
-            DefaultConsensusVoteFactory(self.node_id))
+            DefaultConsensusVoteFactory(self.node_id),
+            RotateTermFactory(1)
+        )
+
+    async def _on_init_event(self, init_event: InitializeEvent):
+        self._nodes = init_event.voters
+
+    async def _on_done_round_event(self, done_round: DoneRoundEvent):
+        await sleep(500)
+        round_start_event = StartRoundEvent(
+            term_num=done_round.term_num,
+            round_num=done_round.round_num + 1,
+            voters=self.nodes
+        )
+        self.event_system.simulator.raise_event(round_start_event)
 
     def __del__(self):
         self.close()
