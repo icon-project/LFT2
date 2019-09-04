@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from lft.app.data.consensus_votes import ConsensusVotes
 from lft.consensus.data import ConsensusDataFactory, ConsensusVoteFactory, ConsensusDataVerifier, ConsensusVoteVerifier, \
     ConsensusData, ConsensusVote
@@ -41,33 +43,30 @@ class SyncLayer(EventHandlerManager):
 
     async def _on_event_initialize(self, init_event: InitializeEvent):
         self._temporal_data_container = TemporalConsensusDataContainer(init_event.candidate_data.number)
-        self._temporal_data_container.add_data(init_event.candidate_data)
+        self._data_verifier = await self._data_factory.create_data_verifier()
+        self._vote_verifier = await self._vote_factory.create_vote_verifier()
+
         self._candidate_info = CandidateInfo(
             candidate_data=init_event.candidate_data,
             votes=init_event.votes
         )
-        self._term = self._term_factory.create_term(term_num=init_event.term_num,
-                                                    voters=init_event.voters)
+        self._temporal_data_container.add_data(init_event.candidate_data)
 
-        self._sync_round = SyncRound(term=self._term,
-                                     round_num=init_event.round_num
-                                     )
-        self._data_verifier = await self._data_factory.create_data_verifier()
-        self._vote_verifier = await self._vote_factory.create_vote_verifier()
+        await self._start_new_round(
+            term_num=init_event.term_num,
+            round_num=init_event.round_num,
+            voters=init_event.voters
+        )
 
     async def _on_event_start_round(self, start_round_event: StartRoundEvent):
         if not self._is_next_round(start_round_event):
             return
 
-        if self._term.num != start_round_event.term_num:
-            self._term = self._term_factory.create_term(start_round_event.term_num, start_round_event.voters)
-
-        self._sync_round = SyncRound(
-            term=self._term,
-            round_num=start_round_event.round_num
+        await self._start_new_round(
+            term_num=start_round_event.term_num,
+            round_num=start_round_event.round_num,
+            voters=start_round_event.voters
         )
-
-        await self._create_data_if_proposer()
 
     async def _on_sequence_propose(self, propose_sequence: ProposeSequence):
         """ Receive propose
@@ -82,7 +81,7 @@ class SyncLayer(EventHandlerManager):
         self._sync_round.add_data(data)
 
         if not self._sync_round.is_voted:
-            await self._create_and_broadcast_vote(data)
+            await self._verify_and_broadcast_vote(data)
 
     async def _on_sequence_vote(self, vote_sequence: VoteSequence):
         self._sync_round.add_vote(vote_sequence.vote)
@@ -138,6 +137,19 @@ class SyncLayer(EventHandlerManager):
             )
         self._event_system.simulator.raise_event(done_round)
 
+    async def _start_new_round(self, term_num: int, round_num: int, voters: Sequence[bytes]):
+        if not self._term or self._term.num != term_num:
+            self._term = self._term_factory.create_term(
+                term_num=term_num,
+                voters=voters
+            )
+
+        self._sync_round = SyncRound(
+            term=self._term,
+            round_num=round_num
+        )
+        await self._create_data_if_proposer()
+
     async def _create_data_if_proposer(self):
         try:
             self._term.verify_proposer(self._node_id, self._sync_round.round_num)
@@ -169,7 +181,7 @@ class SyncLayer(EventHandlerManager):
                 )
         # TODO note
 
-    async def _create_and_broadcast_vote(self, data):
+    async def _verify_and_broadcast_vote(self, data):
         if self._node_id == data.proposer_id:
             vote = await self._vote_factory.create_vote(data_id=data.id,
                                                         commit_id=self._candidate_info.candidate_data.id,

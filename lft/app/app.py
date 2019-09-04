@@ -5,6 +5,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List
 from lft.app import Node
+from lft.app.data import DefaultConsensusData
 from lft.consensus.events import InitializeEvent
 
 RECORD_PATH = "record.log"
@@ -48,7 +49,17 @@ class App(ABC):
             loop.close()
 
     def _raise_init_event(self, init_node: Node, nodes: List[Node]):
-        event = InitializeEvent(0, 0, None, tuple(node.node_id for node in nodes), self._node_id_list)
+        genesis_data = DefaultConsensusData(
+            id_=b'genesis',
+            prev_id=b'',
+            proposer_id=self._node_id_list[0],
+            number=0,
+            term_num=0,
+            round_num=0,
+            prev_votes=[]
+        )
+        print(f"app node_id_list : {self._node_id_list} ")
+        event = InitializeEvent(0, 1, genesis_data, tuple(node.node_id for node in nodes), self._node_id_list)
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 

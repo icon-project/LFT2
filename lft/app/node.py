@@ -31,18 +31,20 @@ class Node:
             DefaultConsensusVoteFactory(self.node_id),
             RotateTermFactory(1)
         )
+        self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
+        self.event_system.simulator.register_handler(DoneRoundEvent, self._on_done_round_event)
 
     async def _on_init_event(self, init_event: InitializeEvent):
         self._nodes = init_event.voters
 
     async def _on_done_round_event(self, done_round: DoneRoundEvent):
-        await sleep(500)
         round_start_event = StartRoundEvent(
             term_num=done_round.term_num,
             round_num=done_round.round_num + 1,
-            voters=self.nodes
+            voters=self._nodes
         )
-        self.event_system.simulator.raise_event(round_start_event)
+        mediator = self.event_system.get_mediator(DelayedEventMediator)
+        mediator.execute(0.5, round_start_event)
 
     def __del__(self):
         self.close()

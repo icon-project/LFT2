@@ -102,6 +102,8 @@ class ConsensusVote(Serializable):
                and self.term_num == other.term_num \
                and self.round_num == other.round_num
 
+    def __hash__(self):
+        return int.from_bytes(self.id, "big")
 
 class ConsensusData(Serializable):
     @property
@@ -151,3 +153,6 @@ class ConsensusData(Serializable):
                and self.term_num == other.term_num \
                and self.round_num == other.round_num \
                and self.prev_votes == other.prev_votes
+
+    def __hash__(self):
+        return int.from_bytes(self.id, "big")

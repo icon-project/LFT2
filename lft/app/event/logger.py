@@ -1,6 +1,8 @@
 import json
 from lft.consensus.events import (Event, InitializeEvent, DoneRoundEvent,
-                                  ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent)
+                                  ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, StartRoundEvent,
+                                  ProposeSequence, VoteSequence, BroadcastConsensusDataEvent,
+                                  BroadcastConsensusVoteEvent)
 from lft.event import EventSimulator
 from lft.serialization import Serializable
 
@@ -19,7 +21,17 @@ class Logger:
             ReceivedConsensusDataEvent:
                 self._simulator.register_handler(ReceivedConsensusDataEvent, self._on_received_consensus_data_event),
             ReceivedConsensusVoteEvent:
-                self._simulator.register_handler(ReceivedConsensusVoteEvent, self._on_received_consensus_vote_event)
+                self._simulator.register_handler(ReceivedConsensusVoteEvent, self._on_received_consensus_vote_event),
+            StartRoundEvent:
+                self._simulator.register_handler(StartRoundEvent, self._print_log),
+            ProposeSequence:
+                self._simulator.register_handler(ProposeSequence, self._print_log),
+            VoteSequence:
+                self._simulator.register_handler(VoteSequence, self._print_log),
+            BroadcastConsensusDataEvent:
+                self._simulator.register_handler(BroadcastConsensusDataEvent, self._print_log),
+            BroadcastConsensusVoteEvent:
+                self._simulator.register_handler(BroadcastConsensusVoteEvent, self._print_log)
         }
 
     def __del__(self):
