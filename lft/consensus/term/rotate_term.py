@@ -42,7 +42,7 @@ class RotateTerm(Term):
 
     def verify_data(self, data: ConsensusData):
         self.verify_proposer(data.proposer_id, data.round_num)
-        for i, vote in data.prev_votes:
+        for i, vote in enumerate(data.prev_votes):
             self.verify_vote(vote, i)
 
     def verify_vote(self, vote: ConsensusVote, vote_index: int = -1):
