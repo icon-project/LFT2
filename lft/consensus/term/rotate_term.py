@@ -29,6 +29,10 @@ class RotateTerm(Term):
         self._voters_num = len(self._voters)
 
     @property
+    def voters(self) -> Sequence[bytes]:
+        return self._voters
+
+    @property
     def voters_num(self) -> int:
         return self._voters_num
 

@@ -35,6 +35,11 @@ class Term(ABC):
     def voters_num(self) -> int:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def voters(self) -> Sequence[bytes]:
+        raise NotImplementedError
+
     @abstractmethod
     def verify_data(self, data: ConsensusData):
         raise NotImplementedError

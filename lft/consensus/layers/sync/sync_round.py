@@ -1,6 +1,5 @@
-from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Optional, Sequence, Set
+from typing import Dict, Optional, Sequence
 
 from lft.consensus.data import ConsensusData, ConsensusVote
 from lft.consensus.term import Term
@@ -63,15 +62,16 @@ class SyncRound:
                     term_num=self.term_num,
                     round_num=self.round_num,
                     candidate_data=self._datas[self._votes.majority_id],
-                    votes=self._votes.majority_votes
+                    votes=self._votes.majority_votes.serialize(self.term.voters)
                 )
             else:
+                # TODO: Fail Vote들도 알려줘야하나???
                 return RoundResult(
                     is_success=False,
                     term_num=self.term_num,
                     round_num=self.round_num,
                     candidate_data=None,
-                    votes=self._votes.majority_votes
+                    votes=None
                 )
         else:
             return None

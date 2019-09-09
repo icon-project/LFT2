@@ -166,7 +166,7 @@ class SyncLayer(EventHandlerManager):
             await self._raise_new_data_events(new_data)
 
     async def _check_and_update_candidate(self, data):
-        prev_votes = ConsensusVotes.from_list(data.prev_votes)
+        prev_votes = ConsensusVotes.deserialize(data.prev_votes)
         if prev_votes.data_id != self._candidate_info.candidate_data.id:
             if prev_votes.term_num == self._candidate_info.candidate_data.term_num:
                 if prev_votes.round_num > self._candidate_info.candidate_data.round_num:

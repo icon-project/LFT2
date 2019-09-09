@@ -15,26 +15,25 @@
 # limitations under the License.
 from typing import Dict, Set, Sequence
 
-from lft.app.data.consensus_votes import ConsensusVotes
+from lft.app.data.consensus_votes import ConsensusVotes, EmptyVotes
 from lft.consensus.data import ConsensusVote
 
 
 class VoteCounter:
     def __init__(self):
-        self._votes: Dict[bytes, 'ConsensusVotes'] = {}
-        self._voters: Set[bytes] = set()
         self._majority_id: bytes = b''
+        self._votes: Dict[bytes, 'ConsensusVotes'] = {
+            self._majority_id: EmptyVotes()
+        }
+        self._voters: Set[bytes] = set()
 
     @property
     def majority_id(self) -> bytes:
         return self._majority_id
 
     @property
-    def majority_votes(self) -> Sequence['ConsensusVote']:
-        try:
-            return self._votes[self._majority_id].votes
-        except KeyError:
-            return []
+    def majority_votes(self) -> ConsensusVotes:
+        return self._votes[self._majority_id]
 
     @property
     def majority_counts(self) -> int:
@@ -43,13 +42,6 @@ class VoteCounter:
     @property
     def voter_counts(self) -> int:
         return len(self._voters)
-
-    @property
-    def all_votes(self) -> Sequence['ConsensusVote']:
-        all_votes = []
-        for votes_by_data_id in self._votes.values():
-            all_votes.extend(votes_by_data_id.votes)
-        return all_votes
 
     def add_vote(self, vote: ConsensusVote):
         if not vote.is_not():

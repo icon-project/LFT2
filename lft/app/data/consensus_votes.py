@@ -13,9 +13,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, Sequence
+from typing import List, Sequence, Type, TypeVar
 
 from lft.consensus.data import ConsensusVote
+
+T = TypeVar("T")
 
 
 class ConsensusVotes:
@@ -51,9 +53,40 @@ class ConsensusVotes:
                 self._votes.append(vote)
                 self._voters.add(vote.voter_id)
 
+    def serialize(self, voters: Sequence[bytes]) -> List:
+        votes = [b'' for x in voters]
+        for vote in self._votes:
+            try:
+                vote_index = voters.index(vote.voter_id)
+            except ValueError as e:
+                print(f"Unknown voter : {vote.voter_id}")
+            else:
+                votes[vote_index] = vote
+        return votes
+
     @classmethod
-    def from_list(cls, consensus_votes: Sequence['ConsensusVote']) -> 'ConsensusVotes':
-        new_object = cls(consensus_votes[0].data_id, consensus_votes[0].term_num, consensus_votes[0].round_num)
-        for vote in consensus_votes:
-            new_object.add_vote(vote)
-        return new_object
+    def deserialize(cls: Type[T], votes: Sequence) -> T:
+        deserialized_obj = None
+        for vote in votes:
+            if isinstance(vote, ConsensusVote):
+                if not deserialized_obj:
+                    deserialized_obj = cls(data_id=vote.data_id,
+                                           term_num=vote.term_num,
+                                           round_num=vote.round_num)
+                deserialized_obj.add_vote(vote)
+        return deserialized_obj
+
+
+class EmptyVotes(ConsensusVotes):
+    def __init__(self):
+        super().__init__(b'', 0, 0)
+
+    def add_vote(self, vote: 'ConsensusVote'):
+        raise NotImplementedError
+
+    def serialize(self, voters: Sequence[bytes]) -> List:
+        raise NotImplementedError
+
+    @classmethod
+    def deserialize(cls: Type[T], votes: Sequence) -> T:
+        raise NotImplementedError
