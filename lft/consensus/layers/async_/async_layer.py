@@ -121,9 +121,11 @@ class AsyncLayer(EventHandlerManager):
                          new_term_num: int,
                          new_round_num: int,
                          voters: Sequence[bytes] = ()):
+        print("new round")
         self._vote_timeout_started = False
 
         self._round_num = new_round_num
+        print(f"start new round : {self._round_num}")
 
         if not self._term or self._term.num != new_term_num:
             self._term = self._term_factory.create_term(new_term_num, voters)
@@ -150,6 +152,7 @@ class AsyncLayer(EventHandlerManager):
 
     def _register_handlers(self):
         self._add_handler(InitializeEvent, self._on_event_initialize)
+        self._add_handler(StartRoundEvent, self._on_event_start_round)
         self._add_handler(DoneRoundEvent, self._on_event_done_round)
         self._add_handler(ReceivedConsensusDataEvent, self._on_event_received_consensus_data)
         self._add_handler(ReceivedConsensusVoteEvent, self._on_event_received_consensus_vote)
@@ -189,6 +192,8 @@ class AsyncLayer(EventHandlerManager):
         return count >= self._term.quorum_num
 
     def _trim_rounds(self, d: dict):
+        print("_trim rounds")
+        print(f"trim round : {self._round_num}")
         expired_rounds = [round_ for round_ in d if round_ < self._round_num]
         for expired_round in expired_rounds:
             d.pop(expired_round, None)
