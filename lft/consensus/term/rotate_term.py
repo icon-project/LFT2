@@ -50,7 +50,8 @@ class RotateTerm(Term):
             self.verify_vote(vote, i)
 
     def verify_vote(self, vote: ConsensusVote, vote_index: int = -1):
-        self.verify_voter(vote.voter_id, vote_index)
+        if isinstance(vote, ConsensusVote):
+            self.verify_voter(vote.voter_id, vote_index)
 
     def verify_proposer(self, proposer_id: bytes, round_num: int):
         expected = self.get_proposer_id(round_num)
