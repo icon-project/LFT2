@@ -19,7 +19,7 @@ from typing import Tuple
 import pytest
 
 from lft.app.data import DefaultConsensusData, DefaultConsensusDataFactory, DefaultConsensusVoteFactory
-from lft.consensus.data import ConsensusData
+from lft.consensus.data import ConsensusData, ConsensusVote
 from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastConsensusDataEvent, ReceivedConsensusDataEvent, \
     BroadcastConsensusVoteEvent, ReceivedConsensusVoteEvent, StartRoundEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, get_event, verify_no_events
@@ -193,11 +193,12 @@ async def verify_data_events(event_system, prev_id, round_num, proposer_id, term
 def verify_prev_votes(consensus_data: ConsensusData, prev_id, round_num, term_num, commit_id, voters):
     compare_voters = []
     for vote in consensus_data.prev_votes:
-        assert vote.term_num == term_num
-        assert vote.round_num == round_num
-        assert vote.commit_id == commit_id
-        assert vote.data_id == prev_id
-        assert vote.data_id == consensus_data.prev_id
-        assert vote.voter_id in voters
-        compare_voters.append(vote.voter_id)
+        if isinstance(vote, ConsensusVote):
+            assert vote.term_num == term_num
+            assert vote.round_num == round_num
+            assert vote.commit_id == commit_id
+            assert vote.data_id == prev_id
+            assert vote.data_id == consensus_data.prev_id
+            assert vote.voter_id in voters
+            compare_voters.append(vote.voter_id)
     assert len(compare_voters) >= (2 * len(voters)) / 3

@@ -87,6 +87,6 @@ class SyncRound:
 
     def _is_success(self) -> bool:
         if self._votes.majority_counts >= self.term.quorum_num:
-            if not self._votes.majority_votes.is_none()
+            if not self._votes.majority_votes.is_none():
                 return True
         return False
