@@ -27,6 +27,7 @@ class ConsensusVotes:
         self._round_num: int = round_num
         self._voters = set()
         self._votes: List['ConsensusVote'] = []
+        self._is_none = None
 
     @property
     def data_id(self) -> bytes:
@@ -50,6 +51,8 @@ class ConsensusVotes:
     def add_vote(self, vote: 'ConsensusVote'):
         if vote.voter_id not in self._voters:
             if vote.data_id == self._data_id:
+                if self._is_none is None:
+                    self._is_none = True if vote.is_none() else False
                 self._votes.append(vote)
                 self._voters.add(vote.voter_id)
 
@@ -75,6 +78,11 @@ class ConsensusVotes:
                                            round_num=vote.round_num)
                 deserialized_obj.add_vote(vote)
         return deserialized_obj
+
+    def is_none(self) -> bool:
+        if self._is_none is None:
+            raise ValueError("Unknown votes status")
+        return self._is_none
 
 
 class EmptyVotes(ConsensusVotes):
