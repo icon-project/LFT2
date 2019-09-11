@@ -59,7 +59,7 @@ class App(ABC):
             prev_votes=[]
         )
         print(f"app node_id_list : {self._node_id_list} ")
-        event = InitializeEvent(0, 1, genesis_data, tuple(node.node_id for node in nodes), self._node_id_list)
+        event = InitializeEvent(0, 1, genesis_data, [], self._node_id_list)
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 

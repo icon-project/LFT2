@@ -71,6 +71,7 @@ class ConsensusVotes:
     def deserialize(cls: Type[T], votes: Sequence) -> T:
         deserialized_obj = None
         for vote in votes:
+            print(f"vote type: {type(vote)}")
             if isinstance(vote, ConsensusVote):
                 if not deserialized_obj:
                     deserialized_obj = cls(data_id=vote.data_id,

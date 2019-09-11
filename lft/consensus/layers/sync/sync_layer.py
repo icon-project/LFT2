@@ -76,8 +76,7 @@ class SyncLayer(EventHandlerManager):
         """
         data = propose_sequence.data
         self._temporal_data_container.add_data(data)
-        if data.prev_votes:
-            await self._check_and_update_candidate(data)
+        await self._update_candidate_by_data_if_reach_requirements(data)
         self._sync_round.add_data(data)
 
         if not self._sync_round.is_voted:
@@ -165,7 +164,10 @@ class SyncLayer(EventHandlerManager):
             )
             await self._raise_new_data_events(new_data)
 
-    async def _check_and_update_candidate(self, data):
+    async def _update_candidate_by_data_if_reach_requirements(self, data):
+        if self._is_genesis_or_is_connected_genesis(data):
+            return
+
         prev_votes = ConsensusVotes.deserialize(data.prev_votes)
         if prev_votes.data_id != self._candidate_info.candidate_data.id:
             if prev_votes.term_num == self._candidate_info.candidate_data.term_num:
@@ -179,7 +181,9 @@ class SyncLayer(EventHandlerManager):
                     candidate_data=self._temporal_data_container.get_data(data.number - 1, prev_votes.data_id),
                     votes=prev_votes.votes
                 )
-        # TODO note
+
+    def _is_genesis_or_is_connected_genesis(self, data: ConsensusData) -> bool:
+        return data.number == 0 or data.number == 1
 
     async def _verify_and_broadcast_vote(self, data):
         if self._node_id == data.proposer_id:
