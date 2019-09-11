@@ -38,6 +38,7 @@ class EventSimulator:
             non_deterministic, mono_ns, event = await self._event_tasks.get()
             if not event:
                 break
+            print(f"Run Event: {event.serialize()}")
             await self._execute_event(event)
 
     async def _execute_event(self, event: Event):

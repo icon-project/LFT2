@@ -1,3 +1,4 @@
+import datetime
 import json
 from lft.consensus.events import (Event, InitializeEvent, DoneRoundEvent,
                                   ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, StartRoundEvent,
@@ -56,7 +57,7 @@ class Logger:
 
     def _print_log(self, event: Event):
         event_serialized = self._encoder.encode(event)
-        print(f"{shorten(self._node_id)}, {event_serialized}")
+        print(f"{shorten(self._node_id)}, {datetime.datetime.now()}:: {event_serialized}")
 
 
 class _JSONEncoder(json.JSONEncoder):

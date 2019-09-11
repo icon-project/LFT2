@@ -35,6 +35,8 @@ class Node:
         self.event_system.simulator.register_handler(DoneRoundEvent, self._on_done_round_event)
 
     async def _on_init_event(self, init_event: InitializeEvent):
+        for gossiper in self._gossipers.values():
+            await gossiper.start()
         self._nodes = init_event.voters
 
     async def _on_done_round_event(self, done_round: DoneRoundEvent):
@@ -43,6 +45,7 @@ class Node:
             round_num=done_round.round_num + 1,
             voters=self._nodes
         )
+        round_start_event.deterministic = False
         mediator = self.event_system.get_mediator(DelayedEventMediator)
         mediator.execute(0.5, round_start_event)
 
@@ -92,8 +95,7 @@ class Node:
             self.event_system.simulator.raise_event(event)
 
     def register_peer(self, peer_id: bytes, peer: 'Node'):
-        gossiper = Gossiper(self.event_system, self, peer)
-        self._gossipers[peer_id] = gossiper
+        self._gossipers[peer_id] = Gossiper(self.event_system, self, peer)
 
     def unregister_peer(self, peer_id: bytes):
         self._gossipers.pop(peer_id, None)

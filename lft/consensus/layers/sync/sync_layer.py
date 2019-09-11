@@ -109,6 +109,7 @@ class SyncLayer(EventHandlerManager):
         )
 
     async def _raise_broadcast_vote(self, vote: ConsensusVote):
+        print(f"raise vote {vote.serialize()}")
         self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
 
         receive_vote_event = ReceivedConsensusVoteEvent(vote=vote)

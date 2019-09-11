@@ -46,5 +46,4 @@ class DelayedEventMediator(EventMediator):
 
 def _is_valid_event(event: Event):
     if event.deterministic:
-        raise RuntimeError("Delayed event must not be deterministic")
-
+        raise RuntimeError(f"Delayed event must not be deterministic :{event.serialize()}")

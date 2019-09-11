@@ -30,9 +30,9 @@ class Gossiper:
         simulator = event_system.simulator
         self._handlers = {
             BroadcastConsensusDataEvent:
-                simulator.register_handler(BroadcastConsensusDataEvent, self._on_propose_sequence),
+                simulator.register_handler(BroadcastConsensusDataEvent, self._temp_on_broadcast_data),
             BroadcastConsensusVoteEvent:
-                simulator.register_handler(BroadcastConsensusVoteEvent, self._on_vote_sequence)
+                simulator.register_handler(BroadcastConsensusVoteEvent, self._temp_on_broadcast_vote)
         }
 
     def __del__(self):
@@ -44,16 +44,23 @@ class Gossiper:
         self._handlers.clear()
 
     def _send_data(self, data: ConsensusData):
+        print("Gossip : Senddata")
         delay = self._get_random_delay()
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_data, data)
 
     def _send_vote(self, vote: ConsensusVote):
+        print("Gossip : Sendvote")
         delay = self._get_random_delay()
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_vote, vote)
 
+    def _temp_on_broadcast_data(self, event: BroadcastConsensusDataEvent):
+        self._send_data(event.data)
+
+    def _temp_on_broadcast_vote(self, event: BroadcastConsensusVoteEvent):
+        self._send_vote(event.vote)
+
     def _on_propose_sequence(self, event: BroadcastConsensusDataEvent):
-        if event.data.is_not():
-            return
+        print(f"receive broadcast event : {event}")
         if event.data in self._cached_data:
             return
 
@@ -63,8 +70,7 @@ class Gossiper:
         asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_data.remove, event.data)
 
     def _on_vote_sequence(self, event: BroadcastConsensusVoteEvent):
-        if event.vote.is_not():
-            return
+        print(f"receive broadcast event : {event}")
         if event.vote in self._cached_votes:
             return
 
@@ -73,8 +79,13 @@ class Gossiper:
         self._asset_votes.add(event.vote)
         asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_votes.remove, event.vote)
 
+    async def start(self):
+        pass
+        # await self._gossip()
+
     async def _gossip(self):
         while True:
+            print("Doing gossip")
             for data in self._reserved_data:
                 self._send_data(data)
             self._reserved_data.clear()
