@@ -103,12 +103,13 @@ class AsyncLayer(EventHandlerManager):
         mediator.execute(delay, event)
 
     async def _raise_received_consensus_vote(self, delay: float, vote: ConsensusVote):
-        print(f"raise vote: {vote.serialize()}")
-        event = ReceivedConsensusVoteEvent(vote)
-        event.deterministic = False
+        if isinstance(vote, ConsensusVote):
+            print(f"Async Layer : raise vote: {vote.serialize()}")
+            event = ReceivedConsensusVoteEvent(vote)
+            event.deterministic = False
 
-        mediator = self._event_system.get_mediator(DelayedEventMediator)
-        mediator.execute(delay, event)
+            mediator = self._event_system.get_mediator(DelayedEventMediator)
+            mediator.execute(delay, event)
 
     async def _raise_propose_sequence(self, data: ConsensusData):
         propose_sequence = ProposeSequence(data)
@@ -138,6 +139,7 @@ class AsyncLayer(EventHandlerManager):
                 await self._raise_received_consensus_data(delay=0, data=data)
             for votes in self._vote_dict[new_round_num].values():
                 for vote in votes:
+                    print(vote)
                     await self._raise_received_consensus_vote(delay=0, vote=vote)
 
     async def _new_data(self):

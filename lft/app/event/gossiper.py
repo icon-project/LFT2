@@ -44,12 +44,11 @@ class Gossiper:
         self._handlers.clear()
 
     def _send_data(self, data: ConsensusData):
-        print("Gossip : Senddata")
         delay = self._get_random_delay()
+        print(f"send data {data.serialize()}")
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_data, data)
 
     def _send_vote(self, vote: ConsensusVote):
-        print("Gossip : Sendvote")
         delay = self._get_random_delay()
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_vote, vote)
 

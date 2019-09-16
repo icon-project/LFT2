@@ -75,6 +75,7 @@ class Node:
         self.event_system.start_replay(record_io, mediator_ios, blocking)
 
     def receive_data(self, data: ConsensusData):
+        print(f"Node {self.node_id}: Receive data {data.serialize()}")
         if data in self.received_data:
             print(f"{self.node_id} : receive data but ignored : {data}")
         else:

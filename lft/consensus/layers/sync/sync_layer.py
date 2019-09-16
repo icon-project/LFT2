@@ -82,8 +82,13 @@ class SyncLayer(EventHandlerManager):
         if not self._sync_round.is_voted:
             await self._verify_and_broadcast_vote(data)
 
+        await self._update_round_if_complete()
+
     async def _on_sequence_vote(self, vote_sequence: VoteSequence):
         self._sync_round.add_vote(vote_sequence.vote)
+        await self._update_round_if_complete()
+
+    async def _update_round_if_complete(self):
         if not self._sync_round.is_apply:
             round_result = self._sync_round.get_result()
             if round_result:
@@ -109,7 +114,7 @@ class SyncLayer(EventHandlerManager):
         )
 
     async def _raise_broadcast_vote(self, vote: ConsensusVote):
-        print(f"raise vote {vote.serialize()}")
+        print(f"Sync Layer : raise vote {vote.serialize()}")
         self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
 
         receive_vote_event = ReceivedConsensusVoteEvent(vote=vote)
@@ -166,6 +171,9 @@ class SyncLayer(EventHandlerManager):
             await self._raise_new_data_events(new_data)
 
     async def _update_candidate_by_data_if_reach_requirements(self, data):
+        if data.is_not():
+            return
+
         if self._is_genesis_or_is_connected_genesis(data):
             return
 

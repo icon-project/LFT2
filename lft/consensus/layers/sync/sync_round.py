@@ -27,10 +27,10 @@ class SyncRound:
         self.round_num: int = round_num
 
         self._datas: Dict[bytes, ConsensusData] = datas if datas else {}
-        self._votes: VoteCounter = VoteCounter()
+        self._vote_counter: VoteCounter = VoteCounter()
         if votes:
             for vote in votes:
-                self._votes.add_vote(vote)
+                self._vote_counter.add_vote(vote)
         self.is_voted = False
         self._apply = False
 
@@ -52,18 +52,23 @@ class SyncRound:
             self._datas[data.id] = data
 
     def add_vote(self, vote: ConsensusVote):
-        self._votes.add_vote(vote)
+        self._vote_counter.add_vote(vote)
 
     def get_result(self) -> Optional[RoundResult]:
         if self._is_complete():
             if self._is_success():
-                return RoundResult(
-                    is_success=True,
-                    term_num=self.term_num,
-                    round_num=self.round_num,
-                    candidate_data=self._datas[self._votes.majority_id],
-                    votes=self._votes.majority_votes.serialize(self.term.voters)
-                )
+                try:
+                    candidate_data = self._datas[self._vote_counter.majority_id]
+                except KeyError:
+                    return None
+                else:
+                    return RoundResult(
+                        is_success=True,
+                        term_num=self.term_num,
+                        round_num=self.round_num,
+                        candidate_data=candidate_data,
+                        votes=self._vote_counter.majority_votes.serialize(self.term.voters)
+                    )
             else:
                 # TODO: Fail Vote들도 알려줘야하나???
                 return RoundResult(
@@ -77,16 +82,16 @@ class SyncRound:
             return None
 
     def _is_complete(self) -> bool:
-        if self.term.quorum_num <= self._votes.majority_counts:
+        if self.term.quorum_num <= self._vote_counter.majority_counts:
             return True
-        elif self.term.voters_num == self._votes.voter_counts:
+        elif self.term.voters_num == self._vote_counter.voter_counts:
             return True
-        elif self._votes.voter_counts == self.term.voters_num - 1 and self._datas.get(self._NOT_ID):
+        elif self._vote_counter.voter_counts == self.term.voters_num - 1 and self._datas.get(self._NOT_ID):
             return True
         return False
 
     def _is_success(self) -> bool:
-        if self._votes.majority_counts >= self.term.quorum_num:
-            if not self._votes.majority_votes.is_none():
+        if self._vote_counter.majority_counts >= self.term.quorum_num:
+            if not self._vote_counter.majority_votes.is_none():
                 return True
         return False
