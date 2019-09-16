@@ -6,6 +6,7 @@ from lft.event import EventReplayerMediatorExecutor, EventRecorderMediatorExecut
 
 class DelayedEventInstantMediatorExecutor(EventInstantMediatorExecutor):
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
+        print(f"executed event {event}")
         _is_valid_event(event)
 
         loop = loop or asyncio.get_event_loop()

@@ -44,15 +44,16 @@ class Gossiper:
         self._handlers.clear()
 
     def _send_data(self, data: ConsensusData):
-        delay = self._get_random_delay()
+        delay = random.randint(0, 10000) / 10000
         print(f"send data {data.serialize()}")
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_data, data)
 
     def _send_vote(self, vote: ConsensusVote):
-        delay = self._get_random_delay()
+        delay = random.randint(0, 10000) / 10000
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_vote, vote)
 
     def _temp_on_broadcast_data(self, event: BroadcastConsensusDataEvent):
+        print(f"receive broadcast event : {event}")
         self._send_data(event.data)
 
     def _temp_on_broadcast_vote(self, event: BroadcastConsensusVoteEvent):
