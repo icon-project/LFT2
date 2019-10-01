@@ -100,8 +100,6 @@ class AsyncLayer(EventHandlerManager):
     async def _raise_received_consensus_data(self, delay: float, data: ConsensusData):
         event = ReceivedConsensusDataEvent(data)
 
-        print(f"async raise data : {event.serialize()}")
-        print(f"async raise data : {event.data.serialize()}")
         event.deterministic = False
 
         mediator = self._event_system.get_mediator(DelayedEventMediator)
@@ -109,7 +107,6 @@ class AsyncLayer(EventHandlerManager):
 
     async def _raise_received_consensus_vote(self, delay: float, vote: ConsensusVote):
         if isinstance(vote, ConsensusVote):
-            print(f"Async Layer : raise vote: {vote.serialize()}")
             event = ReceivedConsensusVoteEvent(vote)
             event.deterministic = False
 
@@ -154,7 +151,6 @@ class AsyncLayer(EventHandlerManager):
                                                             self._term.num,
                                                             self._round_num,
                                                             expected_proposer)
-            print(f"created not data : {data}")
             await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
 
     def _register_handlers(self):

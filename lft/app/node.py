@@ -75,11 +75,11 @@ class Node:
         self.event_system.start_replay(record_io, mediator_ios, blocking)
 
     def receive_data(self, data: ConsensusData):
-        print(f"Node {self.node_id}: Receive data {data.serialize()}")
+        print(f"{self.node_id.hex()}: Receive data {data.serialize()}")
         if data in self.received_data:
-            print(f"{self.node_id} : receive data but ignored : {data}")
+            print(f"{self.node_id.hex()} : receive duplicated data: {data}")
         else:
-            print(f"{self.node_id} : receive data : {data}")
+            print(f"{self.node_id.hex()} : receive data : {data}")
             self.received_data.add(data)
 
             event = ReceivedConsensusDataEvent(data)
@@ -87,9 +87,9 @@ class Node:
 
     def receive_vote(self, vote: ConsensusVote):
         if vote in self.received_votes:
-            print(f"{self.node_id} : receive vote but ignored : {vote}")
+            print(f"{self.node_id.hex()} : receive duplicated vote : {vote.serialize()}")
         else:
-            print(f"{self.node_id} : receive vote : {vote}")
+            print(f"{self.node_id.hex()} : receive vote : {vote.serialize()}")
             self.received_votes.add(vote)
 
             event = ReceivedConsensusVoteEvent(vote)

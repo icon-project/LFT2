@@ -100,7 +100,7 @@ class Gossiper:
 
             missing_votes = self._asset_votes - self._receiver.received_votes
             for vote in missing_votes:
-                 self._send_vote(vote)
+                self._send_vote(vote)
 
             await asyncio.sleep(0.1)
 
