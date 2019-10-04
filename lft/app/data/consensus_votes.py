@@ -70,7 +70,7 @@ class ConsensusVotes:
     @classmethod
     def deserialize(cls: Type[T], votes: Sequence) -> T:
         deserialized_obj = None
-        print("deserialize votes {} ")
+        print(f"deserialize votes {votes} ")
         for vote in votes:
             if isinstance(vote, ConsensusVote):
                 if not deserialized_obj:
