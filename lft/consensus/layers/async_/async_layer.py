@@ -59,7 +59,6 @@ class AsyncLayer(EventHandlerManager):
 
     async def _on_event_received_consensus_data(self, event: ReceivedConsensusDataEvent):
 
-        print(f"received consensus data : {event.data.serialize()}")
         data = event.data
         if not self._is_acceptable_data(data):
             return

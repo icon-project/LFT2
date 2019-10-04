@@ -114,7 +114,6 @@ class SyncLayer(EventHandlerManager):
         )
 
     async def _raise_broadcast_vote(self, vote: ConsensusVote):
-        print(f"raise vote {vote.serialize()}")
         self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
 
         receive_vote_event = ReceivedConsensusVoteEvent(vote=vote)
@@ -168,7 +167,6 @@ class SyncLayer(EventHandlerManager):
                 round_num=self._sync_round.round_num,
                 prev_votes=self._candidate_info.votes
             )
-            print(f"created new data {new_data}")
             await self._raise_new_data_events(new_data)
 
     async def _update_candidate_by_data_if_reach_requirements(self, data):
