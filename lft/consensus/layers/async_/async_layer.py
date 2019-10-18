@@ -2,8 +2,9 @@ from collections import defaultdict
 from typing import Dict, DefaultDict, OrderedDict, Optional, Sequence
 from lft.consensus.events import (ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, ProposeSequence, VoteSequence,
                                   DoneRoundEvent, InitializeEvent, StartRoundEvent)
-from lft.consensus.data import ConsensusData, ConsensusDataFactory, ConsensusVote, ConsensusVoteFactory
-from lft.consensus.term import Term, RotateTerm
+from lft.consensus.data import ConsensusData, ConsensusDataFactory
+from lft.consensus.vote import ConsensusVote, ConsensusVoteFactory
+from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory
 from lft.event import EventSystem
 from lft.event.event_register import EventRegister

@@ -1,13 +1,13 @@
 from typing import Sequence
 
-from lft.app.data.consensus_votes import ConsensusVotes
-from lft.consensus.data import ConsensusDataFactory, ConsensusVoteFactory, ConsensusDataVerifier, ConsensusVoteVerifier, \
-    ConsensusData, ConsensusVote
+from lft.consensus.data import ConsensusData, ConsensusDataVerifier, ConsensusDataFactory
+from lft.consensus.vote import ConsensusVote, ConsensusVoteVerifier, ConsensusVoteFactory, ConsensusVotes
 from lft.consensus.layers.sync.candidate_info import CandidateInfo
 from lft.consensus.layers.sync.sync_round import SyncRound, RoundResult
-from lft.consensus.events import BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent, DoneRoundEvent, \
-    InitializeEvent, ProposeSequence, VoteSequence, ReceivedConsensusVoteEvent, ReceivedConsensusDataEvent, \
-    StartRoundEvent
+from lft.consensus.events import (BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent,
+                                  InitializeEvent, ProposeSequence, VoteSequence,
+                                  ReceivedConsensusVoteEvent, ReceivedConsensusDataEvent,
+                                  StartRoundEvent, DoneRoundEvent)
 from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalConsensusDataContainer
 from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory

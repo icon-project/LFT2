@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Sequence
 
 from lft.consensus.data import ConsensusData, ConsensusVote
+from lft.consensus.vote import VoteCounter
 from lft.consensus.term import Term
-from lft.consensus.vote_counter import VoteCounter
 
 
 @dataclass

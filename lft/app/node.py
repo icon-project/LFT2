@@ -1,7 +1,7 @@
-from asyncio import sleep
-from typing import IO, Dict, Type, Sequence
+from typing import IO, Dict, Type
 from lft.app.event import Gossiper
-from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
+from lft.app.data import DefaultConsensusDataFactory
+from lft.app.vote import DefaultConsensusVoteFactory
 from lft.app.event.logger import Logger
 from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem, EventMediator
