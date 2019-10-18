@@ -13,24 +13,39 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Type
-
+from functools import partial
+from typing import Type, Dict
 from lft.event import EventSystem
-from lft.event.event_simulator import TEvent
+from lft.event.event_simulator import TEvent, HandlerCallable, HandlerAwaitable
 
 
-class EventHandlerManager:
+class EventRegister:
+    _handler_prototypes: Dict[Type[TEvent], HandlerCallable] = {}
+
     def __init__(self, event_system: EventSystem):
         self._event_system = event_system
-        self._handlers = {}
+        self._handlers: Dict[Type[TEvent], HandlerAwaitable] = {}
+        self._register_handlers()
 
     def __del__(self):
         self.close()
 
     def close(self):
+        self._unregister_handlers()
+
+    def _register_handler(self, event_type: Type[TEvent]):
+        handler = partial(self._handler_prototypes[event_type], self)
+        self._handlers[event_type] = self._event_system.simulator.register_handler(event_type, handler)
+
+    def _register_handlers(self):
+        for event_type in self._handler_prototypes:
+            self._register_handler(event_type)
+
+    def _unregister_handler(self, event_type: Type[TEvent]):
+        handler = self._handlers.pop(event_type)
+        self._event_system.simulator.unregister_handler(event_type, handler)
+
+    def _unregister_handlers(self):
         for event_type, handler in self._handlers.items():
             self._event_system.simulator.unregister_handler(event_type, handler)
         self._handlers.clear()
-
-    def _add_handler(self, event: Type[TEvent], handler: Callable):
-        self._handlers[event] = self._event_system.simulator.register_handler(event, handler)

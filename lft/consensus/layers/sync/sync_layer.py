@@ -13,10 +13,10 @@ from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory
 from lft.consensus.term.term import InvalidProposer
 from lft.event import EventSystem
-from lft.event.event_handler_manager import EventHandlerManager
+from lft.event.event_register import EventRegister
 
 
-class SyncLayer(EventHandlerManager):
+class SyncLayer(EventRegister):
     def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: ConsensusDataFactory,
                  vote_factory: ConsensusVoteFactory, term_factory: TermFactory):
         super().__init__(event_system)
@@ -33,13 +33,6 @@ class SyncLayer(EventHandlerManager):
         self._sync_round: SyncRound = None
         self._term: Term = None
         self._node_id: bytes = node_id
-        self._register_handler()
-
-    def _register_handler(self):
-        self._add_handler(InitializeEvent, self._on_event_initialize)
-        self._add_handler(StartRoundEvent, self._on_event_start_round)
-        self._add_handler(ProposeSequence, self._on_sequence_propose)
-        self._add_handler(VoteSequence, self._on_sequence_vote)
 
     async def _on_event_initialize(self, init_event: InitializeEvent):
         self._temporal_data_container = TemporalConsensusDataContainer(init_event.candidate_data.number)
@@ -231,3 +224,10 @@ class SyncLayer(EventHandlerManager):
                 and start_round_event.round_num == 0:
             return True
         return False
+
+    _handler_prototypes = {
+        InitializeEvent: _on_event_initialize,
+        StartRoundEvent: _on_event_start_round,
+        ProposeSequence: _on_sequence_propose,
+        VoteSequence: _on_sequence_vote
+    }

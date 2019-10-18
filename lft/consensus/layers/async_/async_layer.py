@@ -6,7 +6,7 @@ from lft.consensus.data import ConsensusData, ConsensusDataFactory, ConsensusVot
 from lft.consensus.term import Term, RotateTerm
 from lft.consensus.term.factories import TermFactory
 from lft.event import EventSystem
-from lft.event.event_handler_manager import EventHandlerManager
+from lft.event.event_register import EventRegister
 from lft.event.mediators import DelayedEventMediator
 
 TIMEOUT_PROPOSE = 2.0
@@ -20,7 +20,7 @@ VoteByVoterID = DefaultDict[bytes, VoteByID]  # dict[voter_id][id] = ConsensusVo
 VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = ConsensusVote
 
 
-class AsyncLayer(EventHandlerManager):
+class AsyncLayer(EventRegister):
     def __init__(self,
                  node_id: bytes,
                  event_system: EventSystem,
@@ -152,13 +152,6 @@ class AsyncLayer(EventHandlerManager):
                                                             expected_proposer)
             await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
 
-    def _register_handlers(self):
-        self._add_handler(InitializeEvent, self._on_event_initialize)
-        self._add_handler(StartRoundEvent, self._on_event_start_round)
-        self._add_handler(DoneRoundEvent, self._on_event_done_round)
-        self._add_handler(ReceivedConsensusDataEvent, self._on_event_received_consensus_data)
-        self._add_handler(ReceivedConsensusVoteEvent, self._on_event_received_consensus_vote)
-
     def _is_acceptable_data(self, data: ConsensusData):
         if self._term.num != data.term_num:
             return False
@@ -197,3 +190,11 @@ class AsyncLayer(EventHandlerManager):
         expired_rounds = [round_ for round_ in d if round_ < self._round_num]
         for expired_round in expired_rounds:
             d.pop(expired_round, None)
+
+    _handler_prototypes = {
+        InitializeEvent: _on_event_initialize,
+        StartRoundEvent: _on_event_start_round,
+        DoneRoundEvent: _on_event_done_round,
+        ReceivedConsensusDataEvent: _on_event_received_consensus_data,
+        ReceivedConsensusVoteEvent: _on_event_received_consensus_vote
+    }
