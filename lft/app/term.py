@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2019 ICON Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +14,9 @@
 import math
 from typing import Sequence
 
-from lft.consensus.data import Data, Vote
-from lft.consensus.term import Term
-from lft.consensus.term.term import InvalidProposer, InvalidVoter
+from lft.consensus.data import Data
+from lft.consensus.term import Term, TermFactory, InvalidProposer, InvalidVoter
+from lft.consensus.vote import Vote
 
 
 class RotateTerm(Term):
@@ -75,3 +73,14 @@ class RotateTerm(Term):
 
     def get_voters_id(self) -> Sequence[bytes]:
         return self._voters
+
+
+class RotateTermFactory(TermFactory):
+    def __init__(self, rotate_bound: int):
+        self._rotate_bound = rotate_bound
+
+    def create_term(self, term_num: int, voters: Sequence[bytes]) -> Term:
+        return RotateTerm(num=term_num,
+                          voters=voters,
+                          rotate_bound=self._rotate_bound)
+

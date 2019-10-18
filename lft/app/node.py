@@ -3,7 +3,7 @@ from lft.app.event import Gossiper
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.app.event.logger import Logger
-from lft.consensus.term.factories import RotateTermFactory
+from lft.app.term import RotateTermFactory
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus

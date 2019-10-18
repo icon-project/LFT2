@@ -9,9 +9,7 @@ from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
                                   ReceivedVoteEvent, ReceivedDataEvent,
                                   StartRoundEvent, DoneRoundEvent)
 from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalDataContainer
-from lft.consensus.term import Term
-from lft.consensus.term.factories import TermFactory
-from lft.consensus.term.term import InvalidProposer
+from lft.consensus.term import Term, TermFactory, InvalidProposer
 from lft.event import EventSystem
 from lft.event.event_register import EventRegister
 

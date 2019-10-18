@@ -1,11 +1,12 @@
 from typing import TYPE_CHECKING
 from lft.consensus.layers.async_.async_layer import AsyncLayer
 from lft.consensus.layers.sync.sync_layer import SyncLayer
-from lft.consensus.term.factories import TermFactory
 
 if TYPE_CHECKING:
     from lft.event import EventSystem
-    from lft.consensus.data import DataFactory, VoteFactory
+    from lft.consensus.data import DataFactory
+    from lft.consensus.vote import VoteFactory
+    from lft.consensus.term import TermFactory
 
 
 class Consensus:
