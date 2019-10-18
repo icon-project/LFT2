@@ -16,7 +16,7 @@
 from abc import ABC, abstractmethod
 from typing import Sequence
 
-from lft.consensus.data import ConsensusData, ConsensusVote
+from lft.consensus.data import Data, Vote
 
 
 class Term(ABC):
@@ -41,11 +41,11 @@ class Term(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def verify_data(self, data: ConsensusData):
+    def verify_data(self, data: Data):
         raise NotImplementedError
 
     @abstractmethod
-    def verify_vote(self, vote: ConsensusVote, vote_index: int = -1):
+    def verify_vote(self, vote: Vote, vote_index: int = -1):
         raise NotImplementedError
 
     @abstractmethod

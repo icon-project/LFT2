@@ -17,20 +17,20 @@
 from collections import defaultdict
 from typing import Dict
 
-from lft.consensus.data import ConsensusData
+from lft.consensus.data import Data
 
 
-class TemporalConsensusDataContainer:
+class TemporalDataContainer:
     def __init__(self, criteria: int):
         self._criteria = criteria
-        self._datas: Dict[int, Dict[bytes, 'ConsensusData']] = defaultdict(dict)
+        self._datas: Dict[int, Dict[bytes, 'Data']] = defaultdict(dict)
 
-    def add_data(self, data: ConsensusData):
+    def add_data(self, data: Data):
         if data.number < self._criteria:
             return
         self._datas[data.number][data.id] = data
 
-    def get_data(self, number: int, id_: bytes) -> ConsensusData:
+    def get_data(self, number: int, id_: bytes) -> Data:
         return self._datas[number][id_]
 
     def update_criteria(self, criteria: int):

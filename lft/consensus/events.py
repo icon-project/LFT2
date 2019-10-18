@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Sequence, Optional
 
 from lft.event import Event
-from lft.consensus.data import ConsensusData, ConsensusVote
+from lft.consensus.data import Data, Vote
 
 
 @dataclass
@@ -11,37 +11,37 @@ class InitializeEvent(Event):
     """
     term_num: int
     round_num: int
-    candidate_data: 'ConsensusData'
-    votes: Sequence['ConsensusVote']
+    candidate_data: 'Data'
+    votes: Sequence['Vote']
     voters: Sequence[bytes]
 
 
 @dataclass
-class ReceivedConsensusDataEvent(Event):
+class ReceivedDataEvent(Event):
     """ from application to async layer
     """
-    data: 'ConsensusData'
+    data: 'Data'
 
 
 @dataclass
-class ReceivedConsensusVoteEvent(Event):
+class ReceivedVoteEvent(Event):
     """ from application to async layer
     """
-    vote: 'ConsensusVote'
+    vote: 'Vote'
 
 
 @dataclass
-class BroadcastConsensusDataEvent(Event):
+class BroadcastDataEvent(Event):
     """ from sync layer to application
     """
-    data: 'ConsensusData'
+    data: 'Data'
 
 
 @dataclass
-class BroadcastConsensusVoteEvent(Event):
+class BroadcastVoteEvent(Event):
     """ from sync layer to application
     """
-    vote: 'ConsensusVote'
+    vote: 'Vote'
 
 
 @dataclass
@@ -51,23 +51,23 @@ class DoneRoundEvent(Event):
     is_success: bool
     term_num: int
     round_num: int
-    candidate_data: Optional['ConsensusData']
+    candidate_data: Optional['Data']
     commit_id: Optional['bytes']
-    votes: Sequence['ConsensusVote']
+    votes: Sequence['Vote']
 
 
 @dataclass
 class ProposeSequence(Event):
     """ from async layer to sync layer
     """
-    data: 'ConsensusData'
+    data: 'Data'
 
 
 @dataclass
 class VoteSequence(Event):
     """ from async layer to sync layer
     """
-    vote: 'ConsensusVote'
+    vote: 'Vote'
 
 
 @dataclass

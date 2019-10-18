@@ -1,11 +1,11 @@
 import os
 from typing import Type, TypeVar
-from lft.consensus.vote import ConsensusVote, ConsensusVoteVerifier, ConsensusVoteFactory
+from lft.consensus.vote import Vote, VoteVerifier, VoteFactory
 
 T = TypeVar("T")
 
 
-class DefaultConsensusVote(ConsensusVote):
+class DefaultVote(Vote):
     NoneVote = bytes(16)
 
     def __init__(self, id_: bytes, data_id: bytes, commit_id: bytes, voter_id: bytes, term_num: int, round_num: int):
@@ -58,7 +58,7 @@ class DefaultConsensusVote(ConsensusVote):
 
     @classmethod
     def _deserialize(cls: Type[T], **kwargs) -> T:
-        return DefaultConsensusVote(
+        return DefaultVote(
             id_=kwargs["id"],
             data_id=kwargs["data_id"],
             commit_id=kwargs["commit_id"],
@@ -68,12 +68,12 @@ class DefaultConsensusVote(ConsensusVote):
         )
 
 
-class DefaultConsensusVoteVerifier(ConsensusVoteVerifier):
-    async def verify(self, vote: 'DefaultConsensusVote'):
+class DefaultVoteVerifier(VoteVerifier):
+    async def verify(self, vote: 'DefaultVote'):
         pass
 
 
-class DefaultConsensusVoteFactory(ConsensusVoteFactory):
+class DefaultVoteFactory(VoteFactory):
     def __init__(self, node_id: bytes):
         self._node_id = node_id
 
@@ -81,19 +81,19 @@ class DefaultConsensusVoteFactory(ConsensusVoteFactory):
         return os.urandom(16)
 
     async def create_vote(self,
-                          data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> DefaultConsensusVote:
-        return DefaultConsensusVote(self._create_id(), data_id, commit_id, self._node_id, term_num, round_num)
+                          data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> DefaultVote:
+        return DefaultVote(self._create_id(), data_id, commit_id, self._node_id, term_num, round_num)
 
-    async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> DefaultConsensusVote:
-        return DefaultConsensusVote(self._create_id(), voter_id, voter_id, voter_id, term_num, round_num)
+    async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> DefaultVote:
+        return DefaultVote(self._create_id(), voter_id, voter_id, voter_id, term_num, round_num)
 
-    async def create_none_vote(self, term_num: int, round_num: int) -> DefaultConsensusVote:
-        return DefaultConsensusVote(self._create_id(),
-                                    DefaultConsensusVote.NoneVote,
-                                    DefaultConsensusVote.NoneVote,
+    async def create_none_vote(self, term_num: int, round_num: int) -> DefaultVote:
+        return DefaultVote(self._create_id(),
+                                    DefaultVote.NoneVote,
+                                    DefaultVote.NoneVote,
                                     self._node_id,
                                     term_num,
                                     round_num)
 
-    async def create_vote_verifier(self) -> DefaultConsensusVoteVerifier:
-        return DefaultConsensusVoteVerifier()
+    async def create_vote_verifier(self) -> DefaultVoteVerifier:
+        return DefaultVoteVerifier()

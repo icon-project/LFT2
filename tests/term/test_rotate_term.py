@@ -15,11 +15,11 @@
 # limitations under the License.
 import pytest
 from typing import Sequence
-from lft.consensus.data import ConsensusData, ConsensusVote
+from lft.consensus.data import Data, Vote
 from lft.consensus.term import RotateTerm
 
 
-class MockConsensusData(ConsensusData):
+class MockData(Data):
     @property
     def id(self) -> bytes:
         return
@@ -45,7 +45,7 @@ class MockConsensusData(ConsensusData):
         return self._round
 
     @property
-    def prev_votes(self) -> Sequence[ConsensusVote]:
+    def prev_votes(self) -> Sequence[Vote]:
         return ()
 
     def is_not(self) -> bool:
@@ -61,5 +61,5 @@ class MockConsensusData(ConsensusData):
 def test_rotate_term(round_num, rotate_term, leader_num):
     validators = [b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9']
     term = RotateTerm(0, rotate_bound=rotate_term, voters=validators)
-    consensus_data_mock = MockConsensusData(leader=validators[leader_num], round_=round_num)
+    consensus_data_mock = MockData(leader=validators[leader_num], round_=round_num)
     term.verify_data(consensus_data_mock)

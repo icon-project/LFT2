@@ -5,12 +5,12 @@ from lft.consensus.term.factories import TermFactory
 
 if TYPE_CHECKING:
     from lft.event import EventSystem
-    from lft.consensus.data import ConsensusDataFactory, ConsensusVoteFactory
+    from lft.consensus.data import DataFactory, VoteFactory
 
 
 class Consensus:
     def __init__(self, event_system: 'EventSystem', node_id: bytes,
-                 data_factory: 'ConsensusDataFactory', vote_factory: 'ConsensusVoteFactory',
+                 data_factory: 'DataFactory', vote_factory: 'VoteFactory',
                  term_factory: 'TermFactory'):
         self.event_system = event_system
         self.data_factory = data_factory

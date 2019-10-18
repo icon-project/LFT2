@@ -2,8 +2,8 @@ import os
 import random
 import pytest
 
-from lft.app.data import DefaultConsensusDataFactory
-from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
+from lft.app.data import DefaultDataFactory
+from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent
 from lft.consensus.term import RotateTerm
 from .conftest import start_event_system
 
@@ -26,11 +26,11 @@ async def test_async_layer_past_duplicate_data(async_layer_items,
 
     term = RotateTerm(0, voters)
     proposer = term.get_proposer_id(init_round_num)
-    proposer_data_factory = DefaultConsensusDataFactory(proposer)
+    proposer_data_factory = DefaultDataFactory(proposer)
 
     for _ in range(data_count):
         data = await proposer_data_factory.create_data(0, os.urandom(16), 0, init_round_num, [])
-        event = ReceivedConsensusDataEvent(data)
+        event = ReceivedDataEvent(data)
         for _ in range(data_count):
             event_system.simulator.raise_event(event)
 
@@ -50,7 +50,7 @@ async def test_async_layer_past_duplicate_vote(async_layer_items,
     for _ in range(vote_count):
         for vote_factory in vote_factories:
             vote = await vote_factory.create_vote(os.urandom(16), b'', 0, init_round_num)
-            event = ReceivedConsensusVoteEvent(vote)
+            event = ReceivedVoteEvent(vote)
             for _ in range(vote_count):
                 event_system.simulator.raise_event(event)
 

@@ -1,14 +1,14 @@
 from typing import Sequence
 
-from lft.consensus.data import ConsensusData, ConsensusDataVerifier, ConsensusDataFactory
-from lft.consensus.vote import ConsensusVote, ConsensusVoteVerifier, ConsensusVoteFactory, ConsensusVotes
+from lft.consensus.data import Data, DataVerifier, DataFactory
+from lft.consensus.vote import Vote, VoteVerifier, VoteFactory, Votes
 from lft.consensus.layers.sync.candidate_info import CandidateInfo
 from lft.consensus.layers.sync.sync_round import SyncRound, RoundResult
-from lft.consensus.events import (BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent,
+from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
                                   InitializeEvent, ProposeSequence, VoteSequence,
-                                  ReceivedConsensusVoteEvent, ReceivedConsensusDataEvent,
+                                  ReceivedVoteEvent, ReceivedDataEvent,
                                   StartRoundEvent, DoneRoundEvent)
-from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalConsensusDataContainer
+from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalDataContainer
 from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory
 from lft.consensus.term.term import InvalidProposer
@@ -17,25 +17,25 @@ from lft.event.event_register import EventRegister
 
 
 class SyncLayer(EventRegister):
-    def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: ConsensusDataFactory,
-                 vote_factory: ConsensusVoteFactory, term_factory: TermFactory):
+    def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: DataFactory,
+                 vote_factory: VoteFactory, term_factory: TermFactory):
         super().__init__(event_system)
         self._event_system: EventSystem = event_system
-        self._data_factory: ConsensusDataFactory = data_factory
-        self._vote_factory: ConsensusVoteFactory = vote_factory
+        self._data_factory: DataFactory = data_factory
+        self._vote_factory: VoteFactory = vote_factory
         self._term_factory: TermFactory = term_factory
 
-        self._data_verifier: ConsensusDataVerifier = None
-        self._vote_verifier: ConsensusVoteVerifier = None
+        self._data_verifier: DataVerifier = None
+        self._vote_verifier: VoteVerifier = None
 
         self._candidate_info: CandidateInfo = None
-        self._temporal_data_container: TemporalConsensusDataContainer = None
+        self._temporal_data_container: TemporalDataContainer = None
         self._sync_round: SyncRound = None
         self._term: Term = None
         self._node_id: bytes = node_id
 
     async def _on_event_initialize(self, init_event: InitializeEvent):
-        self._temporal_data_container = TemporalConsensusDataContainer(init_event.candidate_data.number)
+        self._temporal_data_container = TemporalDataContainer(init_event.candidate_data.number)
         self._data_verifier = await self._data_factory.create_data_verifier()
         self._vote_verifier = await self._vote_factory.create_vote_verifier()
 
@@ -96,20 +96,20 @@ class SyncLayer(EventRegister):
 
     async def _raise_new_data_events(self, new_data):
         self._event_system.simulator.raise_event(
-            BroadcastConsensusDataEvent(
+            BroadcastDataEvent(
                 data=new_data
             )
         )
         self._event_system.simulator.raise_event(
-            ReceivedConsensusDataEvent(
+            ReceivedDataEvent(
                 data=new_data
             )
         )
 
-    async def _raise_broadcast_vote(self, vote: ConsensusVote):
-        self._event_system.simulator.raise_event(BroadcastConsensusVoteEvent(vote=vote))
+    async def _raise_broadcast_vote(self, vote: Vote):
+        self._event_system.simulator.raise_event(BroadcastVoteEvent(vote=vote))
 
-        receive_vote_event = ReceivedConsensusVoteEvent(vote=vote)
+        receive_vote_event = ReceivedVoteEvent(vote=vote)
         receive_vote_event.deterministic = True
         self._event_system.simulator.raise_event(receive_vote_event)
 
@@ -169,7 +169,7 @@ class SyncLayer(EventRegister):
         if self._is_genesis_or_is_connected_genesis(data):
             return
 
-        prev_votes = ConsensusVotes.deserialize(data.prev_votes)
+        prev_votes = Votes.deserialize(data.prev_votes)
         if prev_votes.data_id != self._candidate_info.candidate_data.id:
             if prev_votes.term_num == self._candidate_info.candidate_data.term_num:
                 if prev_votes.round_num > self._candidate_info.candidate_data.round_num:
@@ -183,7 +183,7 @@ class SyncLayer(EventRegister):
                     votes=prev_votes.votes
                 )
 
-    def _is_genesis_or_is_connected_genesis(self, data: ConsensusData) -> bool:
+    def _is_genesis_or_is_connected_genesis(self, data: Data) -> bool:
         return data.number == 0 or data.number == 1
 
     async def _verify_and_broadcast_vote(self, data):
@@ -203,7 +203,7 @@ class SyncLayer(EventRegister):
         await self._raise_broadcast_vote(vote)
         self._sync_round.is_voted = True
 
-    def _verify_is_connect_to_candidate(self, data: ConsensusData) -> bool:
+    def _verify_is_connect_to_candidate(self, data: Data) -> bool:
         return self._candidate_info.candidate_data.id == data.prev_id
 
     async def _verify_data(self, data):

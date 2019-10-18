@@ -1,12 +1,12 @@
 import os
 from typing import Sequence, Type, TypeVar
-from lft.app.vote import DefaultConsensusVote
-from lft.consensus.data import ConsensusData, ConsensusDataVerifier, ConsensusDataFactory
+from lft.app.vote import DefaultVote
+from lft.consensus.data import Data, DataVerifier, DataFactory
 
 T = TypeVar("T")
 
 
-class DefaultConsensusData(ConsensusData):
+class DefaultData(Data):
     def __init__(self,
                  id_: bytes,
                  prev_id: bytes,
@@ -14,14 +14,14 @@ class DefaultConsensusData(ConsensusData):
                  number: int,
                  term_num: int,
                  round_num: int,
-                 prev_votes: Sequence['DefaultConsensusVote'] = ()):
+                 prev_votes: Sequence['DefaultVote'] = ()):
         self._id = id_
         self._prev_id = prev_id
         self._proposer_id = proposer_id
         self._number = number
         self._term_num = term_num
         self._round_num = round_num
-        self._prev_votes: Sequence['DefaultConsensusVote'] = prev_votes
+        self._prev_votes: Sequence['DefaultVote'] = prev_votes
 
     @property
     def id(self) -> bytes:
@@ -48,7 +48,7 @@ class DefaultConsensusData(ConsensusData):
         return self._round_num
 
     @property
-    def prev_votes(self) -> Sequence['DefaultConsensusVote']:
+    def prev_votes(self) -> Sequence['DefaultVote']:
         return self._prev_votes
 
     def is_not(self) -> bool:
@@ -67,7 +67,7 @@ class DefaultConsensusData(ConsensusData):
 
     @classmethod
     def _deserialize(cls: Type[T], **kwargs) -> T:
-        return DefaultConsensusData(
+        return DefaultData(
             id_=kwargs["id"],
             prev_id=kwargs["prev_id"],
             proposer_id=kwargs["proposer_id"],
@@ -78,12 +78,12 @@ class DefaultConsensusData(ConsensusData):
         )
 
 
-class DefaultConsensusDataVerifier(ConsensusDataVerifier):
-    async def verify(self, data: 'DefaultConsensusData'):
+class DefaultDataVerifier(DataVerifier):
+    async def verify(self, data: 'DefaultData'):
         pass
 
 
-class DefaultConsensusDataFactory(ConsensusDataFactory):
+class DefaultDataFactory(DataFactory):
     def __init__(self, node_id: bytes):
         self._node_id = node_id
 
@@ -95,17 +95,17 @@ class DefaultConsensusDataFactory(ConsensusDataFactory):
                           prev_id: bytes,
                           term_num: int,
                           round_num: int,
-                          prev_votes: Sequence['DefaultConsensusVote']) -> DefaultConsensusData:
-        return DefaultConsensusData(self._create_id(), prev_id, self._node_id, data_number, term_num, round_num,
+                          prev_votes: Sequence['DefaultVote']) -> DefaultData:
+        return DefaultData(self._create_id(), prev_id, self._node_id, data_number, term_num, round_num,
                                     prev_votes=prev_votes)
 
     async def create_not_data(self,
                               data_number: int,
                               term_num: int,
                               round_num: int,
-                              proposer_id: bytes) -> DefaultConsensusData:
-        return DefaultConsensusData(proposer_id, proposer_id, proposer_id, data_number, term_num, round_num)
+                              proposer_id: bytes) -> DefaultData:
+        return DefaultData(proposer_id, proposer_id, proposer_id, data_number, term_num, round_num)
 
-    async def create_data_verifier(self) -> DefaultConsensusDataVerifier:
-        return DefaultConsensusDataVerifier()
+    async def create_data_verifier(self) -> DefaultDataVerifier:
+        return DefaultDataVerifier()
 

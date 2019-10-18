@@ -6,7 +6,7 @@ from lft.serialization import Serializable
 T = TypeVar("T")
 
 
-class ConsensusVote(Serializable):
+class Vote(Serializable):
     @property
     @abstractmethod
     def id(self) -> bytes:
@@ -57,13 +57,33 @@ class ConsensusVote(Serializable):
         return int.from_bytes(self.id, "big")
 
 
-class ConsensusVotes:
+class VoteVerifier(ABC):
+    @abstractmethod
+    async def verify(self, vote: 'Vote'):
+        raise NotImplementedError
+
+
+class VoteFactory(ABC):
+    async def create_vote(self, data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> 'Vote':
+        raise NotImplementedError
+
+    async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> 'Vote':
+        raise NotImplementedError
+
+    async def create_none_vote(self, term_num: int, round_num: int) -> 'Vote':
+        raise NotImplementedError
+
+    async def create_vote_verifier(self) -> 'VoteVerifier':
+        raise NotImplementedError
+
+
+class Votes:
     def __init__(self, data_id: bytes, term_num: int, round_num: int):
         self._data_id: bytes = data_id
         self._term_num: int = term_num
         self._round_num: int = round_num
         self._voters = set()
-        self._votes: List['ConsensusVote'] = []
+        self._votes: List['Vote'] = []
         self._is_none = None
 
     @property
@@ -79,13 +99,13 @@ class ConsensusVotes:
         return self._round_num
 
     @property
-    def votes(self) -> Sequence['ConsensusVote']:
+    def votes(self) -> Sequence['Vote']:
         return self._votes
 
     def __len__(self):
         return len(self._votes)
 
-    def add_vote(self, vote: 'ConsensusVote'):
+    def add_vote(self, vote: 'Vote'):
         if vote.voter_id not in self._voters:
             if vote.data_id == self._data_id:
                 if self._is_none is None:
@@ -109,7 +129,7 @@ class ConsensusVotes:
         deserialized_obj = None
         print(f"deserialize votes {votes} ")
         for vote in votes:
-            if isinstance(vote, ConsensusVote):
+            if isinstance(vote, Vote):
                 if not deserialized_obj:
                     deserialized_obj = cls(data_id=vote.data_id,
                                            term_num=vote.term_num,
@@ -123,11 +143,11 @@ class ConsensusVotes:
         return self._is_none
 
 
-class EmptyVotes(ConsensusVotes):
+class EmptyVotes(Votes):
     def __init__(self):
         super().__init__(b'', 0, 0)
 
-    def add_vote(self, vote: 'ConsensusVote'):
+    def add_vote(self, vote: 'Vote'):
         raise NotImplementedError
 
     def serialize(self, voters: Sequence[bytes]) -> List:
@@ -138,30 +158,10 @@ class EmptyVotes(ConsensusVotes):
         raise NotImplementedError
 
 
-class ConsensusVoteVerifier(ABC):
-    @abstractmethod
-    async def verify(self, vote: 'ConsensusVote'):
-        raise NotImplementedError
-
-
-class ConsensusVoteFactory(ABC):
-    async def create_vote(self, data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> 'ConsensusVote':
-        raise NotImplementedError
-
-    async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> 'ConsensusVote':
-        raise NotImplementedError
-
-    async def create_none_vote(self, term_num: int, round_num: int) -> 'ConsensusVote':
-        raise NotImplementedError
-
-    async def create_vote_verifier(self) -> 'ConsensusVoteVerifier':
-        raise NotImplementedError
-
-
 class VoteCounter:
     def __init__(self):
         self._majority_id: bytes = b''
-        self._votes: Dict[bytes, 'ConsensusVotes'] = {
+        self._votes: Dict[bytes, 'Votes'] = {
             self._majority_id: EmptyVotes()
         }
         self._voters: Set[bytes] = set()
@@ -171,7 +171,7 @@ class VoteCounter:
         return self._majority_id
 
     @property
-    def majority_votes(self) -> ConsensusVotes:
+    def majority_votes(self) -> Votes:
         return self._votes[self._majority_id]
 
     @property
@@ -182,11 +182,11 @@ class VoteCounter:
     def voter_counts(self) -> int:
         return len(self._voters)
 
-    def add_vote(self, vote: ConsensusVote):
+    def add_vote(self, vote: Vote):
         if not vote.is_not():
             votes = self._votes.get(vote.data_id)
             if not votes:
-                self._votes[vote.data_id] = ConsensusVotes(vote.data_id, vote.term_num, vote.round_num)
+                self._votes[vote.data_id] = Votes(vote.data_id, vote.term_num, vote.round_num)
                 votes = self._votes.get(vote.data_id)
             votes.add_vote(vote)
             self._update_majority(vote.data_id)

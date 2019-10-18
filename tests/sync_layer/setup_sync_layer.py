@@ -18,8 +18,8 @@ from typing import Tuple, Sequence, List
 
 import pytest
 
-from lft.app.data import DefaultConsensusVoteFactory, DefaultConsensusDataFactory, DefaultConsensusData
-from lft.consensus.data import ConsensusData
+from lft.app.data import DefaultVoteFactory, DefaultDataFactory, DefaultData
+from lft.consensus.data import Data
 from lft.consensus.events import InitializeEvent
 from lft.consensus.layers.sync.sync_layer import SyncLayer
 from lft.consensus.term.factories import RotateTermFactory
@@ -30,14 +30,14 @@ TEST_NODE_ID = bytes([2])
 LEADER_ID = bytes([1])
 
 
-async def setup_sync_layer(peer_num: int) -> Tuple[EventSystem, SyncLayer, List[bytes], ConsensusData]:
+async def setup_sync_layer(peer_num: int) -> Tuple[EventSystem, SyncLayer, List[bytes], Data]:
 
     event_system = EventSystem(True)
     voters = [bytes([x]) for x in range(peer_num)]
-    vote_factory = DefaultConsensusVoteFactory(TEST_NODE_ID)
-    data_factory = DefaultConsensusDataFactory(TEST_NODE_ID)
+    vote_factory = DefaultVoteFactory(TEST_NODE_ID)
+    data_factory = DefaultDataFactory(TEST_NODE_ID)
     term_factory = RotateTermFactory(1)
-    genesis_data = DefaultConsensusData(
+    genesis_data = DefaultData(
         id_=CANDIDATE_ID,
         prev_id=None,
         proposer_id=TEST_NODE_ID,

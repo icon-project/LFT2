@@ -1,6 +1,6 @@
 import os
 import pytest
-from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, DoneRoundEvent, StartRoundEvent
+from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent, DoneRoundEvent, StartRoundEvent
 from .conftest import start_event_system
 
 
@@ -10,14 +10,14 @@ async def test_async_layer_basic(async_layer_items, init_round_num, voter_num: i
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
     data = await data_factory.create_data(0, os.urandom(16), 0, 0, [])
-    event = ReceivedConsensusDataEvent(data)
+    event = ReceivedDataEvent(data)
     event_system.simulator.raise_event(event)
 
     votes = []
     for vote_factory in vote_factories[1:]:
         vote = await vote_factory.create_vote(data.id, b'', data.term_num, data.round_num)
         votes.append(vote)
-        event = ReceivedConsensusVoteEvent(vote)
+        event = ReceivedVoteEvent(vote)
         event.deterministic = False
         event_system.simulator.raise_event(event)
 

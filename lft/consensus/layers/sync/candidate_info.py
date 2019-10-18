@@ -16,10 +16,10 @@
 from dataclasses import dataclass
 from typing import Sequence
 
-from lft.consensus.data import ConsensusData, ConsensusVote
+from lft.consensus.data import Data, Vote
 
 
 @dataclass
 class CandidateInfo:
-    candidate_data: 'ConsensusData'
-    votes: Sequence['ConsensusVote']
+    candidate_data: 'Data'
+    votes: Sequence['Vote']

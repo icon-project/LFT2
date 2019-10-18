@@ -2,8 +2,8 @@ import os
 import random
 import pytest
 from typing import cast
-from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
-from lft.app.data import DefaultConsensusVoteFactory
+from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent
+from lft.app.data import DefaultVoteFactory
 from .conftest import start_event_system
 
 param_count = 10
@@ -21,7 +21,7 @@ async def test_async_layer_past_round_data(async_layer_items,
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
     data = await data_factory.create_data(0, os.urandom(16), 0, data_round_num, [])
-    event = ReceivedConsensusDataEvent(data)
+    event = ReceivedDataEvent(data)
     event_system.simulator.raise_event(event)
 
     await start_event_system(event_system)
@@ -39,10 +39,10 @@ async def test_async_layer_past_round_vote(async_layer_items,
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
     for vote_factory in vote_factories:
-        vote_factory = cast(DefaultConsensusVoteFactory, vote_factory)
+        vote_factory = cast(DefaultVoteFactory, vote_factory)
         vote = await vote_factory.create_vote(os.urandom(16), b'', 0, vote_round_num)
 
-        event = ReceivedConsensusVoteEvent(vote)
+        event = ReceivedVoteEvent(vote)
         event_system.simulator.raise_event(event)
 
     await start_event_system(event_system)
@@ -63,7 +63,7 @@ async def test_async_layer_future_round_data(async_layer_items,
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
     data = await data_factory.create_data(0, os.urandom(16), 0, data_round_num, [])
-    event = ReceivedConsensusDataEvent(data)
+    event = ReceivedDataEvent(data)
     event_system.simulator.raise_event(event)
 
     await start_event_system(event_system)
@@ -83,11 +83,11 @@ async def test_async_layer_future_round_vote(async_layer_items,
 
     votes = []
     for vote_factory in vote_factories:
-        vote_factory = cast(DefaultConsensusVoteFactory, vote_factory)
+        vote_factory = cast(DefaultVoteFactory, vote_factory)
         vote = await vote_factory.create_vote(os.urandom(16), b'', 0, vote_round_num)
         votes.append(vote)
 
-        event = ReceivedConsensusVoteEvent(vote)
+        event = ReceivedVoteEvent(vote)
         event_system.simulator.raise_event(event)
 
     await start_event_system(event_system)

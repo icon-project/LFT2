@@ -1,9 +1,9 @@
 import datetime
 import json
 from lft.consensus.events import (Event, InitializeEvent, DoneRoundEvent,
-                                  ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, StartRoundEvent,
-                                  ProposeSequence, VoteSequence, BroadcastConsensusDataEvent,
-                                  BroadcastConsensusVoteEvent)
+                                  ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent,
+                                  ProposeSequence, VoteSequence, BroadcastDataEvent,
+                                  BroadcastVoteEvent)
 from lft.event import EventSimulator
 from lft.serialization import Serializable
 
@@ -19,20 +19,20 @@ class Logger:
                 self._simulator.register_handler(InitializeEvent, self._on_initialize_event),
             DoneRoundEvent:
                 self._simulator.register_handler(DoneRoundEvent, self._on_done_round_event),
-            ReceivedConsensusDataEvent:
-                self._simulator.register_handler(ReceivedConsensusDataEvent, self._on_received_consensus_data_event),
-            ReceivedConsensusVoteEvent:
-                self._simulator.register_handler(ReceivedConsensusVoteEvent, self._on_received_consensus_vote_event),
+            ReceivedDataEvent:
+                self._simulator.register_handler(ReceivedDataEvent, self._on_received_consensus_data_event),
+            ReceivedVoteEvent:
+                self._simulator.register_handler(ReceivedVoteEvent, self._on_received_consensus_vote_event),
             StartRoundEvent:
                 self._simulator.register_handler(StartRoundEvent, self._print_log),
             ProposeSequence:
                 self._simulator.register_handler(ProposeSequence, self._print_log),
             VoteSequence:
                 self._simulator.register_handler(VoteSequence, self._print_log),
-            BroadcastConsensusDataEvent:
-                self._simulator.register_handler(BroadcastConsensusDataEvent, self._print_log),
-            BroadcastConsensusVoteEvent:
-                self._simulator.register_handler(BroadcastConsensusVoteEvent, self._print_log)
+            BroadcastDataEvent:
+                self._simulator.register_handler(BroadcastDataEvent, self._print_log),
+            BroadcastVoteEvent:
+                self._simulator.register_handler(BroadcastVoteEvent, self._print_log)
         }
 
     def __del__(self):
@@ -49,10 +49,10 @@ class Logger:
     def _on_done_round_event(self, event: DoneRoundEvent):
         self._print_log(event)
 
-    def _on_received_consensus_data_event(self, event: ReceivedConsensusDataEvent):
+    def _on_received_consensus_data_event(self, event: ReceivedDataEvent):
         self._print_log(event)
 
-    def _on_received_consensus_vote_event(self, event: ReceivedConsensusVoteEvent):
+    def _on_received_consensus_vote_event(self, event: ReceivedVoteEvent):
         self._print_log(event)
 
     def _print_log(self, event: Event):

@@ -16,7 +16,7 @@
 import math
 from typing import Sequence
 
-from lft.consensus.data import ConsensusData, ConsensusVote
+from lft.consensus.data import Data, Vote
 from lft.consensus.term import Term
 from lft.consensus.term.term import InvalidProposer, InvalidVoter
 
@@ -44,13 +44,13 @@ class RotateTerm(Term):
     def quorum_num(self) -> int:
         return math.ceil(self.voters_num * 0.67)
 
-    def verify_data(self, data: ConsensusData):
+    def verify_data(self, data: Data):
         self.verify_proposer(data.proposer_id, data.round_num)
         for i, vote in enumerate(data.prev_votes):
             self.verify_vote(vote, i)
 
-    def verify_vote(self, vote: ConsensusVote, vote_index: int = -1):
-        if isinstance(vote, ConsensusVote):
+    def verify_vote(self, vote: Vote, vote_index: int = -1):
+        if isinstance(vote, Vote):
             self.verify_voter(vote.voter_id, vote_index)
 
     def verify_proposer(self, proposer_id: bytes, round_num: int):

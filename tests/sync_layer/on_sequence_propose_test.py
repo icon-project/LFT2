@@ -18,8 +18,8 @@ from asyncio import QueueEmpty
 
 import pytest
 
-from lft.app.data import DefaultConsensusVote, DefaultConsensusData
-from lft.consensus.events import BroadcastConsensusVoteEvent, ProposeSequence, ReceivedConsensusVoteEvent
+from lft.app.data import DefaultVote, DefaultData
+from lft.consensus.events import BroadcastVoteEvent, ProposeSequence, ReceivedVoteEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, verify_no_events
 
 PROPOSE_ID = b"b"
@@ -28,8 +28,8 @@ PROPOSE_ID = b"b"
 @pytest.mark.asyncio
 @pytest.mark.parametrize("propose_id,propose_prev_id,expected_vote_data_id",
                          [(b"b", CANDIDATE_ID, b"b"),
-                          (b"b", b"other_id", DefaultConsensusVote.NoneVote),
-                          (LEADER_ID, None, DefaultConsensusVote.NoneVote)])
+                          (b"b", b"other_id", DefaultVote.NoneVote),
+                          (LEADER_ID, None, DefaultVote.NoneVote)])
 async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     # TODO propose not data, correct data, non_connection_data
     """ GIVEN SyncLayer with candidate_data and ProposeSequence, setup
@@ -38,7 +38,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     """
     # GIVEN
     event_system, sync_layer, voters, genesis_data = await setup_sync_layer(peer_num=7)
-    propose = DefaultConsensusData(id_=PROPOSE_ID,
+    propose = DefaultData(id_=PROPOSE_ID,
                                    prev_id=propose_prev_id,
                                    proposer_id=LEADER_ID,
                                    number=1,
@@ -52,16 +52,16 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     # THEN
 
     non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
-    assert isinstance(event, BroadcastConsensusVoteEvent)
+    assert isinstance(event, BroadcastVoteEvent)
     assert event.vote.data_id == expected_vote_data_id
 
     non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
-    assert isinstance(event, ReceivedConsensusVoteEvent)
+    assert isinstance(event, ReceivedVoteEvent)
     assert event.vote.data_id == expected_vote_data_id
 
     # Test double propose
     # GIVEN
-    second_propose = DefaultConsensusData(id_=PROPOSE_ID,
+    second_propose = DefaultData(id_=PROPOSE_ID,
                                           prev_id=propose_prev_id,
                                           proposer_id=LEADER_ID,
                                           number=1,

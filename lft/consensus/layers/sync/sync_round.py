@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Sequence
 
-from lft.consensus.data import ConsensusData, ConsensusVote
+from lft.consensus.data import Data, Vote
 from lft.consensus.vote import VoteCounter
 from lft.consensus.term import Term
 
@@ -11,8 +11,8 @@ class RoundResult:
     is_success: bool
     term_num: int
     round_num: int
-    candidate_data: Optional[ConsensusData]
-    votes: Sequence[ConsensusVote]
+    candidate_data: Optional[Data]
+    votes: Sequence[Vote]
 
 
 class SyncRound:
@@ -21,12 +21,12 @@ class SyncRound:
     def __init__(self,
                  term: Term,
                  round_num: int,
-                 datas: Optional[Dict[bytes, ConsensusData]] = None,
-                 votes: Optional[Sequence[ConsensusVote]] = None):
+                 datas: Optional[Dict[bytes, Data]] = None,
+                 votes: Optional[Sequence[Vote]] = None):
         self.term: Term = term
         self.round_num: int = round_num
 
-        self._datas: Dict[bytes, ConsensusData] = datas if datas else {}
+        self._datas: Dict[bytes, Data] = datas if datas else {}
         self._vote_counter: VoteCounter = VoteCounter()
         if votes:
             for vote in votes:
@@ -45,13 +45,13 @@ class SyncRound:
     def apply(self):
         self._apply = True
 
-    def add_data(self, data: ConsensusData):
+    def add_data(self, data: Data):
         if data.is_not():
             self._datas[self._NOT_ID] = data
         else:
             self._datas[data.id] = data
 
-    def add_vote(self, vote: ConsensusVote):
+    def add_vote(self, vote: Vote):
         self._vote_counter.add_vote(vote)
 
     def get_result(self) -> Optional[RoundResult]:

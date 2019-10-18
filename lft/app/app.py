@@ -5,7 +5,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List
 from lft.app import Node
-from lft.app.data import DefaultConsensusData
+from lft.app.data import DefaultData
 from lft.consensus.events import InitializeEvent
 
 RECORD_PATH = "record.log"
@@ -49,7 +49,7 @@ class App(ABC):
             loop.close()
 
     def _raise_init_event(self, init_node: Node, nodes: List[Node]):
-        genesis_data = DefaultConsensusData(
+        genesis_data = DefaultData(
             id_=b'genesis',
             prev_id=b'',
             proposer_id=self._node_id_list[0],

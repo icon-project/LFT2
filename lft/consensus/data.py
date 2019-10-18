@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Sequence
 
-from lft.consensus.vote import ConsensusVote
+from lft.consensus.vote import Vote
 from lft.serialization import Serializable
 
 
-class ConsensusData(Serializable):
+class Data(Serializable):
     @property
     @abstractmethod
     def id(self) -> bytes:
@@ -38,7 +38,7 @@ class ConsensusData(Serializable):
 
     @property
     @abstractmethod
-    def prev_votes(self) -> Sequence['ConsensusVote']:
+    def prev_votes(self) -> Sequence['Vote']:
         raise NotImplementedError
 
     @abstractmethod
@@ -58,23 +58,23 @@ class ConsensusData(Serializable):
         return int.from_bytes(self.id, "big")
 
 
-class ConsensusDataVerifier(ABC):
+class DataVerifier(ABC):
     @abstractmethod
-    async def verify(self, data: 'ConsensusData'):
+    async def verify(self, data: 'Data'):
         raise NotImplementedError
 
-    async def add_vote(self, vote: 'ConsensusVote'):
+    async def add_vote(self, vote: 'Vote'):
         raise NotImplementedError
 
 
-class ConsensusDataFactory(ABC):
+class DataFactory(ABC):
     @abstractmethod
     async def create_data(self,
                           data_number: int,
                           prev_id: bytes,
                           term_num: int,
                           round_num: int,
-                          prev_votes: Sequence['ConsensusVote']) -> 'ConsensusData':
+                          prev_votes: Sequence['Vote']) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod
@@ -82,9 +82,9 @@ class ConsensusDataFactory(ABC):
                               data_number: int,
                               term_num: int,
                               round_num: int,
-                              proposer_id: bytes) -> 'ConsensusData':
+                              proposer_id: bytes) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod
-    async def create_data_verifier(self) -> 'ConsensusDataVerifier':
+    async def create_data_verifier(self) -> 'DataVerifier':
         raise NotImplementedError

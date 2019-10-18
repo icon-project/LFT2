@@ -1,9 +1,9 @@
 from collections import defaultdict
 from typing import Dict, DefaultDict, OrderedDict, Optional, Sequence
-from lft.consensus.events import (ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, ProposeSequence, VoteSequence,
+from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent, ProposeSequence, VoteSequence,
                                   DoneRoundEvent, InitializeEvent, StartRoundEvent)
-from lft.consensus.data import ConsensusData, ConsensusDataFactory
-from lft.consensus.vote import ConsensusVote, ConsensusVoteFactory
+from lft.consensus.data import Data, DataFactory
+from lft.consensus.vote import Vote, VoteFactory
 from lft.consensus.term import Term
 from lft.consensus.term.factories import TermFactory
 from lft.event import EventSystem
@@ -13,20 +13,20 @@ from lft.event.mediators import DelayedEventMediator
 TIMEOUT_PROPOSE = 2.0
 TIMEOUT_VOTE = 2.0
 
-DataByID = Dict[bytes, ConsensusData]  # dict[id] = ConsensusData
-DataByRound = DefaultDict[int, DataByID]  # dict[round][id] = ConsensusData
+DataByID = Dict[bytes, Data]  # dict[id] = Data
+DataByRound = DefaultDict[int, DataByID]  # dict[round][id] = Data
 
-VoteByID = OrderedDict[bytes, ConsensusVote]  # dict[id] = ConsensusVote
-VoteByVoterID = DefaultDict[bytes, VoteByID]  # dict[voter_id][id] = ConsensusVote
-VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = ConsensusVote
+VoteByID = OrderedDict[bytes, Vote]  # dict[id] = Vote
+VoteByVoterID = DefaultDict[bytes, VoteByID]  # dict[voter_id][id] = Vote
+VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = Vote
 
 
 class AsyncLayer(EventRegister):
     def __init__(self,
                  node_id: bytes,
                  event_system: EventSystem,
-                 data_factory: ConsensusDataFactory,
-                 vote_factory: ConsensusVoteFactory,
+                 data_factory: DataFactory,
+                 vote_factory: VoteFactory,
                  term_factory: TermFactory):
         super().__init__(event_system)
         self._node_id = node_id
@@ -58,7 +58,7 @@ class AsyncLayer(EventRegister):
         if event.candidate_data:
             self._candidate_num = event.candidate_data.number
 
-    async def _on_event_received_consensus_data(self, event: ReceivedConsensusDataEvent):
+    async def _on_event_received_consensus_data(self, event: ReceivedDataEvent):
 
         data = event.data
         if not self._is_acceptable_data(data):
@@ -78,7 +78,7 @@ class AsyncLayer(EventRegister):
                     await self._raise_received_consensus_vote(delay=0, vote=vote)
                 await self._raise_received_consensus_data(delay=0, data=data)
 
-    async def _on_event_received_consensus_vote(self, event: ReceivedConsensusVoteEvent):
+    async def _on_event_received_consensus_vote(self, event: ReceivedVoteEvent):
         vote = event.vote
         if not self._is_acceptable_vote(vote):
             return
@@ -97,27 +97,27 @@ class AsyncLayer(EventRegister):
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
-    async def _raise_received_consensus_data(self, delay: float, data: ConsensusData):
-        event = ReceivedConsensusDataEvent(data)
+    async def _raise_received_consensus_data(self, delay: float, data: Data):
+        event = ReceivedDataEvent(data)
 
         event.deterministic = False
 
         mediator = self._event_system.get_mediator(DelayedEventMediator)
         mediator.execute(delay, event)
 
-    async def _raise_received_consensus_vote(self, delay: float, vote: ConsensusVote):
-        if isinstance(vote, ConsensusVote):
-            event = ReceivedConsensusVoteEvent(vote)
+    async def _raise_received_consensus_vote(self, delay: float, vote: Vote):
+        if isinstance(vote, Vote):
+            event = ReceivedVoteEvent(vote)
             event.deterministic = False
 
             mediator = self._event_system.get_mediator(DelayedEventMediator)
             mediator.execute(delay, event)
 
-    async def _raise_propose_sequence(self, data: ConsensusData):
+    async def _raise_propose_sequence(self, data: Data):
         propose_sequence = ProposeSequence(data)
         self._event_system.simulator.raise_event(propose_sequence)
 
-    async def _raise_vote_sequence(self, vote: ConsensusVote):
+    async def _raise_vote_sequence(self, vote: Vote):
         vote_sequence = VoteSequence(vote)
         self._event_system.simulator.raise_event(vote_sequence)
 
@@ -153,7 +153,7 @@ class AsyncLayer(EventRegister):
                                                             expected_proposer)
             await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
 
-    def _is_acceptable_data(self, data: ConsensusData):
+    def _is_acceptable_data(self, data: Data):
         if self._term.num != data.term_num:
             return False
         if self._round_num > data.round_num:
@@ -167,7 +167,7 @@ class AsyncLayer(EventRegister):
 
         return True
 
-    def _is_acceptable_vote(self, vote: ConsensusVote):
+    def _is_acceptable_vote(self, vote: Vote):
         if self._term.num != vote.term_num:
             return False
         if self._round_num > vote.round_num:
@@ -196,6 +196,6 @@ class AsyncLayer(EventRegister):
         InitializeEvent: _on_event_initialize,
         StartRoundEvent: _on_event_start_round,
         DoneRoundEvent: _on_event_done_round,
-        ReceivedConsensusDataEvent: _on_event_received_consensus_data,
-        ReceivedConsensusVoteEvent: _on_event_received_consensus_vote
+        ReceivedDataEvent: _on_event_received_consensus_data,
+        ReceivedVoteEvent: _on_event_received_consensus_vote
     }
