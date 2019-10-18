@@ -29,7 +29,7 @@ async def test_async_layer_past_duplicate_data(async_layer_items,
     proposer_data_factory = DefaultConsensusDataFactory(proposer)
 
     for _ in range(data_count):
-        data = await proposer_data_factory.create_data(0, os.urandom(16), 0, init_round_num)
+        data = await proposer_data_factory.create_data(0, os.urandom(16), 0, init_round_num, [])
         event = ReceivedConsensusDataEvent(data)
         for _ in range(data_count):
             event_system.simulator.raise_event(event)
@@ -49,7 +49,7 @@ async def test_async_layer_past_duplicate_vote(async_layer_items,
 
     for _ in range(vote_count):
         for vote_factory in vote_factories:
-            vote = await vote_factory.create_vote(os.urandom(16), 0, init_round_num)
+            vote = await vote_factory.create_vote(os.urandom(16), b'', 0, init_round_num)
             event = ReceivedConsensusVoteEvent(vote)
             for _ in range(vote_count):
                 event_system.simulator.raise_event(event)

@@ -1,17 +1,21 @@
-from typing import IO, Dict, Type
+from asyncio import sleep
+from typing import IO, Dict, Type, Sequence
 from lft.app.event import Gossiper
 from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
 from lft.app.event.logger import Logger
+from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
 from lft.consensus.data import ConsensusData, ConsensusVote
-from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent
+from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, DoneRoundEvent, \
+    StartRoundEvent, InitializeEvent
 
 
 class Node:
     def __init__(self, node_id: bytes):
         self.node_id = node_id
+        self.nodes = None
         self.event_system = EventSystem()
         self.event_system.set_mediator(DelayedEventMediator)
 
@@ -24,7 +28,26 @@ class Node:
             self.event_system,
             self.node_id,
             DefaultConsensusDataFactory(self.node_id),
-            DefaultConsensusVoteFactory(self.node_id))
+            DefaultConsensusVoteFactory(self.node_id),
+            RotateTermFactory(1)
+        )
+        self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
+        self.event_system.simulator.register_handler(DoneRoundEvent, self._on_done_round_event)
+
+    async def _on_init_event(self, init_event: InitializeEvent):
+        for gossiper in self._gossipers.values():
+            await gossiper.start()
+        self._nodes = init_event.voters
+
+    async def _on_done_round_event(self, done_round: DoneRoundEvent):
+        round_start_event = StartRoundEvent(
+            term_num=done_round.term_num,
+            round_num=done_round.round_num + 1,
+            voters=self._nodes
+        )
+        round_start_event.deterministic = False
+        mediator = self.event_system.get_mediator(DelayedEventMediator)
+        mediator.execute(0.5, round_start_event)
 
     def __del__(self):
         self.close()
@@ -52,10 +75,11 @@ class Node:
         self.event_system.start_replay(record_io, mediator_ios, blocking)
 
     def receive_data(self, data: ConsensusData):
+        print(f"{self.node_id.hex()}: Receive data {data.serialize()}")
         if data in self.received_data:
-            print(f"{self.node_id} : receive data but ignored : {data}")
+            print(f"{self.node_id.hex()} : receive duplicated data: {data}")
         else:
-            print(f"{self.node_id} : receive data : {data}")
+            print(f"{self.node_id.hex()} : receive data : {data}")
             self.received_data.add(data)
 
             event = ReceivedConsensusDataEvent(data)
@@ -63,17 +87,16 @@ class Node:
 
     def receive_vote(self, vote: ConsensusVote):
         if vote in self.received_votes:
-            print(f"{self.node_id} : receive vote but ignored : {vote}")
+            print(f"{self.node_id.hex()} : receive duplicated vote : {vote.serialize()}")
         else:
-            print(f"{self.node_id} : receive vote : {vote}")
+            print(f"{self.node_id.hex()} : receive vote : {vote.serialize()}")
             self.received_votes.add(vote)
 
             event = ReceivedConsensusVoteEvent(vote)
             self.event_system.simulator.raise_event(event)
 
     def register_peer(self, peer_id: bytes, peer: 'Node'):
-        gossiper = Gossiper(self.event_system, self, peer)
-        self._gossipers[peer_id] = gossiper
+        self._gossipers[peer_id] = Gossiper(self.event_system, self, peer)
 
     def unregister_peer(self, peer_id: bytes):
         self._gossipers.pop(peer_id, None)

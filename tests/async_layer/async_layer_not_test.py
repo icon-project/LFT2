@@ -20,14 +20,14 @@ async def test_async_layer_not_data_early(async_layer_items,
                                           init_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
-    not_data = await data_factory.create_not_data(0, 0, init_round_num)
+    not_data = await data_factory.create_not_data(0, 0, init_round_num, voters[0])
     event = ReceivedConsensusDataEvent(not_data)
     event_system.simulator.raise_event(event)
 
     await start_event_system(event_system)
     assert not_data is async_layer._data_dict[init_round_num][not_data.id]
 
-    data = await data_factory.create_data(0, os.urandom(16), 0, init_round_num)
+    data = await data_factory.create_data(0, os.urandom(16), 0, init_round_num, [])
     event = ReceivedConsensusDataEvent(data)
     event_system.simulator.raise_event(event)
 
@@ -43,14 +43,14 @@ async def test_async_layer_not_data_later(async_layer_items,
                                           init_round_num: int):
     node_id, event_system, async_layer, voters, data_factory, vote_factories = async_layer_items
 
-    data = await data_factory.create_data(0, os.urandom(16), 0, init_round_num)
+    data = await data_factory.create_data(0, os.urandom(16), 0, init_round_num, [])
     event = ReceivedConsensusDataEvent(data)
     event_system.simulator.raise_event(event)
 
     await start_event_system(event_system)
     assert data is async_layer._data_dict[init_round_num][data.id]
 
-    not_data = await data_factory.create_not_data(0, 0, init_round_num)
+    not_data = await data_factory.create_not_data(0, 0, init_round_num, voters[0])
     event = ReceivedConsensusDataEvent(not_data)
     event_system.simulator.raise_event(event)
 
@@ -74,7 +74,7 @@ async def test_async_layer_not_vote_early(async_layer_items,
         await start_event_system(event_system)
         assert not_vote is async_layer._vote_dict[init_round_num][voter][not_vote.id]
 
-        vote = await vote_factory.create_vote(os.urandom(16), 0, init_round_num)
+        vote = await vote_factory.create_vote(os.urandom(16), b'', 0, init_round_num)
         event = ReceivedConsensusVoteEvent(vote)
         event_system.simulator.raise_event(event)
 
@@ -92,7 +92,7 @@ async def test_async_layer_not_vote_later(async_layer_items,
 
     for voter, vote_factory in zip(voters, vote_factories):
         vote_factory = cast(DefaultConsensusVoteFactory, vote_factory)
-        vote = await vote_factory.create_vote(os.urandom(16), 0, init_round_num)
+        vote = await vote_factory.create_vote(os.urandom(16), b'', 0, init_round_num)
         event = ReceivedConsensusVoteEvent(vote)
         event_system.simulator.raise_event(event)
 

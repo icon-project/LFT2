@@ -26,6 +26,15 @@ class RotateTerm(Term):
         self._num = num
         self._rotate_bound = rotate_bound
         self._voters = tuple(voters)
+        self._voters_num = len(self._voters)
+
+    @property
+    def voters(self) -> Sequence[bytes]:
+        return self._voters
+
+    @property
+    def voters_num(self) -> int:
+        return self._voters_num
 
     @property
     def num(self) -> int:
@@ -33,15 +42,16 @@ class RotateTerm(Term):
 
     @property
     def quorum_num(self) -> int:
-        return math.ceil(len(self._voters) * 0.67)
+        return math.ceil(self.voters_num * 0.67)
 
     def verify_data(self, data: ConsensusData):
         self.verify_proposer(data.proposer_id, data.round_num)
-        for i, vote in data.prev_votes:
+        for i, vote in enumerate(data.prev_votes):
             self.verify_vote(vote, i)
 
     def verify_vote(self, vote: ConsensusVote, vote_index: int = -1):
-        self.verify_voter(vote.voter_id, vote_index)
+        if isinstance(vote, ConsensusVote):
+            self.verify_voter(vote.voter_id, vote_index)
 
     def verify_proposer(self, proposer_id: bytes, round_num: int):
         expected = self.get_proposer_id(round_num)

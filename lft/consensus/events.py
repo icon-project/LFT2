@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Sequence, Optional
+
 from lft.event import Event
 from lft.consensus.data import ConsensusData, ConsensusVote
 
@@ -11,6 +12,7 @@ class InitializeEvent(Event):
     term_num: int
     round_num: int
     candidate_data: 'ConsensusData'
+    votes: Sequence['ConsensusVote']
     voters: Sequence[bytes]
 
 
@@ -46,10 +48,12 @@ class BroadcastConsensusVoteEvent(Event):
 class DoneRoundEvent(Event):
     """ from sync layer to its async layer and application
     """
+    is_success: bool
     term_num: int
     round_num: int
-    candidate_data: 'ConsensusData'
-    commit_data: 'ConsensusData'
+    candidate_data: Optional['ConsensusData']
+    commit_id: Optional['bytes']
+    votes: Sequence['ConsensusVote']
 
 
 @dataclass
@@ -64,3 +68,10 @@ class VoteSequence(Event):
     """ from async layer to sync layer
     """
     vote: 'ConsensusVote'
+
+
+@dataclass
+class StartRoundEvent(Event):
+    term_num: int
+    round_num: int
+    voters: Sequence[bytes]

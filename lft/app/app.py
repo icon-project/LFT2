@@ -5,14 +5,20 @@ from enum import Enum
 from pathlib import Path
 from typing import List
 from lft.app import Node
+from lft.app.data import DefaultConsensusData
 from lft.consensus.events import InitializeEvent
 
 RECORD_PATH = "record.log"
 
 
 class App(ABC):
+    def __init__(self):
+        self._node_id_list = None
+
     def start(self):
         nodes = self._gen_nodes()
+        self._node_id_list = [node.node_id for node in nodes]
+
         for node in nodes:
             for peer in (peer for peer in nodes if peer != node):
                 node.register_peer(peer.node_id, peer)
@@ -42,18 +48,31 @@ class App(ABC):
             loop.run_until_complete(loop.shutdown_asyncgens())
             loop.close()
 
+    def _raise_init_event(self, init_node: Node, nodes: List[Node]):
+        genesis_data = DefaultConsensusData(
+            id_=b'genesis',
+            prev_id=b'',
+            proposer_id=self._node_id_list[0],
+            number=0,
+            term_num=0,
+            round_num=0,
+            prev_votes=[]
+        )
+        event = InitializeEvent(0, 1, genesis_data, [], self._node_id_list)
+        event.deterministic = False
+        init_node.event_system.simulator.raise_event(event)
+
 
 class InstantApp(App):
     def __init__(self, number: int):
+        super().__init__()
         self.number = number
 
     def _start(self, nodes: List[Node]):
         for node in nodes:
             node.start(False)
 
-            event = InitializeEvent(0, 0, None, tuple(node.node_id for node in nodes))
-            event.deterministic = False
-            node.event_system.simulator.raise_event(event)
+            self._raise_init_event(node, nodes)
 
     def _gen_nodes(self) -> List[Node]:
         return [Node(os.urandom(16)) for _ in range(self.number)]
@@ -61,6 +80,7 @@ class InstantApp(App):
 
 class RecordApp(App):
     def __init__(self, number: int, path: Path):
+        super().__init__()
         self.number = number
         self.path = path
 
@@ -72,9 +92,7 @@ class RecordApp(App):
             record_io = open(str(node_path.joinpath(RECORD_PATH)), 'w')
             node.start_record(record_io, blocking=False)
 
-            event = InitializeEvent(0, 0, None, tuple(node.node_id for node in nodes))
-            event.deterministic = False
-            node.event_system.simulator.raise_event(event)
+            self._raise_init_event(node, nodes)
 
     def _gen_nodes(self) -> List[Node]:
         self.path.mkdir(parents=True, exist_ok=True)
@@ -83,6 +101,7 @@ class RecordApp(App):
 
 class ReplayApp(App):
     def __init__(self, path: Path, node: bytes):
+        super().__init__()
         self.path = path
         self.node = node
 

@@ -7,6 +7,7 @@ from lft.serialization import Serializable
 class _JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, bytes):
+            print(f"origin byte : {o}")
             return "0x" + o.hex()
         elif isinstance(o, str):
             return "0r" + o

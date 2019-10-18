@@ -9,7 +9,12 @@ class DelayedEventInstantMediatorExecutor(EventInstantMediatorExecutor):
         _is_valid_event(event)
 
         loop = loop or asyncio.get_event_loop()
-        loop.call_later(delay, lambda: self._event_simulator.raise_event(event))
+
+        def logging_raise():
+            print(f"delayed raise event : {event.serialize()}")
+            self._event_simulator.raise_event(event)
+
+        loop.call_later(delay, logging_raise)
 
     async def execute_async(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         return self.execute(delay, event, loop)
@@ -46,5 +51,4 @@ class DelayedEventMediator(EventMediator):
 
 def _is_valid_event(event: Event):
     if event.deterministic:
-        raise RuntimeError("Delayed event must not be deterministic")
-
+        raise RuntimeError(f"Delayed event must not be deterministic :{event.serialize()}")

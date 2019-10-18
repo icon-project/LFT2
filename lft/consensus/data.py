@@ -9,14 +9,16 @@ class ConsensusDataFactory(ABC):
                           data_number: int,
                           prev_id: bytes,
                           term_num: int,
-                          round_num: int) -> 'ConsensusData':
+                          round_num: int,
+                          prev_votes: Sequence['ConsensusVote']) -> 'ConsensusData':
         raise NotImplementedError
 
     @abstractmethod
     async def create_not_data(self,
                               data_number: int,
                               term_num: int,
-                              round_num: int) -> 'ConsensusData':
+                              round_num: int,
+                              proposer_id: bytes) -> 'ConsensusData':
         raise NotImplementedError
 
     @abstractmethod
@@ -25,7 +27,7 @@ class ConsensusDataFactory(ABC):
 
 
 class ConsensusVoteFactory(ABC):
-    async def create_vote(self, data_id: bytes, term_num: int, round_num: int) -> 'ConsensusVote':
+    async def create_vote(self, data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> 'ConsensusVote':
         raise NotImplementedError
 
     async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> 'ConsensusVote':
@@ -41,6 +43,9 @@ class ConsensusVoteFactory(ABC):
 class ConsensusDataVerifier(ABC):
     @abstractmethod
     async def verify(self, data: 'ConsensusData'):
+        raise NotImplementedError
+
+    async def add_vote(self, vote: 'ConsensusVote'):
         raise NotImplementedError
 
 
@@ -59,6 +64,11 @@ class ConsensusVote(Serializable):
     @property
     @abstractmethod
     def data_id(self) -> bytes:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def commit_id(self) -> bytes:
         raise NotImplementedError
 
     @property
@@ -84,6 +94,16 @@ class ConsensusVote(Serializable):
     def is_none(self) -> bool:
         raise NotImplementedError
 
+    def __eq__(self, other):
+        return self.id == other.id \
+               and self.data_id == other.data_id \
+               and self.commit_id == other.commit_id \
+               and self.voter_id == other.voter_id \
+               and self.term_num == other.term_num \
+               and self.round_num == other.round_num
+
+    def __hash__(self):
+        return int.from_bytes(self.id, "big")
 
 class ConsensusData(Serializable):
     @property
@@ -124,3 +144,15 @@ class ConsensusData(Serializable):
     @abstractmethod
     def is_not(self) -> bool:
         raise NotImplementedError
+
+    def __eq__(self, other):
+        return self.id == other.id \
+               and self.number == other.number \
+               and self.prev_id == other.prev_id \
+               and self.proposer_id == other.proposer_id \
+               and self.term_num == other.term_num \
+               and self.round_num == other.round_num \
+               and self.prev_votes == other.prev_votes
+
+    def __hash__(self):
+        return int.from_bytes(self.id, "big")
