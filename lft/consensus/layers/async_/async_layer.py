@@ -5,8 +5,7 @@ from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent, ProposeS
 from lft.consensus.data import Data, DataFactory
 from lft.consensus.vote import Vote, VoteFactory
 from lft.consensus.term import Term, TermFactory
-from lft.event import EventSystem
-from lft.event.event_register import EventRegister
+from lft.event import EventSystem, EventRegister
 from lft.event.mediators import DelayedEventMediator
 
 TIMEOUT_PROPOSE = 2.0
@@ -27,7 +26,7 @@ class AsyncLayer(EventRegister):
                  data_factory: DataFactory,
                  vote_factory: VoteFactory,
                  term_factory: TermFactory):
-        super().__init__(event_system)
+        super().__init__(event_system.simulator)
         self._node_id = node_id
         self._event_system = event_system
         self._data_factory = data_factory
@@ -41,7 +40,6 @@ class AsyncLayer(EventRegister):
         self._candidate_num = -1
 
         self._vote_timeout_started = False
-        self._register_handlers()
 
     async def _on_event_initialize(self, event: InitializeEvent):
         candidate_num = event.candidate_data.number if event.candidate_data else 0

@@ -10,14 +10,13 @@ from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
                                   StartRoundEvent, DoneRoundEvent)
 from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalDataContainer
 from lft.consensus.term import Term, TermFactory, InvalidProposer
-from lft.event import EventSystem
-from lft.event.event_register import EventRegister
+from lft.event import EventSystem, EventRegister
 
 
 class SyncLayer(EventRegister):
     def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: DataFactory,
                  vote_factory: VoteFactory, term_factory: TermFactory):
-        super().__init__(event_system)
+        super().__init__(event_system.simulator)
         self._event_system: EventSystem = event_system
         self._data_factory: DataFactory = data_factory
         self._vote_factory: VoteFactory = vote_factory

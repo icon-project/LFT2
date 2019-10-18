@@ -4,60 +4,32 @@ from lft.consensus.events import (Event, InitializeEvent, DoneRoundEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent,
                                   ProposeSequence, VoteSequence, BroadcastDataEvent,
                                   BroadcastVoteEvent)
-from lft.event import EventSimulator
+from lft.event import EventSimulator, EventRegister
 from lft.serialization import Serializable
 
 
-class Logger:
+class Logger(EventRegister):
     def __init__(self, node_id: bytes, event_simulator: EventSimulator):
+        super().__init__(event_simulator)
         self._node_id = node_id
         self._simulator = event_simulator
         self._encoder = _JSONEncoder()
 
-        self._handlers = {
-            InitializeEvent:
-                self._simulator.register_handler(InitializeEvent, self._on_initialize_event),
-            DoneRoundEvent:
-                self._simulator.register_handler(DoneRoundEvent, self._on_done_round_event),
-            ReceivedDataEvent:
-                self._simulator.register_handler(ReceivedDataEvent, self._on_received_consensus_data_event),
-            ReceivedVoteEvent:
-                self._simulator.register_handler(ReceivedVoteEvent, self._on_received_consensus_vote_event),
-            StartRoundEvent:
-                self._simulator.register_handler(StartRoundEvent, self._print_log),
-            ProposeSequence:
-                self._simulator.register_handler(ProposeSequence, self._print_log),
-            VoteSequence:
-                self._simulator.register_handler(VoteSequence, self._print_log),
-            BroadcastDataEvent:
-                self._simulator.register_handler(BroadcastDataEvent, self._print_log),
-            BroadcastVoteEvent:
-                self._simulator.register_handler(BroadcastVoteEvent, self._print_log)
-        }
-
-    def __del__(self):
-        self.close()
-
-    def close(self):
-        for event_type, handler in self._handlers.items():
-            self._simulator.unregister_handler(event_type, handler)
-        self._handlers.clear()
-
-    def _on_initialize_event(self, event: InitializeEvent):
-        self._print_log(event)
-
-    def _on_done_round_event(self, event: DoneRoundEvent):
-        self._print_log(event)
-
-    def _on_received_consensus_data_event(self, event: ReceivedDataEvent):
-        self._print_log(event)
-
-    def _on_received_consensus_vote_event(self, event: ReceivedVoteEvent):
-        self._print_log(event)
-
     def _print_log(self, event: Event):
         event_serialized = self._encoder.encode(event)
         print(f"{shorten(self._node_id)}, {datetime.datetime.now()}:: {event_serialized}")
+
+    _handler_prototypes = {
+        InitializeEvent: _print_log,
+        StartRoundEvent: _print_log,
+        DoneRoundEvent: _print_log,
+        ReceivedDataEvent: _print_log,
+        ReceivedVoteEvent: _print_log,
+        ProposeSequence: _print_log,
+        VoteSequence: _print_log,
+        BroadcastDataEvent: _print_log,
+        BroadcastVoteEvent: _print_log
+    }
 
 
 class _JSONEncoder(json.JSONEncoder):

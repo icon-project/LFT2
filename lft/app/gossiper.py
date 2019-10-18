@@ -1,9 +1,10 @@
 import asyncio
 import random
 from typing import TYPE_CHECKING
-from lft.event import EventSystem
-from lft.consensus.data import Data, Vote
-from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastDataEvent, BroadcastVoteEvent
+from lft.event import EventSystem, EventRegister
+from lft.consensus.data import Data
+from lft.consensus.vote import Vote
+from lft.consensus.events import BroadcastDataEvent, BroadcastVoteEvent
 
 if TYPE_CHECKING:
     from lft.app import Node
@@ -12,8 +13,9 @@ TIME_SLEEP = 0.1
 TIME_TO_LIVE = 5
 
 
-class Gossiper:
+class Gossiper(EventRegister):
     def __init__(self, event_system: EventSystem, sender: 'Node', receiver: 'Node'):
+        super().__init__(event_system.simulator)
         self._event_system = event_system
         self._sender = sender
         self._receiver = receiver
@@ -26,22 +28,6 @@ class Gossiper:
 
         self._asset_data = set()
         self._asset_votes = set()
-
-        simulator = event_system.simulator
-        self._handlers = {
-            BroadcastDataEvent:
-                simulator.register_handler(BroadcastDataEvent, self._temp_on_broadcast_data),
-            BroadcastVoteEvent:
-                simulator.register_handler(BroadcastVoteEvent, self._temp_on_broadcast_vote)
-        }
-
-    def __del__(self):
-        self.close()
-
-    def close(self):
-        for event_type, handler in self._handlers.items():
-            self._event_system.simulator.unregister_handler(event_type, handler)
-        self._handlers.clear()
 
     def _send_data(self, data: Data):
         delay = random.randint(0, 10000) / 10000
@@ -113,3 +99,8 @@ class Gossiper:
             return random.randint(0, 10000) / 100
         else:
             return random.randint(0, 10000) / 10000
+
+    _handler_prototypes = {
+        BroadcastDataEvent: _temp_on_broadcast_data,
+        BroadcastVoteEvent: _temp_on_broadcast_vote
+    }
