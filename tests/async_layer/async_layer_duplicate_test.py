@@ -3,8 +3,8 @@ import random
 import pytest
 
 from lft.app.data import DefaultDataFactory
+from lft.app.term import RotateTerm
 from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent
-from lft.consensus.term import RotateTerm
 from .conftest import start_event_system
 
 

@@ -15,8 +15,8 @@
 # limitations under the License.
 import pytest
 from typing import Sequence
+from lft.app.term import RotateTerm
 from lft.consensus.data import Data, Vote
-from lft.consensus.term import RotateTerm
 
 
 class MockData(Data):

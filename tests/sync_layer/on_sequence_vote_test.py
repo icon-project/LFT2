@@ -16,10 +16,10 @@
 
 import pytest
 
-from lft.app.data import DefaultData, DefaultVoteFactory
+from lft.app.data import DefaultData
+from lft.app.vote import DefaultVoteFactory
 from lft.consensus.data import Data
-from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastVoteEvent, \
-    ReceivedVoteEvent
+from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastVoteEvent, ReceivedVoteEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 
 PEER_NUM = 7

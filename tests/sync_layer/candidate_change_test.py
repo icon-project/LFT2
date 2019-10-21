@@ -13,11 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
-
-from lft.app.data import DefaultData, DefaultVoteFactory
-from lft.consensus.events import ProposeSequence, VoteSequence, DoneRoundEvent, StartRoundEvent, \
-    BroadcastVoteEvent
+from lft.app.vote import DefaultVoteFactory
+from lft.consensus.events import ProposeSequence, VoteSequence, DoneRoundEvent, StartRoundEvent, BroadcastVoteEvent
 from tests.sync_layer.setup_sync_layer import *
 
 

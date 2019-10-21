@@ -1,10 +1,11 @@
 import os
 import pytest
 from functools import partial
-from lft.app.data import DefaultDataFactory, DefaultVoteFactory
+from lft.app.data import DefaultDataFactory
+from lft.app.vote import DefaultVoteFactory
+from lft.app.term import RotateTermFactory
 from lft.consensus.events import InitializeEvent
 from lft.consensus.layers.async_.async_layer import AsyncLayer
-from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem, Event
 from lft.event.mediators import DelayedEventMediator
 

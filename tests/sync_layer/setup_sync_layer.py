@@ -14,15 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from asyncio.queues import QueueEmpty
-from typing import Tuple, Sequence, List
+from typing import Tuple, List
 
 import pytest
 
-from lft.app.data import DefaultVoteFactory, DefaultDataFactory, DefaultData
+from lft.app.data import DefaultDataFactory, DefaultData
+from lft.app.vote import DefaultVoteFactory
+from lft.app.term import RotateTermFactory
 from lft.consensus.data import Data
 from lft.consensus.events import InitializeEvent
 from lft.consensus.layers.sync.sync_layer import SyncLayer
-from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem
 
 CANDIDATE_ID = b'a'

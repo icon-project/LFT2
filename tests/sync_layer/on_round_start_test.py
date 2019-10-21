@@ -18,10 +18,10 @@ from typing import Tuple
 
 import pytest
 
-from lft.app.data import DefaultData, DefaultDataFactory, DefaultVoteFactory
+from lft.app.data import DefaultData
+from lft.app.vote import DefaultVoteFactory
 from lft.consensus.data import Data, Vote
-from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastDataEvent, ReceivedDataEvent, \
-    BroadcastVoteEvent, ReceivedVoteEvent, StartRoundEvent
+from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastDataEvent, ReceivedDataEvent, StartRoundEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, get_event, verify_no_events
 
 PEER_NUM = 7

@@ -3,7 +3,7 @@ import random
 import pytest
 from typing import cast
 from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent
-from lft.app.data import DefaultVoteFactory
+from lft.app.vote import DefaultVoteFactory
 from .conftest import start_event_system
 
 param_count = 10
