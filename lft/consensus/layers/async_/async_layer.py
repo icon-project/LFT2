@@ -138,7 +138,6 @@ class AsyncLayer(EventRegister):
                 await self._raise_received_consensus_data(delay=0, data=data)
             for votes in self._vote_dict[new_round_num].values():
                 for vote in votes:
-                    print(vote)
                     await self._raise_received_consensus_vote(delay=0, vote=vote)
 
     async def _new_data(self):

@@ -9,12 +9,7 @@ class DelayedEventInstantMediatorExecutor(EventInstantMediatorExecutor):
         _is_valid_event(event)
 
         loop = loop or asyncio.get_event_loop()
-
-        def logging_raise():
-            print(f"delayed raise event : {event.serialize()}")
-            self._event_simulator.raise_event(event)
-
-        loop.call_later(delay, logging_raise)
+        loop.call_later(delay, lambda: self._event_simulator.raise_event(event))
 
     async def execute_async(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         return self.execute(delay, event, loop)

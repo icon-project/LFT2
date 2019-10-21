@@ -1,9 +1,11 @@
-import os
 from setuptools import setup, find_packages
 
 deps = {
     'lft': [
         "jsonrpcclient[requests,aiohttp]==3.3.3"
+    ],
+    'app': [
+        "coloredlogs==10.0"
     ],
     'test': [
         "pytest==4.6.3",
@@ -11,7 +13,7 @@ deps = {
     ],
 }
 
-deps['dev'] = deps['lft'] + deps['test']
+deps['dev'] = deps['lft'] + deps['app'] + deps['test']
 install_requires = deps['lft']
 
 setup(
