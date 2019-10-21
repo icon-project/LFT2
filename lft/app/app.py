@@ -12,12 +12,8 @@ RECORD_PATH = "record.log"
 
 
 class App(ABC):
-    def __init__(self):
-        self._node_id_list = None
-
     def start(self):
         nodes = self._gen_nodes()
-        self._node_id_list = [node.node_id for node in nodes]
 
         for node in nodes:
             for peer in (peer for peer in nodes if peer != node):
@@ -52,13 +48,13 @@ class App(ABC):
         genesis_data = DefaultData(
             id_=b'genesis',
             prev_id=b'',
-            proposer_id=self._node_id_list[0],
+            proposer_id=nodes[0].node_id,
             number=0,
             term_num=0,
             round_num=0,
             prev_votes=[]
         )
-        event = InitializeEvent(0, 1, genesis_data, [], self._node_id_list)
+        event = InitializeEvent(0, 1, genesis_data, [], [node.node_id for node in nodes])
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 
