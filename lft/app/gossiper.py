@@ -1,9 +1,10 @@
 import asyncio
 import random
 from typing import TYPE_CHECKING
-from lft.event import EventSystem
-from lft.consensus.data import ConsensusData, ConsensusVote
-from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastConsensusDataEvent, BroadcastConsensusVoteEvent
+from lft.event import EventSystem, EventRegister
+from lft.consensus.data import Data
+from lft.consensus.vote import Vote
+from lft.consensus.events import BroadcastDataEvent, BroadcastVoteEvent
 
 if TYPE_CHECKING:
     from lft.app import Node
@@ -12,8 +13,9 @@ TIME_SLEEP = 0.1
 TIME_TO_LIVE = 5
 
 
-class Gossiper:
+class Gossiper(EventRegister):
     def __init__(self, event_system: EventSystem, sender: 'Node', receiver: 'Node'):
+        super().__init__(event_system.simulator)
         self._event_system = event_system
         self._sender = sender
         self._receiver = receiver
@@ -27,39 +29,23 @@ class Gossiper:
         self._asset_data = set()
         self._asset_votes = set()
 
-        simulator = event_system.simulator
-        self._handlers = {
-            BroadcastConsensusDataEvent:
-                simulator.register_handler(BroadcastConsensusDataEvent, self._temp_on_broadcast_data),
-            BroadcastConsensusVoteEvent:
-                simulator.register_handler(BroadcastConsensusVoteEvent, self._temp_on_broadcast_vote)
-        }
-
-    def __del__(self):
-        self.close()
-
-    def close(self):
-        for event_type, handler in self._handlers.items():
-            self._event_system.simulator.unregister_handler(event_type, handler)
-        self._handlers.clear()
-
-    def _send_data(self, data: ConsensusData):
+    def _send_data(self, data: Data):
         delay = random.randint(0, 10000) / 10000
         print(f"send data {data.serialize()}")
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_data, data)
 
-    def _send_vote(self, vote: ConsensusVote):
+    def _send_vote(self, vote: Vote):
         delay = random.randint(0, 10000) / 10000
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_vote, vote)
 
-    def _temp_on_broadcast_data(self, event: BroadcastConsensusDataEvent):
+    def _temp_on_broadcast_data(self, event: BroadcastDataEvent):
         print(f"receive broadcast event : {event}")
         self._send_data(event.data)
 
-    def _temp_on_broadcast_vote(self, event: BroadcastConsensusVoteEvent):
+    def _temp_on_broadcast_vote(self, event: BroadcastVoteEvent):
         self._send_vote(event.vote)
 
-    def _on_propose_sequence(self, event: BroadcastConsensusDataEvent):
+    def _on_propose_sequence(self, event: BroadcastDataEvent):
         print(f"receive broadcast event : {event}")
         if event.data in self._cached_data:
             return
@@ -69,7 +55,7 @@ class Gossiper:
         self._asset_data.add(event.data)
         asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_data.remove, event.data)
 
-    def _on_vote_sequence(self, event: BroadcastConsensusVoteEvent):
+    def _on_vote_sequence(self, event: BroadcastVoteEvent):
         print(f"receive broadcast event : {event}")
         if event.vote in self._cached_votes:
             return
@@ -113,3 +99,8 @@ class Gossiper:
             return random.randint(0, 10000) / 100
         else:
             return random.randint(0, 10000) / 10000
+
+    _handler_prototypes = {
+        BroadcastDataEvent: _temp_on_broadcast_data,
+        BroadcastVoteEvent: _temp_on_broadcast_vote
+    }

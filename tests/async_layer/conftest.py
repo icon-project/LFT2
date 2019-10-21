@@ -1,10 +1,11 @@
 import os
 import pytest
 from functools import partial
-from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
+from lft.app.data import DefaultDataFactory
+from lft.app.vote import DefaultVoteFactory
+from lft.app.term import RotateTermFactory
 from lft.consensus.events import InitializeEvent
 from lft.consensus.layers.async_.async_layer import AsyncLayer
-from lft.consensus.term.factories import RotateTermFactory
 from lft.event import EventSystem, Event
 from lft.event.mediators import DelayedEventMediator
 
@@ -16,14 +17,14 @@ def async_layer_items(init_round_num: int, voter_num: int):
     event_system.set_mediator(DelayedEventMediator)
     async_layer = AsyncLayer(node_id,
                              event_system,
-                             DefaultConsensusDataFactory(node_id),
-                             DefaultConsensusVoteFactory(node_id),
+                             DefaultDataFactory(node_id),
+                             DefaultVoteFactory(node_id),
                              RotateTermFactory(1))
     voters = [os.urandom(16) for _ in range(voter_num - 1)]
     voters.insert(0, node_id)
 
-    data_factory = DefaultConsensusDataFactory(node_id)
-    voters_factories = [DefaultConsensusVoteFactory(voter) for voter in voters]
+    data_factory = DefaultDataFactory(node_id)
+    voters_factories = [DefaultVoteFactory(voter) for voter in voters]
 
     event = InitializeEvent(0, init_round_num, None, None, voters)
     event_system.simulator.raise_event(event)

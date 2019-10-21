@@ -16,10 +16,10 @@
 
 import pytest
 
-from lft.app.data import DefaultConsensusData, DefaultConsensusVoteFactory
-from lft.consensus.data import ConsensusData
-from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastConsensusVoteEvent, \
-    ReceivedConsensusVoteEvent
+from lft.app.data import DefaultData
+from lft.app.vote import DefaultVoteFactory
+from lft.consensus.data import Data
+from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastVoteEvent, ReceivedVoteEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 
 PEER_NUM = 7
@@ -45,7 +45,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
     # GIVEN
     event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
 
-    consensus_data = DefaultConsensusData(
+    consensus_data = DefaultData(
         id_=PROPOSE_ID,
         prev_id=CANDIDATE_ID,
         proposer_id=LEADER_ID,
@@ -60,11 +60,11 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
             data=consensus_data
         )
     )
-    validator_vote_factories = [DefaultConsensusVoteFactory(x) for x in voters]
+    validator_vote_factories = [DefaultVoteFactory(x) for x in voters]
 
     # pop unnecessary event
-    my_vote: BroadcastConsensusVoteEvent = await get_event(event_system)
-    my_vote: ReceivedConsensusVoteEvent = await get_event(event_system)
+    my_vote: BroadcastVoteEvent = await get_event(event_system)
+    my_vote: ReceivedVoteEvent = await get_event(event_system)
 
     # WHEN
     async def do_vote(vote):
@@ -120,8 +120,8 @@ def verify_fail_done_round(done_round: DoneRoundEvent):
 
 
 def verify_success_done_round(done_round: DoneRoundEvent,
-                              expected_candidate: ConsensusData,
-                              expected_commit: ConsensusData):
+                              expected_candidate: Data,
+                              expected_commit: Data):
     assert done_round.is_success
     verify_round_num_is_correct(done_round)
     assert done_round.candidate_data == expected_candidate

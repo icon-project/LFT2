@@ -1,15 +1,15 @@
-from asyncio import sleep
-from typing import IO, Dict, Type, Sequence
-from lft.app.event import Gossiper
-from lft.app.data import DefaultConsensusDataFactory, DefaultConsensusVoteFactory
-from lft.app.event.logger import Logger
-from lft.consensus.term.factories import RotateTermFactory
+from typing import IO, Dict, Type
+from lft.app.gossiper import Gossiper
+from lft.app.data import DefaultDataFactory
+from lft.app.vote import DefaultVoteFactory
+from lft.app.logger import Logger
+from lft.app.term import RotateTermFactory
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
-from lft.consensus.data import ConsensusData, ConsensusVote
-from lft.consensus.events import ReceivedConsensusDataEvent, ReceivedConsensusVoteEvent, DoneRoundEvent, \
-    StartRoundEvent, InitializeEvent
+from lft.consensus.data import Data, Vote
+from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent,
+                                  StartRoundEvent, DoneRoundEvent, InitializeEvent)
 
 
 class Node:
@@ -27,8 +27,8 @@ class Node:
         self._consensus = Consensus(
             self.event_system,
             self.node_id,
-            DefaultConsensusDataFactory(self.node_id),
-            DefaultConsensusVoteFactory(self.node_id),
+            DefaultDataFactory(self.node_id),
+            DefaultVoteFactory(self.node_id),
             RotateTermFactory(1)
         )
         self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
@@ -74,7 +74,7 @@ class Node:
     def start_replay(self, record_io: IO, mediator_ios: Dict[Type[EventMediator], IO]=None, blocking=True):
         self.event_system.start_replay(record_io, mediator_ios, blocking)
 
-    def receive_data(self, data: ConsensusData):
+    def receive_data(self, data: Data):
         print(f"{self.node_id.hex()}: Receive data {data.serialize()}")
         if data in self.received_data:
             print(f"{self.node_id.hex()} : receive duplicated data: {data}")
@@ -82,17 +82,17 @@ class Node:
             print(f"{self.node_id.hex()} : receive data : {data}")
             self.received_data.add(data)
 
-            event = ReceivedConsensusDataEvent(data)
+            event = ReceivedDataEvent(data)
             self.event_system.simulator.raise_event(event)
 
-    def receive_vote(self, vote: ConsensusVote):
+    def receive_vote(self, vote: Vote):
         if vote in self.received_votes:
             print(f"{self.node_id.hex()} : receive duplicated vote : {vote.serialize()}")
         else:
             print(f"{self.node_id.hex()} : receive vote : {vote.serialize()}")
             self.received_votes.add(vote)
 
-            event = ReceivedConsensusVoteEvent(vote)
+            event = ReceivedVoteEvent(vote)
             self.event_system.simulator.raise_event(event)
 
     def register_peer(self, peer_id: bytes, peer: 'Node'):

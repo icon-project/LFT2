@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2019 ICON Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +14,9 @@
 import math
 from typing import Sequence
 
-from lft.consensus.data import ConsensusData, ConsensusVote
-from lft.consensus.term import Term
-from lft.consensus.term.term import InvalidProposer, InvalidVoter
+from lft.consensus.data import Data
+from lft.consensus.term import Term, TermFactory, InvalidProposer, InvalidVoter
+from lft.consensus.vote import Vote
 
 
 class RotateTerm(Term):
@@ -44,13 +42,13 @@ class RotateTerm(Term):
     def quorum_num(self) -> int:
         return math.ceil(self.voters_num * 0.67)
 
-    def verify_data(self, data: ConsensusData):
+    def verify_data(self, data: Data):
         self.verify_proposer(data.proposer_id, data.round_num)
         for i, vote in enumerate(data.prev_votes):
             self.verify_vote(vote, i)
 
-    def verify_vote(self, vote: ConsensusVote, vote_index: int = -1):
-        if isinstance(vote, ConsensusVote):
+    def verify_vote(self, vote: Vote, vote_index: int = -1):
+        if isinstance(vote, Vote):
             self.verify_voter(vote.voter_id, vote_index)
 
     def verify_proposer(self, proposer_id: bytes, round_num: int):
@@ -75,3 +73,14 @@ class RotateTerm(Term):
 
     def get_voters_id(self) -> Sequence[bytes]:
         return self._voters
+
+
+class RotateTermFactory(TermFactory):
+    def __init__(self, rotate_bound: int):
+        self._rotate_bound = rotate_bound
+
+    def create_term(self, term_num: int, voters: Sequence[bytes]) -> Term:
+        return RotateTerm(num=term_num,
+                          voters=voters,
+                          rotate_bound=self._rotate_bound)
+

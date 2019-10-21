@@ -18,10 +18,10 @@ from typing import Tuple
 
 import pytest
 
-from lft.app.data import DefaultConsensusData, DefaultConsensusDataFactory, DefaultConsensusVoteFactory
-from lft.consensus.data import ConsensusData, ConsensusVote
-from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastConsensusDataEvent, ReceivedConsensusDataEvent, \
-    BroadcastConsensusVoteEvent, ReceivedConsensusVoteEvent, StartRoundEvent
+from lft.app.data import DefaultData
+from lft.app.vote import DefaultVoteFactory
+from lft.consensus.data import Data, Vote
+from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastDataEvent, ReceivedDataEvent, StartRoundEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, get_event, verify_no_events
 
 PEER_NUM = 7
@@ -79,7 +79,7 @@ async def test_prev_round_is_failed():
     await add_propose(event_system, sync_layer, voters)
 
     for voter in voters:
-        vote = await DefaultConsensusVoteFactory(voter).create_none_vote(
+        vote = await DefaultVoteFactory(voter).create_none_vote(
             term_num=0,
             round_num=1
         )
@@ -144,7 +144,7 @@ async def test_start_future_round():
 
 async def do_success_vote(sync_layer, voters):
     for voter in voters:
-        vote = await DefaultConsensusVoteFactory(voter).create_vote(
+        vote = await DefaultVoteFactory(voter).create_vote(
             data_id=b'data',
             commit_id=CANDIDATE_ID,
             term_num=0,
@@ -158,7 +158,7 @@ async def do_success_vote(sync_layer, voters):
 async def add_propose(event_system, sync_layer, voters):
     await sync_layer._on_sequence_propose(
         ProposeSequence(
-            DefaultConsensusData(
+            DefaultData(
                 id_=b'data',
                 prev_id=CANDIDATE_ID,
                 proposer_id=voters[1],
@@ -174,26 +174,26 @@ async def add_propose(event_system, sync_layer, voters):
     event = await get_event(event_system)
 
 
-async def verify_data_events(event_system, prev_id, round_num, proposer_id, term_num, number) -> ConsensusData:
-    broadcast_data_event: BroadcastConsensusDataEvent = await get_event(event_system)
-    assert isinstance(broadcast_data_event, BroadcastConsensusDataEvent)
+async def verify_data_events(event_system, prev_id, round_num, proposer_id, term_num, number) -> Data:
+    broadcast_data_event: BroadcastDataEvent = await get_event(event_system)
+    assert isinstance(broadcast_data_event, BroadcastDataEvent)
     assert broadcast_data_event.data.prev_id == prev_id
     assert broadcast_data_event.data.round_num == round_num
     assert broadcast_data_event.data.proposer_id == proposer_id
     assert broadcast_data_event.data.term_num == term_num
     assert broadcast_data_event.data.number == number
 
-    received_data_event: ReceivedConsensusDataEvent = await get_event(event_system)
-    assert isinstance(received_data_event, ReceivedConsensusDataEvent)
+    received_data_event: ReceivedDataEvent = await get_event(event_system)
+    assert isinstance(received_data_event, ReceivedDataEvent)
     assert received_data_event.data == broadcast_data_event.data
 
     return received_data_event.data
 
 
-def verify_prev_votes(consensus_data: ConsensusData, prev_id, round_num, term_num, commit_id, voters):
+def verify_prev_votes(consensus_data: Data, prev_id, round_num, term_num, commit_id, voters):
     compare_voters = []
     for vote in consensus_data.prev_votes:
-        if isinstance(vote, ConsensusVote):
+        if isinstance(vote, Vote):
             assert vote.term_num == term_num
             assert vote.round_num == round_num
             assert vote.commit_id == commit_id
