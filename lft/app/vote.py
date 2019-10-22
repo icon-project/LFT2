@@ -1,4 +1,4 @@
-import os
+from hashlib import sha3_256
 from typing import Type, TypeVar
 from lft.consensus.vote import Vote, VoteVerifier, VoteFactory
 
@@ -77,23 +77,23 @@ class DefaultVoteFactory(VoteFactory):
     def __init__(self, node_id: bytes):
         self._node_id = node_id
 
-    def _create_id(self) -> bytes:
-        return os.urandom(16)
+    def _create_id(self,
+                   data_id: bytes, commit_id: bytes, voter_id: bytes, term_num: int, round_num: int) -> bytes:
+        source = data_id + commit_id + voter_id + term_num.to_bytes(64, 'big') + round_num.to_bytes(64, 'big')
+        return sha3_256(source).digest()[:16]
 
     async def create_vote(self,
                           data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> DefaultVote:
-        return DefaultVote(self._create_id(), data_id, commit_id, self._node_id, term_num, round_num)
+        vote_id = self._create_id(data_id, commit_id, self._node_id, term_num, round_num)
+        return DefaultVote(vote_id, data_id, commit_id, self._node_id, term_num, round_num)
 
     async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> DefaultVote:
-        return DefaultVote(self._create_id(), voter_id, voter_id, voter_id, term_num, round_num)
+        vote_id = self._create_id(voter_id, voter_id, voter_id, term_num, round_num)
+        return DefaultVote(vote_id, voter_id, voter_id, voter_id, term_num, round_num)
 
     async def create_none_vote(self, term_num: int, round_num: int) -> DefaultVote:
-        return DefaultVote(self._create_id(),
-                           DefaultVote.NoneVote,
-                           DefaultVote.NoneVote,
-                           self._node_id,
-                           term_num,
-                           round_num)
+        vote_id = self._create_id(DefaultVote.NoneVote, DefaultVote.NoneVote, self._node_id, term_num, round_num)
+        return DefaultVote(vote_id, DefaultVote.NoneVote, DefaultVote.NoneVote, self._node_id, term_num, round_num)
 
     async def create_vote_verifier(self) -> DefaultVoteVerifier:
         return DefaultVoteVerifier()

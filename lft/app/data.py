@@ -1,4 +1,4 @@
-import os
+from hashlib import sha3_256
 from typing import Sequence, Type, TypeVar
 from lft.app.vote import DefaultVote
 from lft.consensus.data import Data, DataVerifier, DataFactory
@@ -87,8 +87,17 @@ class DefaultDataFactory(DataFactory):
     def __init__(self, node_id: bytes):
         self._node_id = node_id
 
-    def _create_id(self) -> bytes:
-        return os.urandom(16)
+    def _create_id(self,
+                   prev_id: bytes,
+                   propose_id: bytes,
+                   data_number: int,
+                   term_num: int,
+                   round_num: int,
+                   prev_votes: Sequence['DefaultVote']) -> bytes:
+        source = (prev_id + propose_id + data_number.to_bytes(64, 'big') +
+                  term_num.to_bytes(64, 'big') + round_num.to_bytes(64, 'big') +
+                  b"".join(prev_vote.id if prev_vote else bytes(16) for prev_vote in prev_votes))
+        return sha3_256(source).digest()[:16]
 
     async def create_data(self,
                           data_number: int,
@@ -96,8 +105,8 @@ class DefaultDataFactory(DataFactory):
                           term_num: int,
                           round_num: int,
                           prev_votes: Sequence['DefaultVote']) -> DefaultData:
-        return DefaultData(self._create_id(), prev_id, self._node_id, data_number, term_num, round_num,
-                                    prev_votes=prev_votes)
+        data_id = self._create_id(prev_id, self._node_id, data_number, term_num, round_num, prev_votes)
+        return DefaultData(data_id, prev_id, self._node_id, data_number, term_num, round_num, prev_votes=prev_votes)
 
     async def create_not_data(self,
                               data_number: int,
