@@ -17,7 +17,7 @@ class App(ABC):
 
         for node in nodes:
             for peer in (peer for peer in nodes if peer != node):
-                node.register_peer(peer.node_id, peer)
+                node.register_peer(peer)
         self._start(nodes)
         self._run_forever(nodes)
 
@@ -54,7 +54,7 @@ class App(ABC):
             round_num=0,
             prev_votes=[]
         )
-        event = InitializeEvent(0, 1, genesis_data, [], [node.node_id for node in nodes])
+        event = InitializeEvent(0, 0, genesis_data, [], [node.node_id for node in nodes])
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 

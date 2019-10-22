@@ -1,9 +1,9 @@
 from typing import IO, Dict, Type
-from lft.app.gossiper import Gossiper
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
-from lft.app.logger import Logger
 from lft.app.term import RotateTermFactory
+from lft.app.network import Network
+from lft.app.logger import Logger
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
@@ -19,11 +19,8 @@ class Node:
         self.event_system = EventSystem()
         self.event_system.set_mediator(DelayedEventMediator)
 
-        self.received_data = set()
-        self.received_votes = set()
-
-        self._gossipers = {}
         self._logger = Logger(self.node_id, self.event_system.simulator)
+        self._network = Network(self.event_system.simulator)
         self._consensus = Consensus(
             self.event_system,
             self.node_id,
@@ -35,14 +32,12 @@ class Node:
         self.event_system.simulator.register_handler(DoneRoundEvent, self._on_done_round_event)
 
     async def _on_init_event(self, init_event: InitializeEvent):
-        for gossiper in self._gossipers.values():
-            await gossiper.start()
         self._nodes = init_event.voters
 
-    async def _on_done_round_event(self, done_round: DoneRoundEvent):
+    async def _on_done_round_event(self, done_round_event: DoneRoundEvent):
         round_start_event = StartRoundEvent(
-            term_num=done_round.term_num,
-            round_num=done_round.round_num + 1,
+            term_num=done_round_event.term_num,
+            round_num=done_round_event.round_num + 1,
             voters=self._nodes
         )
         round_start_event.deterministic = False
@@ -53,9 +48,9 @@ class Node:
         self.close()
 
     def close(self):
-        for gossiper in self._gossipers.values():
-            gossiper.close()
-        self._gossipers.clear()
+        if self._network:
+            self._network.close()
+            self._network= None
 
         if self._consensus:
             self._consensus.close()
@@ -74,26 +69,8 @@ class Node:
     def start_replay(self, record_io: IO, mediator_ios: Dict[Type[EventMediator], IO]=None, blocking=True):
         self.event_system.start_replay(record_io, mediator_ios, blocking)
 
-    def receive_data(self, data: Data):
-        if data in self.received_data:
-            pass
-        else:
-            self.received_data.add(data)
+    def register_peer(self, peer: 'Node'):
+        self._network.add_peer(peer._network)
 
-            event = ReceivedDataEvent(data)
-            self.event_system.simulator.raise_event(event)
-
-    def receive_vote(self, vote: Vote):
-        if vote in self.received_votes:
-            pass
-        else:
-            self.received_votes.add(vote)
-
-            event = ReceivedVoteEvent(vote)
-            self.event_system.simulator.raise_event(event)
-
-    def register_peer(self, peer_id: bytes, peer: 'Node'):
-        self._gossipers[peer_id] = Gossiper(self.event_system, self, peer)
-
-    def unregister_peer(self, peer_id: bytes):
-        self._gossipers.pop(peer_id, None)
+    def unregister_peer(self, peer: 'Node'):
+        self._network.remove_peer(peer._network)

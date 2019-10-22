@@ -89,11 +89,11 @@ class DefaultVoteFactory(VoteFactory):
 
     async def create_none_vote(self, term_num: int, round_num: int) -> DefaultVote:
         return DefaultVote(self._create_id(),
-                                    DefaultVote.NoneVote,
-                                    DefaultVote.NoneVote,
-                                    self._node_id,
-                                    term_num,
-                                    round_num)
+                           DefaultVote.NoneVote,
+                           DefaultVote.NoneVote,
+                           self._node_id,
+                           term_num,
+                           round_num)
 
     async def create_vote_verifier(self) -> DefaultVoteVerifier:
         return DefaultVoteVerifier()
