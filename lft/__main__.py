@@ -12,7 +12,7 @@ def main():
                         help="Number of nodes(ignored on replay mode), (default: %(default)s)")
     parser.add_argument("--data", "-d", type=Path, default=Path("data"), required=False,
                         help="Record data path(ignored on instant mode), (default: %(default)s)")
-    parser.add_argument("--target", "-target", type=bytes.fromhex, default=b"", required=False,
+    parser.add_argument("--target", "-t", type=bytes.fromhex, default=b"", required=False,
                         help="Target node ID for replay(only for replay mode)")
 
     args = parser.parse_args()
