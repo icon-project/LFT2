@@ -5,6 +5,7 @@ from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent, ProposeS
 from lft.consensus.data import Data, DataFactory
 from lft.consensus.vote import Vote, VoteFactory
 from lft.consensus.term import Term, TermFactory
+from lft.consensus.layers.sync.sync_layer import SyncLayer
 from lft.event import EventSystem, EventRegister
 from lft.event.mediators import DelayedEventMediator
 
@@ -21,12 +22,14 @@ VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = Vot
 
 class AsyncLayer(EventRegister):
     def __init__(self,
+                 sync_layer: SyncLayer,
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,
                  vote_factory: VoteFactory,
                  term_factory: TermFactory):
         super().__init__(event_system.simulator)
+        self._sync_layer = sync_layer
         self._node_id = node_id
         self._event_system = event_system
         self._data_factory = data_factory
@@ -109,11 +112,11 @@ class AsyncLayer(EventRegister):
 
     async def _raise_propose_sequence(self, data: Data):
         propose_sequence = ProposeSequence(data)
-        self._event_system.simulator.raise_event(propose_sequence)
+        await self._sync_layer._on_sequence_propose(propose_sequence)
 
     async def _raise_vote_sequence(self, vote: Vote):
         vote_sequence = VoteSequence(vote)
-        self._event_system.simulator.raise_event(vote_sequence)
+        await self._sync_layer._on_sequence_vote(vote_sequence)
 
     async def _new_round(self,
                          new_term_num: int,

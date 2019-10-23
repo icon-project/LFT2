@@ -227,6 +227,4 @@ class SyncLayer(EventRegister):
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
         StartRoundEvent: _on_event_start_round,
-        ProposeSequence: _on_sequence_propose,
-        VoteSequence: _on_sequence_vote
     }
