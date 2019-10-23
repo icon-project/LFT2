@@ -4,9 +4,8 @@ from lft.consensus.data import Data, DataVerifier, DataFactory
 from lft.consensus.vote import Vote, VoteVerifier, VoteFactory, Votes
 from lft.consensus.layers.sync.candidate_info import CandidateInfo
 from lft.consensus.layers.sync.sync_round import SyncRound, RoundResult
-from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
-                                  InitializeEvent, ProposeSequence, VoteSequence,
-                                  StartRoundEvent, DoneRoundEvent)
+from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEvent, ProposeSequence, VoteSequence,
+                                  BroadcastDataEvent, BroadcastVoteEvent, ReceivedDataEvent, ReceivedVoteEvent)
 from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalDataContainer
 from lft.consensus.term import Term, TermFactory, InvalidProposer
 from lft.event import EventSystem, EventRegister
@@ -96,11 +95,21 @@ class SyncLayer(EventRegister):
                 data=data
             )
         )
+        self._event_system.simulator.raise_event(
+            ReceivedDataEvent(
+                data=data
+            )
+        )
 
     async def _raise_broadcast_vote(self, vote: Vote):
         self._event_system.simulator.raise_event(
             BroadcastVoteEvent(
                 vote=vote)
+        )
+        self._event_system.simulator.raise_event(
+            ReceivedVoteEvent(
+                vote=vote
+            )
         )
 
     async def _raise_done_round(self, round_result: RoundResult):

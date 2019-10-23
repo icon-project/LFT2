@@ -22,9 +22,7 @@ class Network(EventRegister):
         self._round_num = 0
         self._datums: Datums = defaultdict(set)
         self._votes: Votes = defaultdict(set)
-
         self._peers: Set['Network'] = set()
-        self.add_peer(self)
 
     def add_peer(self, peer: 'Network'):
         self._peers.add(peer)
