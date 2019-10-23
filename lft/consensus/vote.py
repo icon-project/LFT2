@@ -114,7 +114,7 @@ class Votes:
                 self._voters.add(vote.voter_id)
 
     def serialize(self, voters: Sequence[bytes]) -> List:
-        votes = [b'' for x in voters]
+        votes = [None] * len(voters)
         for vote in self._votes:
             try:
                 vote_index = voters.index(vote.voter_id)

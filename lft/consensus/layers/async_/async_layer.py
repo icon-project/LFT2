@@ -56,7 +56,6 @@ class AsyncLayer(EventRegister):
             self._candidate_num = event.candidate_data.number
 
     async def _on_event_received_consensus_data(self, event: ReceivedDataEvent):
-
         data = event.data
         if not self._is_acceptable_data(data):
             return
@@ -96,19 +95,17 @@ class AsyncLayer(EventRegister):
 
     async def _raise_received_consensus_data(self, delay: float, data: Data):
         event = ReceivedDataEvent(data)
-
         event.deterministic = False
 
         mediator = self._event_system.get_mediator(DelayedEventMediator)
         mediator.execute(delay, event)
 
     async def _raise_received_consensus_vote(self, delay: float, vote: Vote):
-        if isinstance(vote, Vote):
-            event = ReceivedVoteEvent(vote)
-            event.deterministic = False
+        event = ReceivedVoteEvent(vote)
+        event.deterministic = False
 
-            mediator = self._event_system.get_mediator(DelayedEventMediator)
-            mediator.execute(delay, event)
+        mediator = self._event_system.get_mediator(DelayedEventMediator)
+        mediator.execute(delay, event)
 
     async def _raise_propose_sequence(self, data: Data):
         propose_sequence = ProposeSequence(data)
@@ -137,7 +134,7 @@ class AsyncLayer(EventRegister):
             for data in self._data_dict[new_round_num].values():
                 await self._raise_received_consensus_data(delay=0, data=data)
             for votes in self._vote_dict[new_round_num].values():
-                for vote in votes:
+                for vote in votes.values():
                     await self._raise_received_consensus_vote(delay=0, vote=vote)
 
     async def _new_data(self):
