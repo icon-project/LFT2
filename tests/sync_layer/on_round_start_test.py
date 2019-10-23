@@ -165,7 +165,7 @@ async def add_propose(event_system, sync_layer, voters):
                 number=1,
                 term_num=0,
                 round_num=1,
-                prev_votes=None
+                prev_votes=[]
             )
         )
     )
