@@ -6,6 +6,7 @@ from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTermFactory
 from lft.consensus.events import InitializeEvent
 from lft.consensus.layers.async_.async_layer import AsyncLayer
+from lft.consensus.layers.sync.sync_layer import SyncLayer
 from lft.event import EventSystem, Event
 from lft.event.mediators import DelayedEventMediator
 
@@ -15,11 +16,16 @@ def async_layer_items(init_round_num: int, voter_num: int):
     node_id = os.urandom(16)
     event_system = EventSystem()
     event_system.set_mediator(DelayedEventMediator)
-    async_layer = AsyncLayer(node_id,
+
+    data_factory = DefaultDataFactory(node_id)
+    vote_factory = DefaultVoteFactory(node_id)
+    term_factor = RotateTermFactory(1)
+    async_layer = AsyncLayer(SyncLayer(node_id, event_system, data_factory, vote_factory, term_factor),
+                             node_id,
                              event_system,
-                             DefaultDataFactory(node_id),
-                             DefaultVoteFactory(node_id),
-                             RotateTermFactory(1))
+                             data_factory,
+                             vote_factory,
+                             term_factor)
     voters = [os.urandom(16) for _ in range(voter_num - 1)]
     voters.insert(0, node_id)
 

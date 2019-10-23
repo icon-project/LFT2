@@ -19,7 +19,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.data import Data
-from lft.consensus.events import DoneRoundEvent, ProposeSequence, VoteSequence, BroadcastVoteEvent, ReceivedVoteEvent
+from lft.consensus.events import DoneRoundEvent, BroadcastVoteEvent, ReceivedVoteEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 
 PEER_NUM = 7
@@ -52,14 +52,10 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
         number=1,
         term_num=0,
         round_num=1,
-        prev_votes=None
+        prev_votes=[]
     )
 
-    await sync_layer.propose_data(
-        ProposeSequence(
-            data=consensus_data
-        )
-    )
+    await sync_layer.propose_data(data=consensus_data)
     validator_vote_factories = [DefaultVoteFactory(x) for x in voters]
 
     # pop unnecessary event
@@ -68,9 +64,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
 
     # WHEN
     async def do_vote(vote):
-        await sync_layer.vote_data(
-            VoteSequence(vote)
-        )
+        await sync_layer.vote_data(vote)
 
     for i in range(success_vote_num):
         await do_vote(

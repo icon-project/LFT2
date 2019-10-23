@@ -21,7 +21,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.data import Data, Vote
-from lft.consensus.events import ProposeSequence, VoteSequence, BroadcastDataEvent, ReceivedDataEvent, StartRoundEvent
+from lft.consensus.events import BroadcastDataEvent, ReceivedDataEvent
 from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, get_event, verify_no_events
 
 PEER_NUM = 7
@@ -41,14 +41,12 @@ async def test_on_round_start():
 
     # WHEN
     await sync_layer.start_round(
-        StartRoundEvent(
-            term_num=0,
-            round_num=2,
-            voters=voters
-        )
+        term_num=0,
+        round_num=2,
+        voters=voters
     )
     # pop done_round
-    event = await get_event(event_system)
+    await get_event(event_system)
 
     # THEN
     consensus_data = await verify_data_events(
@@ -83,17 +81,13 @@ async def test_prev_round_is_failed():
             term_num=0,
             round_num=1
         )
-        await sync_layer.vote_data(
-            VoteSequence(vote)
-        )
+        await sync_layer.vote_data(vote)
 
     # WHEN
     await sync_layer.start_round(
-        StartRoundEvent(
-            term_num=0,
-            round_num=2,
-            voters=voters
-        )
+        term_num=0,
+        round_num=2,
+        voters=voters
     )
     event = await get_event(event_system)
 
@@ -114,11 +108,9 @@ async def test_prev_round_is_failed():
 async def test_start_past_round():
     sync_layer, event_system, voters = await test_on_round_start()
     await sync_layer.start_round(
-        StartRoundEvent(
-            term_num=0,
-            round_num=1,
-            voters=voters
-        )
+        term_num=0,
+        round_num=1,
+        voters=voters
     )
     await verify_no_events(event_system)
 
@@ -131,11 +123,9 @@ async def test_start_future_round():
     event = await get_event(event_system)
 
     await sync_layer.start_round(
-        StartRoundEvent(
-            term_num=0,
-            round_num=9,
-            voters=voters
-        )
+        term_num=0,
+        round_num=9,
+        voters=voters
     )
     await verify_no_events(event_system)
 
@@ -150,23 +140,19 @@ async def do_success_vote(sync_layer, voters):
             term_num=0,
             round_num=1
         )
-        await sync_layer.vote_data(
-            VoteSequence(vote)
-        )
+        await sync_layer.vote_data(vote)
 
 
 async def add_propose(event_system, sync_layer, voters):
     await sync_layer.propose_data(
-        ProposeSequence(
-            DefaultData(
-                id_=b'data',
-                prev_id=CANDIDATE_ID,
-                proposer_id=voters[1],
-                number=1,
-                term_num=0,
-                round_num=1,
-                prev_votes=[]
-            )
+        DefaultData(
+            id_=b'data',
+            prev_id=CANDIDATE_ID,
+            proposer_id=voters[1],
+            number=1,
+            term_num=0,
+            round_num=1,
+            prev_votes=[]
         )
     )
     # pop vote

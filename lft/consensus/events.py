@@ -57,20 +57,6 @@ class DoneRoundEvent(Event):
 
 
 @dataclass
-class ProposeSequence(Event):
-    """ from async layer to sync layer
-    """
-    data: 'Data'
-
-
-@dataclass
-class VoteSequence(Event):
-    """ from async layer to sync layer
-    """
-    vote: 'Vote'
-
-
-@dataclass
 class StartRoundEvent(Event):
     term_num: int
     round_num: int
