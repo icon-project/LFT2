@@ -127,7 +127,6 @@ class Votes:
     @classmethod
     def deserialize(cls: Type[T], votes: Sequence) -> T:
         deserialized_obj = None
-        print(f"deserialize votes {votes} ")
         for vote in votes:
             if isinstance(vote, Vote):
                 if not deserialized_obj:

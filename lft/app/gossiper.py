@@ -31,7 +31,6 @@ class Gossiper(EventRegister):
 
     def _send_data(self, data: Data):
         delay = random.randint(0, 10000) / 10000
-        print(f"send data {data.serialize()}")
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_data, data)
 
     def _send_vote(self, vote: Vote):
@@ -39,14 +38,12 @@ class Gossiper(EventRegister):
         asyncio.get_event_loop().call_later(delay, self._receiver.receive_vote, vote)
 
     def _temp_on_broadcast_data(self, event: BroadcastDataEvent):
-        print(f"receive broadcast event : {event}")
         self._send_data(event.data)
 
     def _temp_on_broadcast_vote(self, event: BroadcastVoteEvent):
         self._send_vote(event.vote)
 
     def _on_propose_sequence(self, event: BroadcastDataEvent):
-        print(f"receive broadcast event : {event}")
         if event.data in self._cached_data:
             return
 
@@ -56,7 +53,6 @@ class Gossiper(EventRegister):
         asyncio.get_event_loop().call_later(TIME_TO_LIVE, self._cached_data.remove, event.data)
 
     def _on_vote_sequence(self, event: BroadcastVoteEvent):
-        print(f"receive broadcast event : {event}")
         if event.vote in self._cached_votes:
             return
 

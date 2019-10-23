@@ -75,11 +75,9 @@ class Node:
         self.event_system.start_replay(record_io, mediator_ios, blocking)
 
     def receive_data(self, data: Data):
-        print(f"{self.node_id.hex()}: Receive data {data.serialize()}")
         if data in self.received_data:
-            print(f"{self.node_id.hex()} : receive duplicated data: {data}")
+            pass
         else:
-            print(f"{self.node_id.hex()} : receive data : {data}")
             self.received_data.add(data)
 
             event = ReceivedDataEvent(data)
@@ -87,9 +85,8 @@ class Node:
 
     def receive_vote(self, vote: Vote):
         if vote in self.received_votes:
-            print(f"{self.node_id.hex()} : receive duplicated vote : {vote.serialize()}")
+            pass
         else:
-            print(f"{self.node_id.hex()} : receive vote : {vote.serialize()}")
             self.received_votes.add(vote)
 
             event = ReceivedVoteEvent(vote)
