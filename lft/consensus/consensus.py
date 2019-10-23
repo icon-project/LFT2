@@ -24,4 +24,3 @@ class Consensus:
 
     def close(self):
         self._async_layer.close()
-        self._sync_layer.close()

@@ -28,7 +28,7 @@ async def test_candidate_change_by_vote():
     event_system, sync_layer, voters, genesis_data = await setup_sync_layer(peer_num=7)
     first_candidate_id = await add_first_candidate(event_system, sync_layer, voters)
     for voter in voters:
-        await sync_layer._on_sequence_vote(
+        await sync_layer.vote_data(
             VoteSequence(
                 await DefaultVoteFactory(voter).create_vote(
                     data_id=first_candidate_id,
@@ -41,7 +41,7 @@ async def test_candidate_change_by_vote():
     # pop done_round_event
     await get_event(event_system)
     # WHEN
-    await sync_layer._on_event_start_round(
+    await sync_layer.start_round(
         StartRoundEvent(
             term_num=0,
             round_num=2,
@@ -61,7 +61,7 @@ async def test_candidate_change_by_vote():
         round_num=2,
         prev_votes=[]
     )
-    await sync_layer._on_sequence_propose(
+    await sync_layer.propose_data(
         ProposeSequence(second_candidate_data)
     )
     event: BroadcastVoteEvent = await get_event(event_system)
@@ -72,7 +72,7 @@ async def test_candidate_change_by_vote():
     await verify_no_events(event_system)
 
     for voter in voters:
-         await sync_layer._on_sequence_vote(
+         await sync_layer.vote_data(
              VoteSequence(
                 await DefaultVoteFactory(voter).create_vote(
                     data_id=second_candidate_id,
@@ -94,7 +94,7 @@ async def test_candidate_change_by_vote():
 
 async def add_first_candidate(event_system, sync_layer, voters):
     first_candidate_id = b'first_candidate'
-    await sync_layer._on_sequence_propose(
+    await sync_layer.propose_data(
         ProposeSequence(
             DefaultData(
                 id_=first_candidate_id,
@@ -124,7 +124,7 @@ async def test_candidate_change_by_data():
     first_candidate_id = await add_first_candidate(event_system, sync_layer, voters)
 
     for voter in voters[:2]:
-        await sync_layer._on_sequence_vote(
+        await sync_layer.vote_data(
             VoteSequence(
                 await DefaultVoteFactory(voter).create_vote(
                     data_id=first_candidate_id,
@@ -135,7 +135,7 @@ async def test_candidate_change_by_data():
             )
         )
     for voter in voters[2:]:
-        await sync_layer._on_sequence_vote(
+        await sync_layer.vote_data(
             VoteSequence(
                 await DefaultVoteFactory(voter).create_not_vote(
                     voter_id=voter,
@@ -147,7 +147,7 @@ async def test_candidate_change_by_data():
     await get_event(event_system)
     # WHEN
 
-    await sync_layer._on_event_start_round(
+    await sync_layer.start_round(
         StartRoundEvent(
             term_num=0,
             round_num=2,
@@ -161,7 +161,7 @@ async def test_candidate_change_by_data():
                      for voter in voters]
 
     second_data_id = b'second_data'
-    await sync_layer._on_sequence_propose(
+    await sync_layer.propose_data(
         ProposeSequence(
             DefaultData(
                 id_=second_data_id,

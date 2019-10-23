@@ -45,7 +45,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     propose_event = ProposeSequence(propose)
 
     # WHEN
-    await sync_layer._on_sequence_propose(propose_event)
+    await sync_layer.propose_data(propose_event)
     # THEN
 
     non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
@@ -67,6 +67,6 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                                           prev_votes=None)
 
     # WHEN
-    await sync_layer._on_sequence_propose(ProposeSequence(data=second_propose))
+    await sync_layer.propose_data(ProposeSequence(data=second_propose))
     # THEN
     await verify_no_events(event_system)

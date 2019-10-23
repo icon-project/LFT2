@@ -55,7 +55,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
         prev_votes=None
     )
 
-    await sync_layer._on_sequence_propose(
+    await sync_layer.propose_data(
         ProposeSequence(
             data=consensus_data
         )
@@ -68,7 +68,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
 
     # WHEN
     async def do_vote(vote):
-        await sync_layer._on_sequence_vote(
+        await sync_layer.vote_data(
             VoteSequence(vote)
         )
 

@@ -48,7 +48,7 @@ class Node:
     def close(self):
         if self._network:
             self._network.close()
-            self._network= None
+            self._network = None
 
         if self._consensus:
             self._consensus.close()
