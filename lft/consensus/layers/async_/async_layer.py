@@ -1,10 +1,11 @@
 from collections import defaultdict
 from typing import Dict, DefaultDict, OrderedDict, Optional, Sequence
-from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent, ProposeSequence, VoteSequence,
-                                  DoneRoundEvent, InitializeEvent, StartRoundEvent)
+from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEvent,
+                                  ReceivedDataEvent, ReceivedVoteEvent)
 from lft.consensus.data import Data, DataFactory
 from lft.consensus.vote import Vote, VoteFactory
 from lft.consensus.term import Term, TermFactory
+from lft.consensus.layers.sync.sync_layer import SyncLayer
 from lft.event import EventSystem, EventRegister
 from lft.event.mediators import DelayedEventMediator
 
@@ -21,12 +22,14 @@ VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = Vot
 
 class AsyncLayer(EventRegister):
     def __init__(self,
+                 sync_layer: SyncLayer,
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,
                  vote_factory: VoteFactory,
                  term_factory: TermFactory):
         super().__init__(event_system.simulator)
+        self._sync_layer = sync_layer
         self._node_id = node_id
         self._event_system = event_system
         self._data_factory = data_factory
@@ -46,10 +49,14 @@ class AsyncLayer(EventRegister):
         self._candidate_num = candidate_num
         await self._new_round(event.term_num, event.round_num, event.voters)
         await self._new_data()
+        await self._sync_layer.initialize(
+            event.term_num, event.round_num, event.candidate_data, event.voters, event.votes
+        )
 
     async def _on_event_start_round(self, event: StartRoundEvent):
         await self._new_round(event.term_num, event.round_num, event.voters)
         await self._new_data()
+        await self._sync_layer.start_round(event.term_num, event.round_num, event.voters)
 
     async def _on_event_done_round(self, event: DoneRoundEvent):
         if event.candidate_data:
@@ -65,7 +72,7 @@ class AsyncLayer(EventRegister):
                 if not data.is_not():
                     self._term.verify_data(data)
                 self._data_dict[data.round_num][data.id] = data
-                await self._raise_propose_sequence(data)
+                await self._sync_layer.propose_data(data)
         elif self._candidate_num + 2 == data.number:
             if self._round_num + 1 == data.round_num:
                 self._term.verify_data(data)
@@ -84,7 +91,7 @@ class AsyncLayer(EventRegister):
 
         if self._round_num != vote.round_num:
             return
-        await self._raise_vote_sequence(vote)
+        await self._sync_layer.vote_data(vote)
 
         if self._vote_timeout_started or not self._votes_reach_quorum(self._round_num):
             return
@@ -106,14 +113,6 @@ class AsyncLayer(EventRegister):
 
         mediator = self._event_system.get_mediator(DelayedEventMediator)
         mediator.execute(delay, event)
-
-    async def _raise_propose_sequence(self, data: Data):
-        propose_sequence = ProposeSequence(data)
-        self._event_system.simulator.raise_event(propose_sequence)
-
-    async def _raise_vote_sequence(self, vote: Vote):
-        vote_sequence = VoteSequence(vote)
-        self._event_system.simulator.raise_event(vote_sequence)
 
     async def _new_round(self,
                          new_term_num: int,

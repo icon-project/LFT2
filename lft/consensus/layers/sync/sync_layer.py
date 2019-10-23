@@ -4,17 +4,16 @@ from lft.consensus.data import Data, DataVerifier, DataFactory
 from lft.consensus.vote import Vote, VoteVerifier, VoteFactory, Votes
 from lft.consensus.layers.sync.candidate_info import CandidateInfo
 from lft.consensus.layers.sync.sync_round import SyncRound, RoundResult
-from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEvent, ProposeSequence, VoteSequence,
-                                  BroadcastDataEvent, BroadcastVoteEvent, ReceivedDataEvent, ReceivedVoteEvent)
+from lft.consensus.events import (DoneRoundEvent, BroadcastDataEvent, BroadcastVoteEvent,
+                                  ReceivedDataEvent, ReceivedVoteEvent)
 from lft.consensus.layers.sync.temporal_consensus_data_container import TemporalDataContainer
 from lft.consensus.term import Term, TermFactory, InvalidProposer
-from lft.event import EventSystem, EventRegister
+from lft.event import EventSystem
 
 
-class SyncLayer(EventRegister):
+class SyncLayer:
     def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: DataFactory,
                  vote_factory: VoteFactory, term_factory: TermFactory):
-        super().__init__(event_system.simulator)
         self._event_system: EventSystem = event_system
         self._data_factory: DataFactory = data_factory
         self._vote_factory: VoteFactory = vote_factory
@@ -29,40 +28,35 @@ class SyncLayer(EventRegister):
         self._term: Term = None
         self._node_id: bytes = node_id
 
-    async def _on_event_initialize(self, init_event: InitializeEvent):
-        self._temporal_data_container = TemporalDataContainer(init_event.candidate_data.number)
+    async def initialize(self, term_num: int, round_num: int, candidate_data: Data,
+                         voters: Sequence[bytes], votes: Sequence[Vote]):
+        self._temporal_data_container = TemporalDataContainer(candidate_data.number)
         self._data_verifier = await self._data_factory.create_data_verifier()
         self._vote_verifier = await self._vote_factory.create_vote_verifier()
 
         self._candidate_info = CandidateInfo(
-            candidate_data=init_event.candidate_data,
-            votes=init_event.votes
+            candidate_data=candidate_data,
+            votes=votes
         )
-        self._temporal_data_container.add_data(init_event.candidate_data)
+        self._temporal_data_container.add_data(candidate_data)
 
         await self._start_new_round(
-            term_num=init_event.term_num,
-            round_num=init_event.round_num,
-            voters=init_event.voters
+            term_num=term_num,
+            round_num=round_num,
+            voters=voters
         )
 
-    async def _on_event_start_round(self, start_round_event: StartRoundEvent):
-        if not self._is_next_round(start_round_event):
+    async def start_round(self, term_num: int, round_num: int, voters: Sequence[bytes]):
+        if not self._is_next_round(term_num, round_num):
             return
 
         await self._start_new_round(
-            term_num=start_round_event.term_num,
-            round_num=start_round_event.round_num,
-            voters=start_round_event.voters
+            term_num=term_num,
+            round_num=round_num,
+            voters=voters
         )
 
-    async def _on_sequence_propose(self, propose_sequence: ProposeSequence):
-        """ Receive propose
-
-        :param propose_sequence:
-        :return:
-        """
-        data = propose_sequence.data
+    async def propose_data(self, data: Data):
         self._temporal_data_container.add_data(data)
         await self._update_candidate_by_data_if_reach_requirements(data)
         self._sync_round.add_data(data)
@@ -72,8 +66,8 @@ class SyncLayer(EventRegister):
 
         await self._update_round_if_complete()
 
-    async def _on_sequence_vote(self, vote_sequence: VoteSequence):
-        self._sync_round.add_vote(vote_sequence.vote)
+    async def vote_data(self, vote: Vote):
+        self._sync_round.add_vote(vote)
         await self._update_round_if_complete()
 
     async def _update_round_if_complete(self):
@@ -215,18 +209,9 @@ class SyncLayer(EventRegister):
         else:
             return True
 
-    def _is_next_round(self, start_round_event: StartRoundEvent) -> bool:
-        if start_round_event.term_num == self._sync_round.term_num \
-                and start_round_event.round_num == self._sync_round.round_num + 1:
+    def _is_next_round(self, term_num: int, round_num: int) -> bool:
+        if term_num == self._sync_round.term_num and round_num == self._sync_round.round_num + 1:
             return True
-        elif start_round_event.term_num == self._sync_round.term_num + 1 \
-                and start_round_event.round_num == 0:
+        if term_num == self._sync_round.term_num + 1 and round_num == 0:
             return True
         return False
-
-    _handler_prototypes = {
-        InitializeEvent: _on_event_initialize,
-        StartRoundEvent: _on_event_start_round,
-        ProposeSequence: _on_sequence_propose,
-        VoteSequence: _on_sequence_vote
-    }

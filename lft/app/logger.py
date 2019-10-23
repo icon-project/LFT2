@@ -3,8 +3,7 @@ import coloredlogs
 import logging
 from lft.consensus.events import (Event, InitializeEvent, DoneRoundEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent,
-                                  ProposeSequence, VoteSequence, BroadcastDataEvent,
-                                  BroadcastVoteEvent)
+                                  BroadcastDataEvent, BroadcastVoteEvent)
 from lft.event import EventSimulator, EventRegister
 from lft.serialization import Serializable
 
@@ -48,8 +47,6 @@ class Logger(EventRegister):
         DoneRoundEvent: _print_log,
         ReceivedDataEvent: _print_log,
         ReceivedVoteEvent: _print_log,
-        ProposeSequence: _print_log,
-        VoteSequence: _print_log,
         BroadcastDataEvent: _print_log,
         BroadcastVoteEvent: _print_log
     }
