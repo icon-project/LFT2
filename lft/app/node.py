@@ -7,9 +7,7 @@ from lft.app.logger import Logger
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
-from lft.consensus.data import Data, Vote
-from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent,
-                                  StartRoundEvent, DoneRoundEvent, InitializeEvent)
+from lft.consensus.events import StartRoundEvent, DoneRoundEvent, InitializeEvent
 
 
 class Node:
@@ -20,7 +18,7 @@ class Node:
         self.event_system.set_mediator(DelayedEventMediator)
 
         self._logger = Logger(self.node_id, self.event_system.simulator)
-        self._network = Network(self.event_system.simulator)
+        self._network = Network(self.event_system)
         self._consensus = Consensus(
             self.event_system,
             self.node_id,

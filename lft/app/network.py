@@ -1,9 +1,9 @@
-import asyncio
 import random
 
 from collections import defaultdict
 from typing import TYPE_CHECKING, DefaultDict, Set
-from lft.event import EventRegister, EventSimulator
+from lft.event import EventRegister, EventSystem
+from lft.event.mediators import DelayedEventMediator
 from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent)
 
@@ -17,12 +17,13 @@ Votes = DefaultDict[int, Set['Vote']]
 
 
 class Network(EventRegister):
-    def __init__(self, event_simulator: EventSimulator):
-        super().__init__(event_simulator)
+    def __init__(self, event_system: EventSystem):
+        super().__init__(event_system.simulator)
         self._round_num = 0
         self._datums: Datums = defaultdict(set)
         self._votes: Votes = defaultdict(set)
         self._peers: Set['Network'] = set()
+        self._delayed_mediator = event_system.get_mediator(DelayedEventMediator)
 
     def add_peer(self, peer: 'Network'):
         self._peers.add(peer)
@@ -36,7 +37,9 @@ class Network(EventRegister):
         if data.round_num == self._round_num:
             event = ReceivedDataEvent(data)
             event.deterministic = False
-            self._event_simulator.raise_event(event)
+
+            delay = self.random_delay()
+            self._delayed_mediator.execute(delay, event)
 
     def receive_vote(self, vote: 'Vote'):
         self._votes[vote.round_num].add(vote)
@@ -44,19 +47,17 @@ class Network(EventRegister):
         if vote.round_num == self._round_num:
             event = ReceivedVoteEvent(vote)
             event.deterministic = False
-            self._event_simulator.raise_event(event)
+
+            delay = self.random_delay()
+            self._delayed_mediator.execute(delay, event)
 
     def broadcast_data(self, data: 'Data'):
-        loop = asyncio.get_event_loop()
         for peer in self._peers:
-            delay = self.random_delay()
-            loop.call_later(delay, peer.receive_data, data)
+            peer.receive_data(data)
 
     def broadcast_vote(self, vote: 'Vote'):
-        loop = asyncio.get_event_loop()
         for peer in self._peers:
-            delay = self.random_delay()
-            loop.call_later(delay, peer.receive_vote, vote)
+            peer.receive_vote(vote)
 
     def _on_event_broadcast_data(self, event: 'BroadcastDataEvent'):
         self.broadcast_data(event.data)
@@ -68,11 +69,15 @@ class Network(EventRegister):
         self._round_num = event.round_num
         for data in self._datums[event.round_num]:
             received_data_event = ReceivedDataEvent(data)
-            self._event_simulator.raise_event(received_data_event)
+            received_data_event.deterministic = False
+
+            self._delayed_mediator.execute(0, received_data_event)
 
         for vote in self._votes[event.round_num]:
             received_vote_event = ReceivedVoteEvent(vote)
-            self._event_simulator.raise_event(received_vote_event)
+            received_vote_event.deterministic = False
+
+            self._delayed_mediator.execute(0, received_vote_event)
 
     @classmethod
     def random_delay(cls):
