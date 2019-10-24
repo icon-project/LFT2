@@ -1,5 +1,4 @@
-from collections import defaultdict
-from typing import Dict, DefaultDict, OrderedDict, Optional, Sequence
+from typing import DefaultDict, OrderedDict, Optional, Sequence
 from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent)
 from lft.consensus.data import Data, DataFactory
@@ -12,12 +11,8 @@ from lft.event.mediators import DelayedEventMediator
 TIMEOUT_PROPOSE = 2.0
 TIMEOUT_VOTE = 2.0
 
-DataByID = Dict[bytes, Data]  # dict[id] = Data
-DataByRound = DefaultDict[int, DataByID]  # dict[round][id] = Data
-
-VoteByID = OrderedDict[bytes, Vote]  # dict[id] = Vote
-VoteByVoterID = DefaultDict[bytes, VoteByID]  # dict[voter_id][id] = Vote
-VoteByRound = DefaultDict[int, VoteByVoterID]  # dict[round][voter_id][id] = Vote
+Datums = OrderedDict[bytes, Data]  # dict[data_id] = Data
+Votes = DefaultDict[bytes, OrderedDict[bytes, Vote]]  # dict[voter_id][vote_id] = Vote
 
 
 class AsyncLayer(EventRegister):
@@ -36,8 +31,9 @@ class AsyncLayer(EventRegister):
         self._vote_factory = vote_factory
         self._term_factory = term_factory
 
-        self._data_dict: DataByRound = defaultdict(dict)
-        self._vote_dict: VoteByRound = defaultdict(lambda: defaultdict(OrderedDict))
+        self._datums: Datums = OrderedDict()
+        self._votes: Votes = DefaultDict(OrderedDict)
+
         self._term: Optional[Term] = None
         self._round_num = -1
         self._candidate_num = -1
@@ -68,15 +64,14 @@ class AsyncLayer(EventRegister):
             return
 
         if self._candidate_num == data.number or self._candidate_num + 1 == data.number:
-            if self._round_num == data.round_num:
-                if not data.is_not():
-                    self._term.verify_data(data)
-                self._data_dict[data.round_num][data.id] = data
-                await self._sync_layer.propose_data(data)
+            if not data.is_not():
+                self._term.verify_data(data)
+            self._datums[data.id] = data
+            await self._sync_layer.propose_data(data)
         elif self._candidate_num + 2 == data.number:
             if self._round_num + 1 == data.round_num:
                 self._term.verify_data(data)
-                self._data_dict[data.round_num][data.id] = data
+                self._datums[data.id] = data
                 for vote in data.prev_votes:
                     await self._raise_received_consensus_vote(delay=0, vote=vote)
                 await self._raise_received_consensus_data(delay=0, data=data)
@@ -87,13 +82,10 @@ class AsyncLayer(EventRegister):
             return
 
         self._term.verify_vote(vote)
-        self._vote_dict[vote.round_num][vote.voter_id][vote.id] = vote
-
-        if self._round_num != vote.round_num:
-            return
+        self._votes[vote.voter_id][vote.id] = vote
         await self._sync_layer.vote_data(vote)
 
-        if self._vote_timeout_started or not self._votes_reach_quorum(self._round_num):
+        if self._vote_timeout_started or not self._votes_reach_quorum():
             return
         self._vote_timeout_started = True
         for voter in self._term.get_voters_id():
@@ -119,22 +111,12 @@ class AsyncLayer(EventRegister):
                          new_round_num: int,
                          voters: Sequence[bytes] = ()):
         self._vote_timeout_started = False
-
         self._round_num = new_round_num
+        self._datums.clear()
+        self._votes.clear()
 
         if not self._term or self._term.num != new_term_num:
             self._term = self._term_factory.create_term(new_term_num, voters)
-            self._data_dict.clear()
-            self._vote_dict.clear()
-        else:
-            self._trim_rounds(self._data_dict)
-            self._trim_rounds(self._vote_dict)
-
-            for data in self._data_dict[new_round_num].values():
-                await self._raise_received_consensus_data(delay=0, data=data)
-            for votes in self._vote_dict[new_round_num].values():
-                for vote in votes.values():
-                    await self._raise_received_consensus_vote(delay=0, vote=vote)
 
     async def _new_data(self):
         expected_proposer = self._term.get_proposer_id(self._round_num)
@@ -148,13 +130,13 @@ class AsyncLayer(EventRegister):
     def _is_acceptable_data(self, data: Data):
         if self._term.num != data.term_num:
             return False
-        if self._round_num > data.round_num:
+        if self._round_num != data.round_num:
             return False
         if self._candidate_num > data.number:
             return False
-        if data.id in self._data_dict[data.round_num]:
+        if data.id in self._datums:
             return False
-        if data.is_not() and self._data_dict[data.round_num]:
+        if data.is_not() and self._datums:
             return False
 
         return True
@@ -162,27 +144,22 @@ class AsyncLayer(EventRegister):
     def _is_acceptable_vote(self, vote: Vote):
         if self._term.num != vote.term_num:
             return False
-        if self._round_num > vote.round_num:
+        if self._round_num != vote.round_num:
             return False
-        if vote.id in self._vote_dict[vote.round_num][vote.voter_id]:
+        if vote.id in self._votes[vote.voter_id]:
             return False
-        if vote.is_not() and self._vote_dict[vote.round_num][vote.voter_id]:
+        if vote.is_not() and self._votes[vote.voter_id]:
             return False
 
         return True
 
-    def _votes_reach_quorum(self, round_num: int):
+    def _votes_reach_quorum(self):
         count = 0
-        for voter_id, votes_by_id in self._vote_dict[round_num].items():
+        for voter_id, votes_by_id in self._votes.items():
             vote = next(iter(votes_by_id.values()), None)
             if vote and not vote.is_not():
                 count += 1
         return count >= self._term.quorum_num
-
-    def _trim_rounds(self, d: dict):
-        expired_rounds = [round_ for round_ in d if round_ < self._round_num]
-        for expired_round in expired_rounds:
-            d.pop(expired_round, None)
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
