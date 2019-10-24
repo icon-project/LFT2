@@ -8,11 +8,10 @@ from lft.consensus.layers.sync.sync_layer import SyncLayer
 from lft.event import EventSystem, EventRegister
 from lft.event.mediators import DelayedEventMediator
 
+__all__ = ("AsyncLayer", )
+
 TIMEOUT_PROPOSE = 2.0
 TIMEOUT_VOTE = 2.0
-
-Datums = OrderedDict[bytes, Data]  # dict[data_id] = Data
-Votes = DefaultDict[bytes, OrderedDict[bytes, Vote]]  # dict[voter_id][vote_id] = Vote
 
 
 class AsyncLayer(EventRegister):
@@ -31,8 +30,8 @@ class AsyncLayer(EventRegister):
         self._vote_factory = vote_factory
         self._term_factory = term_factory
 
-        self._datums: Datums = OrderedDict()
-        self._votes: Votes = DefaultDict(OrderedDict)
+        self._datums: Datums = Datums()
+        self._votes: Votes = Votes()
 
         self._term: Optional[Term] = None
         self._round_num = -1
@@ -77,17 +76,16 @@ class AsyncLayer(EventRegister):
             if data.is_not():
                 return
 
-            for votes in self._votes.values():
-                for vote in votes.values():
-                    if vote.data_id == data.id:
-                        await self._sync_layer.vote_data(vote)
+            votes_by_vote_id = self._votes.get_votes(data_id=data.id)
+            for vote in votes_by_vote_id.values():
+                await self._sync_layer.vote_data(vote)
 
     async def receive_vote(self, vote: Vote):
         if not self._is_acceptable_vote(vote):
             return
 
         self._term.verify_vote(vote)
-        self._votes[vote.voter_id][vote.id] = vote
+        self._votes.add_vote(vote)
         if vote.data_id in self._datums:
             await self._sync_layer.vote_data(vote)
 
@@ -170,20 +168,22 @@ class AsyncLayer(EventRegister):
             return False
         if self._round_num != vote.round_num:
             return False
-        if vote.id in self._votes[vote.voter_id]:
+        if vote.id in self._votes.get_votes(data_id=vote.data_id):
             return False
-        if vote.is_not() and self._votes[vote.voter_id]:
+        if vote.is_not() and self._votes.get_votes(voter_id=vote.voter_id):
             return False
 
         return True
 
     def _votes_reach_quorum(self):
         count = 0
-        for voter_id, votes_by_id in self._votes.items():
-            vote = next(iter(votes_by_id.values()), None)
-            if vote and not vote.is_not():
-                count += 1
-        return count >= self._term.quorum_num
+        for vote in self._votes:
+            if vote.is_not():
+                continue
+            count += 1
+            if count >= self._term.quorum_num:
+                return True
+        return False
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
@@ -192,3 +192,32 @@ class AsyncLayer(EventRegister):
         ReceivedDataEvent: _on_event_received_consensus_data,
         ReceivedVoteEvent: _on_event_received_consensus_vote
     }
+
+
+Datums = OrderedDict[bytes, Data]
+
+
+class Votes:
+    def __init__(self):
+        self._votes_by_data_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
+        self._votes_by_voter_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
+
+    def get_votes(self, *, data_id: Optional[bytes] = None, voter_id: Optional[bytes] = None):
+        if data_id is not None and voter_id is None:
+            return self._votes_by_data_id[data_id]
+        if voter_id is not None and data_id is None:
+            return self._votes_by_voter_id[voter_id]
+        raise RuntimeError
+
+    def add_vote(self, vote: Vote):
+        self._votes_by_data_id[vote.data_id][vote.voter_id] = vote
+        self._votes_by_voter_id[vote.voter_id][vote.voter_id] = vote
+
+    def __iter__(self):
+        for votes in self._votes_by_data_id.values():
+            yield from votes.values()
+
+    def clear(self):
+        self._votes_by_data_id.clear()
+        self._votes_by_voter_id.clear()
+
