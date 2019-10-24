@@ -40,26 +40,31 @@ class AsyncLayer(EventRegister):
 
         self._vote_timeout_started = False
 
-    async def _on_event_initialize(self, event: InitializeEvent):
-        candidate_num = event.candidate_data.number if event.candidate_data else 0
+    async def initialize(self,
+                         term_num: int,
+                         round_num: int,
+                         candidate_data: Data,
+                         votes: Sequence[Vote],
+                         voters: Sequence[bytes]):
+        candidate_num = candidate_data.number if candidate_data else 0
         self._candidate_num = candidate_num
-        await self._new_round(event.term_num, event.round_num, event.voters)
+        await self._new_round(term_num, round_num, voters)
         await self._new_data()
-        await self._sync_layer.initialize(
-            event.term_num, event.round_num, event.candidate_data, event.voters, event.votes
-        )
+        await self._sync_layer.initialize(term_num, round_num, candidate_data, voters, votes)
 
-    async def _on_event_start_round(self, event: StartRoundEvent):
-        await self._new_round(event.term_num, event.round_num, event.voters)
+    async def start_round(self,
+                          term_num: int,
+                          round_num: int,
+                          voters: Sequence[bytes]):
+        await self._new_round(term_num, round_num, voters)
         await self._new_data()
-        await self._sync_layer.start_round(event.term_num, event.round_num, event.voters)
+        await self._sync_layer.start_round(term_num, round_num, voters)
 
-    async def _on_event_done_round(self, event: DoneRoundEvent):
-        if event.candidate_data:
-            self._candidate_num = event.candidate_data.number
+    async def done_round(self, candidate_data: Data):
+        if candidate_data:
+            self._candidate_num = candidate_data.number
 
-    async def _on_event_received_consensus_data(self, event: ReceivedDataEvent):
-        data = event.data
+    async def receive_data(self, data: Data):
         if not self._is_acceptable_data(data):
             return
 
@@ -76,8 +81,7 @@ class AsyncLayer(EventRegister):
                     await self._raise_received_consensus_vote(delay=0, vote=vote)
                 await self._raise_received_consensus_data(delay=0, data=data)
 
-    async def _on_event_received_consensus_vote(self, event: ReceivedVoteEvent):
-        vote = event.vote
+    async def receive_vote(self, vote: Vote):
         if not self._is_acceptable_vote(vote):
             return
 
@@ -91,6 +95,21 @@ class AsyncLayer(EventRegister):
         for voter in self._term.get_voters_id():
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
+
+    async def _on_event_initialize(self, event: InitializeEvent):
+        await self.initialize(event.term_num, event.round_num, event.candidate_data, event.votes, event.voters)
+
+    async def _on_event_start_round(self, event: StartRoundEvent):
+        await self.start_round(event.term_num, event.round_num, event.voters)
+
+    async def _on_event_done_round(self, event: DoneRoundEvent):
+        await self.done_round(event.candidate_data)
+
+    async def _on_event_received_consensus_data(self, event: ReceivedDataEvent):
+        await self.receive_data(event.data)
+
+    async def _on_event_received_consensus_vote(self, event: ReceivedVoteEvent):
+        await self.receive_vote(event.vote)
 
     async def _raise_received_consensus_data(self, delay: float, data: Data):
         event = ReceivedDataEvent(data)
