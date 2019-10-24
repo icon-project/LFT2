@@ -73,13 +73,6 @@ class AsyncLayer(EventRegister):
                 self._term.verify_data(data)
             self._datums[data.id] = data
             await self._sync_layer.propose_data(data)
-        elif self._candidate_num + 2 == data.number:
-            if self._round_num + 1 == data.round_num:
-                self._term.verify_data(data)
-                self._datums[data.id] = data
-                for vote in data.prev_votes:
-                    await self._raise_received_consensus_vote(delay=0, vote=vote)
-                await self._raise_received_consensus_data(delay=0, data=data)
 
     async def receive_vote(self, vote: Vote):
         if not self._is_acceptable_vote(vote):
