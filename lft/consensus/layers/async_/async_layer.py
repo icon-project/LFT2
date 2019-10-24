@@ -74,16 +74,28 @@ class AsyncLayer(EventRegister):
             self._datums[data.id] = data
             await self._sync_layer.propose_data(data)
 
+            if data.is_not():
+                return
+
+            for votes in self._votes.values():
+                for vote in votes.values():
+                    if vote.data_id == data.id:
+                        await self._sync_layer.vote_data(vote)
+
     async def receive_vote(self, vote: Vote):
         if not self._is_acceptable_vote(vote):
             return
 
         self._term.verify_vote(vote)
         self._votes[vote.voter_id][vote.id] = vote
-        await self._sync_layer.vote_data(vote)
+        if vote.data_id in self._datums:
+            await self._sync_layer.vote_data(vote)
 
-        if self._vote_timeout_started or not self._votes_reach_quorum():
+        if self._vote_timeout_started:
             return
+        if not self._votes_reach_quorum():
+            return
+
         self._vote_timeout_started = True
         for voter in self._term.get_voters_id():
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
