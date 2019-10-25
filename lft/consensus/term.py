@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import math
 from abc import ABC, abstractmethod
 from typing import Sequence
 
@@ -68,15 +67,3 @@ class TermFactory(ABC):
     @abstractmethod
     def create_term(self, term_num: int, voters: Sequence[bytes]) -> Term:
         raise NotImplementedError
-
-
-class InvalidProposer(Exception):
-    def __init__(self, proposer: bytes, expected: bytes):
-        self.proposer = proposer
-        self.expected = expected
-
-
-class InvalidVoter(Exception):
-    def __init__(self, voter: bytes, expected: bytes):
-        self.voter = voter
-        self.expected = expected

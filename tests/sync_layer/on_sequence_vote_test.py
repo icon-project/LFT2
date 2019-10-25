@@ -107,7 +107,6 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
 
 
 def verify_fail_done_round(done_round: DoneRoundEvent):
-    assert not done_round.is_success
     verify_round_num_is_correct(done_round)
     assert not done_round.candidate_data
     assert not done_round.commit_id
@@ -116,7 +115,7 @@ def verify_fail_done_round(done_round: DoneRoundEvent):
 def verify_success_done_round(done_round: DoneRoundEvent,
                               expected_candidate: Data,
                               expected_commit: Data):
-    assert done_round.is_success
+    assert done_round.candidate_data
     verify_round_num_is_correct(done_round)
     assert done_round.candidate_data == expected_candidate
     assert done_round.commit_id == expected_commit.id

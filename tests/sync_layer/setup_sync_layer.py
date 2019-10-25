@@ -22,7 +22,7 @@ from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTermFactory
 from lft.consensus.data import Data
-from lft.consensus.layers.sync.sync_layer import SyncLayer
+from lft.consensus.layers.sync_layer import SyncLayer
 from lft.event import EventSystem
 
 CANDIDATE_ID = b'a'

@@ -129,7 +129,7 @@ async def test_start_future_round():
     )
     await verify_no_events(event_system)
 
-    assert sync_layer._sync_round.round_num == 1
+    assert sync_layer._round.num == 1
 
 
 async def do_success_vote(sync_layer, voters):

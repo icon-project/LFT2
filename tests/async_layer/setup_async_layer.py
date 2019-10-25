@@ -4,8 +4,8 @@ from asyncio import QueueEmpty
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTermFactory
-from lft.consensus.layers.async_.async_layer import AsyncLayer
-from lft.consensus.layers.sync.sync_layer import SyncLayer
+from lft.consensus.layers.async_layer import AsyncLayer
+from lft.consensus.layers.sync_layer import SyncLayer
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 
