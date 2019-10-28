@@ -1,11 +1,47 @@
 import pytest
-from lft.consensus.exceptions import AlreadyVoted
+from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyVoted, AlreadyVoteReceived
 from tests.sync_layer.setup_sync_layer import setup_sync_layers
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("round_num, voter_num", [(0, i) for i in range(4, 100)])
-async def test_sync_layer_already_vote(round_num, voter_num: int):
+async def test_sync_layer_invalid_term():
+    term_num = 0
+    round_num = 0
+    voter_num = 7
+
+    genesis_data, voters, event_systems, sync_layers, data_factories, vote_factories = await setup_items(round_num, voter_num)
+    sync_layer = sync_layers[0]
+    vote = await vote_factories[0].create_vote(b'test', genesis_data.id, term_num + 1, 0)
+    with pytest.raises(InvalidTerm):
+        await sync_layer._receive_vote(vote)
+
+    for sync_layer in sync_layers:
+        sync_layer.close()
+    for event_system in event_systems:
+        event_system.close()
+
+
+@pytest.mark.asyncio
+async def test_sync_layer_invalid_term():
+    round_num = 0
+    voter_num = 7
+
+    genesis_data, voters, event_systems, sync_layers, data_factories, vote_factories = await setup_items(round_num, voter_num)
+    sync_layer = sync_layers[0]
+    vote = await vote_factories[0].create_vote(b'test', genesis_data.id, 0, round_num + 1)
+    with pytest.raises(InvalidRound):
+        await sync_layer._receive_vote(vote)
+
+    for sync_layer in sync_layers:
+        sync_layer.close()
+    for event_system in event_systems:
+        event_system.close()
+
+
+@pytest.mark.asyncio
+async def test_sync_layer_already_vote():
+    round_num = 0
+    voter_num = 7
     genesis_data, voters, event_systems, sync_layers, data_factories, vote_factories = await setup_items(round_num, voter_num)
 
     sync_layer = sync_layers[0]
@@ -26,6 +62,44 @@ async def test_sync_layer_already_vote(round_num, voter_num: int):
         await sync_layer._receive_vote(same_none_vote)
     same_none_vote._id = b'3'
     await sync_layer._receive_vote(same_none_vote)
+
+    for sync_layer in sync_layers:
+        sync_layer.close()
+    for event_system in event_systems:
+        event_system.close()
+
+
+@pytest.mark.asyncio
+async def test_sync_layer_already_vote_received():
+    round_num = 0
+    voter_num = 7
+    genesis_data, voters, event_systems, sync_layers, data_factories, vote_factories = await setup_items(round_num, voter_num)
+
+    sync_layer = sync_layers[0]
+
+    vote = await vote_factories[1].create_vote(b'test', b'', 0, round_num)
+    await sync_layer._receive_vote(vote)
+
+    not_vote = await vote_factories[1].create_not_vote(voters[1], 0, round_num)
+    with pytest.raises(AlreadyVoteReceived):
+        await sync_layer._receive_vote(not_vote)
+
+    for sync_layer in sync_layers:
+        sync_layer.close()
+    for event_system in event_systems:
+        event_system.close()
+
+
+@pytest.mark.asyncio
+async def test_sync_layer_none_vote():
+    round_num = 0
+    voter_num = 7
+    genesis_data, voters, event_systems, sync_layers, data_factories, vote_factories = await setup_items(round_num, voter_num)
+
+    sync_layer = sync_layers[0]
+    for vote_factory in vote_factories[1:]:
+        none_vote = await vote_factory.create_none_vote(0, round_num)
+        sync_layer._receive_vote(none_vote)
 
     for sync_layer in sync_layers:
         sync_layer.close()
