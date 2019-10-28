@@ -40,8 +40,8 @@ async def test_sync_layer_proposer(round_num, voter_num: int):
     event = get_event(proposer_event_system)
     assert isinstance(event, DoneRoundEvent)
 
-    for not_proposer_sync_layer in sync_layers:
-        not_proposer_sync_layer.close()
-    for not_proposer_event_system in event_systems:
-        not_proposer_event_system.close()
+    for sync_layer in sync_layers:
+        sync_layer.close()
+    for event_system in event_systems:
+        event_system.close()
 

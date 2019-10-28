@@ -220,8 +220,8 @@ class Votes:
         raise RuntimeError
 
     def add_vote(self, vote: Vote):
-        self._votes_by_data_id[vote.data_id][vote.voter_id] = vote
-        self._votes_by_voter_id[vote.voter_id][vote.voter_id] = vote
+        self._votes_by_data_id[vote.data_id][vote.id] = vote
+        self._votes_by_voter_id[vote.voter_id][vote.id] = vote
 
     def __iter__(self):
         for votes in self._votes_by_data_id.values():
