@@ -1,7 +1,8 @@
 from typing import List, Dict, DefaultDict, Set, Sequence, Optional, NamedTuple
 from lft.consensus.data import Data, Vote
 from lft.consensus.term import Term
-from lft.consensus.exceptions import CannotComplete, AlreadyCompleted, AlreadyVoted, NotCompleted, DataIDNotFound
+from lft.consensus.exceptions import (CannotComplete, AlreadyCompleted, AlreadyProposed, AlreadyVoted,
+                                      NotCompleted, DataIDNotFound)
 
 Datums = Dict[bytes, Data]  # dict[data_id] = data
 Votes = DefaultDict[bytes, List[Vote]]  # dict[data_id][0] = vote

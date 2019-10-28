@@ -11,6 +11,10 @@ class NotCompleted(Exception):
     pass
 
 
+class AlreadyProposed(Exception):
+    pass
+
+
 class AlreadyVoted(Exception):
     pass
 
