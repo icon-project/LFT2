@@ -4,7 +4,7 @@ from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEve
 from lft.consensus.data import Data, DataFactory
 from lft.consensus.vote import Vote, VoteFactory
 from lft.consensus.term import Term, TermFactory
-from lft.consensus.layers.sync.sync_layer import SyncLayer
+from lft.consensus.layers.sync_layer import SyncLayer
 from lft.event import EventSystem, EventRegister
 from lft.event.mediators import DelayedEventMediator
 

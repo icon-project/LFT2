@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from lft.consensus.layers.async_.async_layer import AsyncLayer
-from lft.consensus.layers.sync.sync_layer import SyncLayer
+from lft.consensus.layers.async_layer import AsyncLayer
+from lft.consensus.layers.sync_layer import SyncLayer
 
 if TYPE_CHECKING:
     from lft.event import EventSystem

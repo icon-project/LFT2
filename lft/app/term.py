@@ -15,8 +15,9 @@ import math
 from typing import Sequence
 
 from lft.consensus.data import Data
-from lft.consensus.term import Term, TermFactory, InvalidProposer, InvalidVoter
+from lft.consensus.term import Term, TermFactory
 from lft.consensus.vote import Vote
+from lft.consensus.exceptions import InvalidProposer, InvalidVoter
 
 
 class RotateTerm(Term):
