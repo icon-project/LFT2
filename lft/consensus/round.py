@@ -36,7 +36,7 @@ class Round:
             raise AlreadyCompleted
 
         if vote.voter_id in self._voters:
-            raise AlreadyVoted
+            raise AlreadyVoted(vote.id, vote.voter_id)
 
         self._voters.add(vote.voter_id)
         self._votes[vote.data_id].append(vote)
