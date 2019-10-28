@@ -47,16 +47,17 @@ class Round:
         try:
             max_data_id = self._find_max_data_id()
         except ValueError:
-            raise CannotComplete
+            raise CannotComplete(f"Datums is empty. {self._datums}")
 
         majority = len(self._votes[max_data_id])
         if self.term.quorum_num > majority and self.term.voters_num != len(self._voters):
-            raise CannotComplete
+            raise CannotComplete(f"Majority({majority}) does not reach quorum({self.term.quorum_num} or "
+                                 f"All voters have not voted. ({len(self._voters)}/{self.term.voters_num})")
 
         vote = self._votes[max_data_id][0]
         if not vote.is_not() and not vote.is_none():
             if max_data_id not in self._datums:
-                raise DataIDNotFound
+                raise DataIDNotFound(f"Upper layers did not send data. {max_data_id}")
 
         self._is_completed = True
 
