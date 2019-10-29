@@ -9,22 +9,22 @@ from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem, EventRegister
 from lft.event.mediators import DelayedEventMediator
 
-__all__ = ("AsyncLayer", )
+__all__ = ("SyncLayer",)
 
 TIMEOUT_PROPOSE = 2.0
 TIMEOUT_VOTE = 2.0
 
 
-class AsyncLayer(EventRegister):
+class SyncLayer(EventRegister):
     def __init__(self,
-                 sync_layer: RoundLayer,
+                 round_layer: RoundLayer,
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,
                  vote_factory: VoteFactory,
                  term_factory: TermFactory):
         super().__init__(event_system.simulator)
-        self._sync_layer = sync_layer
+        self._round_layer = round_layer
         self._node_id = node_id
         self._event_system = event_system
         self._data_factory = data_factory
@@ -51,7 +51,7 @@ class AsyncLayer(EventRegister):
         self._candidate_num = candidate_num
         await self._new_round(term_num, round_num, voters)
         await self._new_data()
-        await self._sync_layer.initialize(term_num, round_num, candidate_data, voters, votes)
+        await self._round_layer.initialize(term_num, round_num, candidate_data, voters, votes)
 
     async def start_round(self,
                           term_num: int,
@@ -59,7 +59,7 @@ class AsyncLayer(EventRegister):
                           voters: Sequence[bytes]):
         await self._new_round(term_num, round_num, voters)
         await self._new_data()
-        await self._sync_layer.start_round(term_num, round_num, voters)
+        await self._round_layer.start_round(term_num, round_num, voters)
 
     async def done_round(self, candidate_data: Data):
         if candidate_data:
@@ -73,14 +73,14 @@ class AsyncLayer(EventRegister):
             if not data.is_not():
                 self._term.verify_data(data)
             self._datums[data.id] = data
-            await self._sync_layer.propose_data(data)
+            await self._round_layer.propose_data(data)
 
             if data.is_not():
                 return
 
             votes_by_vote_id = self._votes.get_votes(data_id=data.id)
             for vote in votes_by_vote_id.values():
-                await self._sync_layer.vote_data(vote)
+                await self._round_layer.vote_data(vote)
 
     async def receive_vote(self, vote: Vote):
         if not self._is_acceptable_vote(vote):
@@ -89,7 +89,7 @@ class AsyncLayer(EventRegister):
         self._term.verify_vote(vote)
         self._votes.add_vote(vote)
         if vote.data_id in self._datums:
-            await self._sync_layer.vote_data(vote)
+            await self._round_layer.vote_data(vote)
 
         if self._vote_timeout_started:
             return

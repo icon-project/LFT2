@@ -1,2 +1,2 @@
 from .round_layer import RoundLayer
-from .async_layer import AsyncLayer
+from .sync_layer import SyncLayer

@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from lft.consensus.layers.async_layer import AsyncLayer
+from lft.consensus.layers.sync_layer import SyncLayer
 from lft.consensus.layers.round_layer import RoundLayer
 
 if TYPE_CHECKING:
@@ -15,7 +15,7 @@ class Consensus:
         self._round_layer = RoundLayer(
             node_id, event_system, data_factory, vote_factory, term_factory
         )
-        self._async_layer = AsyncLayer(
+        self._sync_layer = SyncLayer(
             self._round_layer, node_id, event_system, data_factory, vote_factory, term_factory
         )
 
@@ -23,4 +23,4 @@ class Consensus:
         self.close()
 
     def close(self):
-        self._async_layer.close()
+        self._sync_layer.close()

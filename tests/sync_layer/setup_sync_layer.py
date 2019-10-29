@@ -4,15 +4,15 @@ from asyncio import QueueEmpty
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTermFactory
-from lft.consensus.layers.async_layer import AsyncLayer
+from lft.consensus.layers.sync_layer import SyncLayer
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 
 
-async def setup_async_layers(voter_num: int):
+async def setup_sync_layers(voter_num: int):
     voters = [os.urandom(16) for _ in range(voter_num)]
-    async_layers = []
+    sync_layers = []
     event_systems = []
     data_factories = []
     vote_factories = []
@@ -24,19 +24,19 @@ async def setup_async_layers(voter_num: int):
         data_factory = DefaultDataFactory(voter)
         vote_factory = DefaultVoteFactory(voter)
         term_factor = RotateTermFactory(1)
-        async_layer = AsyncLayer(RoundLayer(voter, event_system, data_factory, vote_factory, term_factor),
-                                 voter,
-                                 event_system,
-                                 data_factory,
-                                 vote_factory,
-                                 term_factor)
+        sync_layer = SyncLayer(RoundLayer(voter, event_system, data_factory, vote_factory, term_factor),
+                               voter,
+                               event_system,
+                               data_factory,
+                               vote_factory,
+                               term_factor)
 
-        async_layers.append(async_layer)
+        sync_layers.append(sync_layer)
         event_systems.append(event_system)
         data_factories.append(data_factory)
         vote_factories.append(vote_factory)
 
-    return voters, event_systems, async_layers, data_factories, vote_factories
+    return voters, event_systems, sync_layers, data_factories, vote_factories
 
 
 def get_event(event_system: EventSystem):
