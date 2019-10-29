@@ -1,3 +1,4 @@
+import logging
 from typing import Sequence
 
 from lft.consensus.round import Round, Candidate
@@ -17,6 +18,7 @@ class SyncLayer:
         self._data_factory: DataFactory = data_factory
         self._vote_factory: VoteFactory = vote_factory
         self._term_factory: TermFactory = term_factory
+        self._logger = logging.getLogger(node_id.hex())
 
         self._data_verifier: DataVerifier = None
         self._vote_verifier: VoteVerifier = None

@@ -13,11 +13,11 @@ from lft.consensus.events import StartRoundEvent, DoneRoundEvent, InitializeEven
 class Node:
     def __init__(self, node_id: bytes):
         self.node_id = node_id
-        self.nodes = None
-        self.event_system = EventSystem()
+        self.logger = Logger(node_id).logger
+        self.event_system = EventSystem(self.logger)
         self.event_system.set_mediator(DelayedEventMediator)
 
-        self._logger = Logger(self.node_id, self.event_system.simulator)
+        self._nodes = None
         self._network = Network(self.event_system)
         self._consensus = Consensus(
             self.event_system,
