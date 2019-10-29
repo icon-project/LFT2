@@ -22,7 +22,7 @@ from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.data import Data, Vote
 from lft.consensus.events import BroadcastDataEvent, ReceivedDataEvent
-from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, get_event, verify_no_events
+from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, get_event, verify_no_events
 
 PEER_NUM = 7
 
@@ -34,13 +34,13 @@ async def test_start_round():
     THEN new round will be started and broadcast new data
     """
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
-    await add_propose(event_system, sync_layer, voters)
+    event_system, round_layer, voters, genesis_data = await setup_round_layer(PEER_NUM)
+    await add_propose(event_system, round_layer, voters)
 
-    await do_success_vote(sync_layer, voters)
+    await do_success_vote(round_layer, voters)
 
     # WHEN
-    await sync_layer.start_round(
+    await round_layer.start_round(
         term_num=0,
         round_num=2,
         voters=voters
@@ -67,24 +67,24 @@ async def test_start_round():
     )
     await verify_no_events(event_system)
 
-    return sync_layer, event_system, voters
+    return round_layer, event_system, voters
 
 
 @pytest.mark.asyncio
 async def test_prev_round_is_failed():
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
-    await add_propose(event_system, sync_layer, voters)
+    event_system, round_layer, voters, genesis_data = await setup_round_layer(PEER_NUM)
+    await add_propose(event_system, round_layer, voters)
 
     for voter in voters:
         vote = await DefaultVoteFactory(voter).create_none_vote(
             term_num=0,
             round_num=1
         )
-        await sync_layer.vote_data(vote)
+        await round_layer.vote_data(vote)
 
     # WHEN
-    await sync_layer.start_round(
+    await round_layer.start_round(
         term_num=0,
         round_num=2,
         voters=voters
@@ -106,8 +106,8 @@ async def test_prev_round_is_failed():
 
 @pytest.mark.asyncio
 async def test_start_past_round():
-    sync_layer, event_system, voters = await test_start_round()
-    await sync_layer.start_round(
+    round_layer, event_system, voters = await test_start_round()
+    await round_layer.start_round(
         term_num=0,
         round_num=1,
         voters=voters
@@ -117,22 +117,22 @@ async def test_start_past_round():
 
 @pytest.mark.asyncio
 async def test_start_future_round():
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
-    await add_propose(event_system, sync_layer, voters)
-    await do_success_vote(sync_layer, voters)
+    event_system, round_layer, voters, genesis_data = await setup_round_layer(PEER_NUM)
+    await add_propose(event_system, round_layer, voters)
+    await do_success_vote(round_layer, voters)
     event = await get_event(event_system)
 
-    await sync_layer.start_round(
+    await round_layer.start_round(
         term_num=0,
         round_num=9,
         voters=voters
     )
     await verify_no_events(event_system)
 
-    assert sync_layer._round.num == 1
+    assert round_layer._round.num == 1
 
 
-async def do_success_vote(sync_layer, voters):
+async def do_success_vote(round_layer, voters):
     for voter in voters:
         vote = await DefaultVoteFactory(voter).create_vote(
             data_id=b'data',
@@ -140,11 +140,11 @@ async def do_success_vote(sync_layer, voters):
             term_num=0,
             round_num=1
         )
-        await sync_layer.vote_data(vote)
+        await round_layer.vote_data(vote)
 
 
-async def add_propose(event_system, sync_layer, voters):
-    await sync_layer.propose_data(
+async def add_propose(event_system, round_layer, voters):
+    await round_layer.propose_data(
         DefaultData(
             id_=b'data',
             prev_id=CANDIDATE_ID,

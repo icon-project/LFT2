@@ -20,7 +20,7 @@ from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.data import Data
 from lft.consensus.events import DoneRoundEvent, BroadcastVoteEvent, ReceivedVoteEvent
-from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
+from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 
 PEER_NUM = 7
 PROPOSE_ID = b'propose'
@@ -43,7 +43,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
     """
 
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(PEER_NUM)
+    event_system, round_layer, voters, genesis_data = await setup_round_layer(PEER_NUM)
 
     consensus_data = DefaultData(
         id_=PROPOSE_ID,
@@ -55,7 +55,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
         prev_votes=[]
     )
 
-    await sync_layer.propose_data(data=consensus_data)
+    await round_layer.propose_data(data=consensus_data)
     validator_vote_factories = [DefaultVoteFactory(x) for x in voters]
 
     # pop unnecessary event
@@ -64,7 +64,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
 
     # WHEN
     async def do_vote(vote):
-        await sync_layer.vote_data(vote)
+        await round_layer.vote_data(vote)
 
     for i in range(success_vote_num):
         await do_vote(

@@ -11,7 +11,7 @@ from lft.consensus.exceptions import InvalidProposer, AlreadyCompleted, AlreadyV
 from lft.event import EventSystem
 
 
-class SyncLayer:
+class RoundLayer:
     def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: DataFactory,
                  vote_factory: VoteFactory, term_factory: TermFactory):
         self._event_system: EventSystem = event_system

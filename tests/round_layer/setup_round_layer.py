@@ -22,7 +22,7 @@ from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTermFactory
 from lft.consensus.data import Data
-from lft.consensus.layers.sync_layer import SyncLayer
+from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem
 
 CANDIDATE_ID = b'a'
@@ -30,7 +30,7 @@ TEST_NODE_ID = bytes([2])
 LEADER_ID = bytes([1])
 
 
-async def setup_sync_layer(peer_num: int) -> Tuple[EventSystem, SyncLayer, List[bytes], Data]:
+async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, List[bytes], Data]:
     event_system = EventSystem(True)
     voters = [bytes([x]) for x in range(peer_num)]
     vote_factory = DefaultVoteFactory(TEST_NODE_ID)
@@ -46,10 +46,10 @@ async def setup_sync_layer(peer_num: int) -> Tuple[EventSystem, SyncLayer, List[
         prev_votes=[]
     )
 
-    sync_layer = SyncLayer(TEST_NODE_ID, event_system, data_factory, vote_factory, term_factory)
-    await sync_layer.initialize(term_num=0, round_num=1, candidate_data=genesis_data, voters=voters, votes=[])
+    round_layer = RoundLayer(TEST_NODE_ID, event_system, data_factory, vote_factory, term_factory)
+    await round_layer.initialize(term_num=0, round_num=1, candidate_data=genesis_data, voters=voters, votes=[])
 
-    return event_system, sync_layer, voters, genesis_data
+    return event_system, round_layer, voters, genesis_data
 
 
 async def get_event(event_system):

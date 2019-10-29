@@ -5,7 +5,7 @@ from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEve
 from lft.consensus.data import Data, DataFactory
 from lft.consensus.vote import Vote, VoteFactory
 from lft.consensus.term import Term, TermFactory
-from lft.consensus.layers.sync_layer import SyncLayer
+from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem, EventRegister
 from lft.event.mediators import DelayedEventMediator
 
@@ -17,7 +17,7 @@ TIMEOUT_VOTE = 2.0
 
 class AsyncLayer(EventRegister):
     def __init__(self,
-                 sync_layer: SyncLayer,
+                 sync_layer: RoundLayer,
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,

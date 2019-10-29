@@ -5,7 +5,7 @@ from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTermFactory
 from lft.consensus.layers.async_layer import AsyncLayer
-from lft.consensus.layers.sync_layer import SyncLayer
+from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 
@@ -24,7 +24,7 @@ async def setup_async_layers(voter_num: int):
         data_factory = DefaultDataFactory(voter)
         vote_factory = DefaultVoteFactory(voter)
         term_factor = RotateTermFactory(1)
-        async_layer = AsyncLayer(SyncLayer(voter, event_system, data_factory, vote_factory, term_factor),
+        async_layer = AsyncLayer(RoundLayer(voter, event_system, data_factory, vote_factory, term_factor),
                                  voter,
                                  event_system,
                                  data_factory,
