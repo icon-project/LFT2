@@ -4,6 +4,7 @@ from asyncio import QueueEmpty
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTermFactory
+from lft.app.logger import Logger
 from lft.consensus.layers.sync_layer import SyncLayer
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem
@@ -17,7 +18,8 @@ async def setup_sync_layers(voter_num: int):
     data_factories = []
     vote_factories = []
     for voter in voters:
-        event_system = EventSystem()
+        logger = Logger(voter)
+        event_system = EventSystem(logger.logger)
         event_system.set_mediator(DelayedEventMediator)
         event_system.start(blocking=False)
 

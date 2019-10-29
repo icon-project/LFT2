@@ -40,9 +40,18 @@ class EventSimulator:
 
     async def execute_events(self):
         while self._running:
-            non_deterministic, mono_ns, event = await self._event_tasks.get()
+            try:
+                event_task = await self._event_tasks.get()
+            except RuntimeError:
+                break
+
+            non_deterministic, mono_ns, event = event_task
             if not event:
                 break
+            if not self._running:
+                self._event_tasks.put_nowait(event_task)
+                break
+
             await self._execute_event(event)
 
     async def _execute_event(self, event: Event):
