@@ -1,11 +1,12 @@
 import asyncio
-from typing import Dict, Type, IO
+import logging
+from typing import Dict, Type, IO, Optional
 from lft.event import EventSimulator, EventRecorder, EventReplayer, EventMediator
 
 
 class EventSystem:
-    def __init__(self, use_priority=True):
-        self.simulator = EventSimulator(use_priority)
+    def __init__(self, logger: Optional[logging.Logger] = None, use_priority=True):
+        self.simulator = EventSimulator(logger, use_priority)
         self.recorder = EventRecorder(self.simulator)
         self.replayer = EventReplayer(self.simulator)
         self.mediators: Dict[Type[EventMediator], EventMediator] = {}

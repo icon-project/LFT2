@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 import traceback
 from collections import defaultdict
@@ -13,10 +14,14 @@ HandlerCallable = Union[HandlerFunction, HandlerAwaitable]
 
 
 class EventSimulator:
-    def __init__(self, use_priority=True):
+    def __init__(self, logger: Optional[logging.Logger] = None, use_priority=True):
         self._event_tasks = asyncio.PriorityQueue() if use_priority else asyncio.Queue()
         self._running = False
         self._handlers: DefaultDict[Type[TEvent], List[HandlerAwaitable]] = defaultdict(list)
+
+        if logger is None:
+            logger = logging.getLogger(__name__)
+        self._logger = logger
 
     def __del__(self):
         self.stop()
@@ -41,6 +46,7 @@ class EventSimulator:
             await self._execute_event(event)
 
     async def _execute_event(self, event: Event):
+        self._logger.debug(event)
         if type(event) is AnyEvent:
             handlers = self._handlers[AnyEvent][:]
         else:

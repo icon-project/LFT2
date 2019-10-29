@@ -1,3 +1,4 @@
+import logging
 from typing import DefaultDict, OrderedDict, Optional, Sequence
 from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent)
@@ -29,6 +30,7 @@ class AsyncLayer(EventRegister):
         self._data_factory = data_factory
         self._vote_factory = vote_factory
         self._term_factory = term_factory
+        self._logger = logging.getLogger(node_id.hex())
 
         self._datums: Datums = Datums()
         self._votes: Votes = Votes()

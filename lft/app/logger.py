@@ -1,55 +1,72 @@
 import json
 import coloredlogs
 import logging
-from lft.consensus.events import (Event, InitializeEvent, DoneRoundEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent,
-                                  BroadcastDataEvent, BroadcastVoteEvent)
-from lft.event import EventSimulator, EventRegister
+from functools import partial
+from typing import Union
+from lft.event import Event
 from lft.serialization import Serializable
 
 
-class Logger(EventRegister):
-    def __init__(self, node_id: bytes, event_simulator: EventSimulator):
-        super().__init__(event_simulator)
-        self._node_id = node_id
-        self._simulator = event_simulator
-        self._encoder = _JSONEncoder()
-        self._logger = logging.Logger(__name__)
-        coloredlogs.install(level='DEBUG', milliseconds=True, logger=self._logger,
-                            fmt='%(asctime)s,%(msecs)03d %(message)s',
-                            datefmt='%H:%M:%S')
+class Logger:
+    def __init__(self, node_id: bytes):
+        self.logger = logging.getLogger(node_id.hex())
 
-    def _print_log(self, event: Event):
+        style = coloredlogs.DEFAULT_LEVEL_STYLES.copy()
+        style['debug'] = {'color': 'cyan'}
+        coloredlogs.install(level='DEBUG', milliseconds=True, logger=self.logger,
+                            fmt='%(asctime)s,%(msecs)03d %(message)s',
+                            datefmt='%H:%M:%S',
+                            level_styles=style)
+
+        patcher = LoggerPatcher(self.logger, node_id)
+        self.logger._debug = self.logger.debug
+        self.logger._info = self.logger.info
+        self.logger._warning = self.logger.warning
+        self.logger._error = self.logger.error
+        self.logger._critical = self.logger.critical
+        self.logger._fatal = self.logger.fatal
+
+        self.logger.debug = partial(patcher.log, "_debug")
+        self.logger.info = partial(patcher.log, "_info")
+        self.logger.warning = partial(patcher.log, "_warning")
+        self.logger.critical = partial(patcher.log, "_critical")
+        self.logger.fatal = partial(patcher.log, "_fatal")
+
+
+class LoggerPatcher:
+    def __init__(self, logger: logging.Logger, node_id: bytes):
+        self._logger = logger
+        self._node_id = node_id
+        self._encoder = _JSONEncoder()
+
+    def log(self, level: str, msg: Union[str, Event], *arg, **kwargs):
+        if isinstance(msg, Event):
+            msg = self._make_log(msg)
+
+        msg = f"0x{shorten(self._node_id)} {msg}"
+        logging_method = getattr(self._logger, level)
+        logging_method(msg, *arg, **kwargs)
+
+    def _make_log(self, event: Event):
         event_encoded = self._encoder.encode(event)
         event_serialized = json.loads(event_encoded)
 
-        msg = self._make_log(event_serialized)
-        self._logger.info(f"0x{shorten(self._node_id)} {msg}")
+        return self.__make_log(event_serialized)
 
-    def _make_log(self, event):
+    def __make_log(self, event):
         if isinstance(event, dict):
             if "!type" in event:
                 type_ = event["!type"].split(".")[-1]
                 if "!data" in event:
-                    return f"{type_}{self._make_log(event['!data'])}"
+                    return f"{type_}{self.__make_log(event['!data'])}"
                 else:
                     return f"{type_}"
             else:
-                return "(" + ",".join(f"{k}={self._make_log(v)}" for k, v in event.items()) + ")"
+                return "(" + ",".join(f"{k}={self.__make_log(v)}" for k, v in event.items()) + ")"
         elif isinstance(event, list):
-            return "[" + ",".join(self._make_log(item) for item in event) + "]"
+            return "[" + ",".join(self.__make_log(item) for item in event) + "]"
         else:
             return f"{event}"
-
-    _handler_prototypes = {
-        InitializeEvent: _print_log,
-        StartRoundEvent: _print_log,
-        DoneRoundEvent: _print_log,
-        ReceivedDataEvent: _print_log,
-        ReceivedVoteEvent: _print_log,
-        BroadcastDataEvent: _print_log,
-        BroadcastVoteEvent: _print_log
-    }
 
 
 class _JSONEncoder(json.JSONEncoder):
