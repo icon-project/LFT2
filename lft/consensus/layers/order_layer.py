@@ -33,10 +33,25 @@ class OrderLayer(EventRegister):
 
         self._vote_timeout_started = False
 
+    def _on_event_initialize(self, event: InitializeEvent):
+        pass
+
+    def _on_event_start_round(self, event: StartRoundEvent):
+        pass
+
+    def _on_event_done_round(self, event: DoneRoundEvent):
+        pass
+
+    def _on_event_received_data(self, event: ReceivedDataEvent):
+        pass
+
+    def _on_event_received_vote(self, event: ReceivedVoteEvent):
+        pass
+
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
         StartRoundEvent: _on_event_start_round,
         DoneRoundEvent: _on_event_done_round,
-        ReceivedDataEvent: _on_event_received_consensus_data,
-        ReceivedVoteEvent: _on_event_received_consensus_vote
+        ReceivedDataEvent: _on_event_received_data,
+        ReceivedVoteEvent: _on_event_received_vote
     }

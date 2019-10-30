@@ -9,7 +9,7 @@ from tests.test_exception import IsCalled
 
 
 @pytest.mark.asyncio
-def receive_now_round_data():
+async def test_receive_now_round_data():
     """ GIVEN initialized OrderLayer and now round data
     WHEN raises ReceiveData with GIVEN data
     THEN OrderLayer call SyncLayer.receive_data(data)
