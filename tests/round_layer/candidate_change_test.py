@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from lft.consensus.events import DoneRoundEvent, BroadcastVoteEvent
-from tests.sync_layer.setup_sync_layer import *
+from tests.round_layer.setup_round_layer import *
 
 
 @pytest.mark.asyncio
@@ -24,10 +24,10 @@ async def test_candidate_change_by_vote():
     THEN SyncRound raises done_round with changed_candidate_data
     """
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(peer_num=7)
-    first_candidate_id = await add_first_candidate(event_system, sync_layer, voters)
+    event_system, round_layer, voters, genesis_data = await setup_round_layer(peer_num=7)
+    first_candidate_id = await add_first_candidate(event_system, round_layer, voters)
     for voter in voters:
-        await sync_layer.vote_data(
+        await round_layer.vote_data(
             await DefaultVoteFactory(voter).create_vote(
                 data_id=first_candidate_id,
                 commit_id=CANDIDATE_ID,
@@ -38,7 +38,7 @@ async def test_candidate_change_by_vote():
     # pop done_round_event
     await get_event(event_system)
     # WHEN
-    await sync_layer.start_round(
+    await round_layer.start_round(
         term_num=0,
         round_num=2,
         voters=voters
@@ -56,7 +56,7 @@ async def test_candidate_change_by_vote():
         round_num=2,
         prev_votes=[]
     )
-    await sync_layer.propose_data(second_candidate_data)
+    await round_layer.propose_data(second_candidate_data)
     await get_event(event_system)
 
     # Pop received event
@@ -65,7 +65,7 @@ async def test_candidate_change_by_vote():
     await verify_no_events(event_system)
 
     for voter in voters:
-        await sync_layer.vote_data(
+        await round_layer.vote_data(
             await DefaultVoteFactory(voter).create_vote(
                 data_id=second_candidate_id,
                 commit_id=CANDIDATE_ID,
@@ -83,9 +83,9 @@ async def test_candidate_change_by_vote():
     assert event.term_num == 0
 
 
-async def add_first_candidate(event_system, sync_layer, voters):
+async def add_first_candidate(event_system, round_layer, voters):
     first_candidate_id = b'first_candidate'
-    await sync_layer.propose_data(
+    await round_layer.propose_data(
         DefaultData(
             id_=first_candidate_id,
             prev_id=CANDIDATE_ID,

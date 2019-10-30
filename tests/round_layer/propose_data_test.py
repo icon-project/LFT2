@@ -17,7 +17,7 @@ import pytest
 
 from lft.app.data import DefaultVote, DefaultData
 from lft.consensus.events import BroadcastVoteEvent, ReceivedVoteEvent
-from tests.sync_layer.setup_sync_layer import setup_sync_layer, CANDIDATE_ID, LEADER_ID, verify_no_events
+from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, LEADER_ID, verify_no_events
 
 PROPOSE_ID = b"b"
 
@@ -34,7 +34,8 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     THEN Receive VoteEvent about ProposeSequence
     """
     # GIVEN
-    event_system, sync_layer, voters, genesis_data = await setup_sync_layer(peer_num=7)
+    event_system, round_layer, voters, genesis_data = await setup_round_layer(peer_num=7)
+    event_system, round_layer, voters, genesis_data = await setup_round_layer(peer_num=7)
     propose = DefaultData(id_=PROPOSE_ID,
                           prev_id=propose_prev_id,
                           proposer_id=LEADER_ID,
@@ -43,7 +44,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                           round_num=0,
                           prev_votes=[])
     # WHEN
-    await sync_layer.propose_data(propose)
+    await round_layer.propose_data(propose)
     # THEN
 
     non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
@@ -65,6 +66,6 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                                  prev_votes=[])
 
     # WHEN
-    await sync_layer.propose_data(data=second_propose)
+    await round_layer.propose_data(data=second_propose)
     # THEN
     await verify_no_events(event_system)

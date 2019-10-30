@@ -1,197 +1,225 @@
 import logging
-from typing import Sequence
-
-from lft.consensus.round import Round, Candidate
-from lft.consensus.data import Data, DataVerifier, DataFactory
-from lft.consensus.vote import Vote, VoteVerifier, VoteFactory
-from lft.consensus.events import (DoneRoundEvent, BroadcastDataEvent, BroadcastVoteEvent,
+from typing import DefaultDict, OrderedDict, Optional, Sequence
+from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent)
+from lft.consensus.data import Data, DataFactory
+from lft.consensus.vote import Vote, VoteFactory
 from lft.consensus.term import Term, TermFactory
-from lft.consensus.exceptions import InvalidProposer, AlreadyCompleted, AlreadyVoted, CannotComplete
-from lft.event import EventSystem
+from lft.consensus.layers.round_layer import RoundLayer
+from lft.event import EventSystem, EventRegister
+from lft.event.mediators import DelayedEventMediator
+
+__all__ = ("SyncLayer",)
+
+TIMEOUT_PROPOSE = 2.0
+TIMEOUT_VOTE = 2.0
 
 
-class SyncLayer:
-    def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: DataFactory,
-                 vote_factory: VoteFactory, term_factory: TermFactory):
-        self._event_system: EventSystem = event_system
-        self._data_factory: DataFactory = data_factory
-        self._vote_factory: VoteFactory = vote_factory
-        self._term_factory: TermFactory = term_factory
+class SyncLayer(EventRegister):
+    def __init__(self,
+                 round_layer: RoundLayer,
+                 node_id: bytes,
+                 event_system: EventSystem,
+                 data_factory: DataFactory,
+                 vote_factory: VoteFactory,
+                 term_factory: TermFactory):
+        super().__init__(event_system.simulator)
+        self._round_layer = round_layer
+        self._node_id = node_id
+        self._event_system = event_system
+        self._data_factory = data_factory
+        self._vote_factory = vote_factory
+        self._term_factory = term_factory
         self._logger = logging.getLogger(node_id.hex())
 
-        self._data_verifier: DataVerifier = None
-        self._vote_verifier: VoteVerifier = None
+        self._datums: Datums = Datums()
+        self._votes: Votes = Votes()
 
-        self._candidate: Candidate = None
-        self._round: Round = None
-        self._term: Term = None
-        self._node_id: bytes = node_id
-        self._is_voted = False
+        self._term: Optional[Term] = None
+        self._round_num = -1
+        self._candidate_num = -1
 
-    async def initialize(self, term_num: int, round_num: int, candidate_data: Data,
-                         voters: Sequence[bytes], votes: Sequence[Vote]):
-        self._data_verifier = await self._data_factory.create_data_verifier()
-        self._vote_verifier = await self._vote_factory.create_vote_verifier()
+        self._vote_timeout_started = False
 
-        self._candidate = Candidate(
-            data=candidate_data,
-            votes=votes
-        )
-        await self._start_new_round(
-            term_num=term_num,
-            round_num=round_num,
-            voters=voters
-        )
+    async def initialize(self,
+                         term_num: int,
+                         round_num: int,
+                         candidate_data: Data,
+                         votes: Sequence[Vote],
+                         voters: Sequence[bytes]):
+        candidate_num = candidate_data.number if candidate_data else 0
+        self._candidate_num = candidate_num
+        await self._new_round(term_num, round_num, voters)
+        await self._new_data()
+        await self._round_layer.initialize(term_num, round_num, candidate_data, voters, votes)
 
-    async def start_round(self, term_num: int, round_num: int, voters: Sequence[bytes]):
-        if not self._is_next_round(term_num, round_num):
+    async def start_round(self,
+                          term_num: int,
+                          round_num: int,
+                          voters: Sequence[bytes]):
+        await self._new_round(term_num, round_num, voters)
+        await self._new_data()
+        await self._round_layer.start_round(term_num, round_num, voters)
+
+    async def done_round(self, candidate_data: Data):
+        if candidate_data:
+            self._candidate_num = candidate_data.number
+
+    async def receive_data(self, data: Data):
+        if not self._is_acceptable_data(data):
             return
 
-        await self._start_new_round(
-            term_num=term_num,
-            round_num=round_num,
-            voters=voters
-        )
-        self._is_voted = False
+        if self._candidate_num == data.number or self._candidate_num + 1 == data.number:
+            if not data.is_not():
+                self._term.verify_data(data)
+            self._datums[data.id] = data
+            await self._round_layer.propose_data(data)
 
-    async def propose_data(self, data: Data):
-        try:
-            self._round.add_data(data)
-        except AlreadyCompleted:
-            pass
-        else:
-            if not self._is_voted:
-                await self._verify_and_broadcast_vote(data)
-                self._is_voted = True
+            if data.is_not():
+                return
 
-            await self._update_round_if_complete()
+            votes_by_vote_id = self._votes.get_votes(data_id=data.id)
+            for vote in votes_by_vote_id.values():
+                await self._round_layer.vote_data(vote)
 
-    async def vote_data(self, vote: Vote):
-        try:
-            self._round.add_vote(vote)
-        except AlreadyCompleted:
-            pass
-        except AlreadyVoted:
-            pass
-        else:
-            await self._update_round_if_complete()
+    async def receive_vote(self, vote: Vote):
+        if not self._is_acceptable_vote(vote):
+            return
 
-    async def _update_round_if_complete(self):
-        try:
-            self._round.complete()
-        except AlreadyCompleted:
-            pass
-        except CannotComplete:
-            pass
-        else:
-            candidate = self._round.result()
-            await self._raise_done_round(candidate)
-            if candidate.data:
-                self._candidate = candidate
+        self._term.verify_vote(vote)
+        self._votes.add_vote(vote)
+        if vote.data_id in self._datums:
+            await self._round_layer.vote_data(vote)
 
-    async def _raise_broadcast_data(self, data):
-        self._event_system.simulator.raise_event(
-            BroadcastDataEvent(
-                data=data
-            )
-        )
-        self._event_system.simulator.raise_event(
-            ReceivedDataEvent(
-                data=data
-            )
-        )
+        if self._vote_timeout_started:
+            return
+        if not self._votes_reach_quorum():
+            return
 
-    async def _raise_broadcast_vote(self, vote: Vote):
-        self._event_system.simulator.raise_event(
-            BroadcastVoteEvent(
-                vote=vote)
-        )
-        self._event_system.simulator.raise_event(
-            ReceivedVoteEvent(
-                vote=vote
-            )
-        )
+        self._vote_timeout_started = True
+        for voter in self._term.get_voters_id():
+            vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
+            await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
-    async def _raise_done_round(self, candidate: Candidate):
-        if candidate.data:
-            done_round = DoneRoundEvent(
-                is_success=True,
-                term_num=self._term.num,
-                round_num=self._round.num,
-                votes=candidate.votes,
-                candidate_data=candidate.data,
-                commit_id=candidate.data.prev_id
-            )
-        else:
-            done_round = DoneRoundEvent(
-                is_success=False,
-                term_num=self._term.num,
-                round_num=self._round.num,
-                votes=candidate.votes,
-                candidate_data=None,
-                commit_id=None
-            )
-        self._event_system.simulator.raise_event(done_round)
+    async def _on_event_initialize(self, event: InitializeEvent):
+        await self.initialize(event.term_num, event.round_num, event.candidate_data, event.votes, event.voters)
 
-    async def _start_new_round(self, term_num: int, round_num: int, voters: Sequence[bytes]):
-        if not self._term or self._term.num != term_num:
-            self._term = self._term_factory.create_term(
-                term_num=term_num,
-                voters=voters
-            )
+    async def _on_event_start_round(self, event: StartRoundEvent):
+        await self.start_round(event.term_num, event.round_num, event.voters)
 
-        self._round = Round(
-            num=round_num,
-            term=self._term
-        )
-        await self._create_data_if_proposer()
+    async def _on_event_done_round(self, event: DoneRoundEvent):
+        await self.done_round(event.candidate_data)
 
-    async def _create_data_if_proposer(self):
-        try:
-            self._term.verify_proposer(self._node_id, self._round.num)
-        except InvalidProposer:
-            pass
-        else:
-            new_data = await self._data_factory.create_data(
-                data_number=self._candidate.data.number + 1,
-                prev_id=self._candidate.data.id,
-                term_num=self._term.num,
-                round_num=self._round.num,
-                prev_votes=self._candidate.votes
-            )
-            await self._raise_broadcast_data(new_data)
+    async def _on_event_received_consensus_data(self, event: ReceivedDataEvent):
+        await self.receive_data(event.data)
 
-    async def _verify_and_broadcast_vote(self, data):
-        if not data.is_not() and self._verify_is_connect_to_candidate(data) and await self._verify_data(data):
-            vote = await self._vote_factory.create_vote(data_id=data.id,
-                                                        commit_id=self._candidate.data.id,
-                                                        term_num=self._round.term.num,
-                                                        round_num=self._round.num)
-        else:
-            vote = await self._vote_factory.create_none_vote(term_num=self._round.term.num,
-                                                             round_num=self._round.num)
-        await self._raise_broadcast_vote(vote)
+    async def _on_event_received_consensus_vote(self, event: ReceivedVoteEvent):
+        await self.receive_vote(event.vote)
 
-    def _verify_is_connect_to_candidate(self, data: Data) -> bool:
-        return self._candidate.data.id == data.prev_id
+    async def _raise_received_consensus_data(self, delay: float, data: Data):
+        event = ReceivedDataEvent(data)
+        event.deterministic = False
 
-    async def _verify_data(self, data):
-        if data.proposer_id == self._node_id:
-            return True
-        try:
-            await self._data_verifier.verify(data)
-        except Exception as e:
+        mediator = self._event_system.get_mediator(DelayedEventMediator)
+        mediator.execute(delay, event)
+
+    async def _raise_received_consensus_vote(self, delay: float, vote: Vote):
+        event = ReceivedVoteEvent(vote)
+        event.deterministic = False
+
+        mediator = self._event_system.get_mediator(DelayedEventMediator)
+        mediator.execute(delay, event)
+
+    async def _new_round(self,
+                         new_term_num: int,
+                         new_round_num: int,
+                         voters: Sequence[bytes] = ()):
+        self._vote_timeout_started = False
+        self._round_num = new_round_num
+        self._datums.clear()
+        self._votes.clear()
+
+        if not self._term or self._term.num != new_term_num:
+            self._term = self._term_factory.create_term(new_term_num, voters)
+
+    async def _new_data(self):
+        expected_proposer = self._term.get_proposer_id(self._round_num)
+        if expected_proposer != self._node_id:
+            data = await self._data_factory.create_not_data(self._candidate_num,
+                                                            self._term.num,
+                                                            self._round_num,
+                                                            expected_proposer)
+            await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
+
+    def _is_acceptable_data(self, data: Data):
+        if self._term.num != data.term_num:
             return False
-        else:
-            return True
+        if self._round_num != data.round_num:
+            return False
+        if self._candidate_num > data.number:
+            return False
+        if data.id in self._datums:
+            return False
+        if data.is_not() and self._datums:
+            return False
 
-    def _is_genesis_or_is_connected_genesis(self, data: Data) -> bool:
-        return data.number == 0 or data.number == 1
+        return True
 
-    def _is_next_round(self, term_num: int, round_num: int) -> bool:
-        if term_num == self._term.num and round_num == self._round.num + 1:
-            return True
-        if term_num == self._term.num + 1 and round_num == 0:
-            return True
+    def _is_acceptable_vote(self, vote: Vote):
+        if self._term.num != vote.term_num:
+            return False
+        if self._round_num != vote.round_num:
+            return False
+        if vote.id in self._votes.get_votes(data_id=vote.data_id):
+            return False
+        if vote.is_not() and self._votes.get_votes(voter_id=vote.voter_id):
+            return False
+
+        return True
+
+    def _votes_reach_quorum(self):
+        count = 0
+        for vote in self._votes:
+            if vote.is_not():
+                continue
+            count += 1
+            if count >= self._term.quorum_num:
+                return True
         return False
+
+    _handler_prototypes = {
+        InitializeEvent: _on_event_initialize,
+        StartRoundEvent: _on_event_start_round,
+        DoneRoundEvent: _on_event_done_round,
+        ReceivedDataEvent: _on_event_received_consensus_data,
+        ReceivedVoteEvent: _on_event_received_consensus_vote
+    }
+
+
+Datums = OrderedDict[bytes, Data]
+
+
+class Votes:
+    def __init__(self):
+        self._votes_by_data_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
+        self._votes_by_voter_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
+
+    def get_votes(self, *, data_id: Optional[bytes] = None, voter_id: Optional[bytes] = None):
+        if data_id is not None and voter_id is None:
+            return self._votes_by_data_id[data_id]
+        if voter_id is not None and data_id is None:
+            return self._votes_by_voter_id[voter_id]
+        raise RuntimeError
+
+    def add_vote(self, vote: Vote):
+        self._votes_by_data_id[vote.data_id][vote.voter_id] = vote
+        self._votes_by_voter_id[vote.voter_id][vote.voter_id] = vote
+
+    def __iter__(self):
+        for votes in self._votes_by_data_id.values():
+            yield from votes.values()
+
+    def clear(self):
+        self._votes_by_data_id.clear()
+        self._votes_by_voter_id.clear()
+
