@@ -1,0 +1,2 @@
+class IsCalled(Exception):
+    pass
