@@ -5,7 +5,9 @@ deps = {
         "jsonrpcclient[requests,aiohttp]==3.3.3"
     ],
     'app': [
-        "coloredlogs==10.0"
+        "coloredlogs==10.0",
+        "pynput==1.4.4",
+        "ipython==7.9.0"
     ],
     'test': [
         "pytest==4.6.3",

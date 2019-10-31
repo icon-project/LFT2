@@ -25,6 +25,7 @@ def main():
     else:
         raise RuntimeError("Invalid mode, {args.mode}")
     app.start()
+    app.close()
 
 
 if __name__ == "__main__":

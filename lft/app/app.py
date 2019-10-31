@@ -3,23 +3,36 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from lft.app import Node
 from lft.app.data import DefaultData
+from lft.app.console import Console
 from lft.consensus.events import InitializeEvent
 
 RECORD_PATH = "record.log"
 
 
 class App(ABC):
-    def start(self):
-        nodes = self._gen_nodes()
+    def __init__(self):
+        self.console = Console(self)
+        self.nodes: Optional[List[Node]] = None
 
-        for node in nodes:
-            for peer in (peer for peer in nodes if peer != node):
+    def __del__(self):
+        self.close()
+
+    def start(self):
+        self.nodes = self._gen_nodes()
+
+        for node in self.nodes:
+            for peer in (peer for peer in self.nodes if peer != node):
                 node.register_peer(peer)
-        self._start(nodes)
-        self._run_forever(nodes)
+
+        self.console.start()
+        self._start(self.nodes)
+        self._run_forever(self.nodes)
+
+    def close(self):
+        self.console.stop()
 
     @abstractmethod
     def _start(self, nodes: List[Node]):
