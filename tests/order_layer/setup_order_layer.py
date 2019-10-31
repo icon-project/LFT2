@@ -5,19 +5,28 @@ from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.term import RotateTermFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.events import InitializeEvent, StartRoundEvent
-from lft.consensus.layers import OrderLayer
+from lft.consensus.layers import OrderLayer, SyncLayer
 from lft.event import EventSystem
 
 
-async def setup_order_layer() -> Tuple[OrderLayer, MagicMock, Sequence[bytes], EventSystem]:
-    mock_sync_layer = MagicMock()
+async def setup_order_layer() -> Tuple[OrderLayer, SyncLayer, Sequence[bytes], EventSystem]:
+    mock_event_system = MagicMock(EventSystem())
+
     voters = [b'1', b'2', b'3', b'4']
     my_id = voters[0]
-    event_system = EventSystem()
+
+    mock_sync_layer = MagicMock(SyncLayer(
+        round_layer=MagicMock(),
+        node_id=my_id,
+        event_system=mock_event_system,
+        data_factory=DefaultDataFactory(my_id),
+        vote_factory=DefaultVoteFactory(my_id),
+        term_factory=RotateTermFactory(1)
+    ))
     order_layer = OrderLayer(sync_layer=MagicMock,
                              async_layer=mock_sync_layer,
                              node_id=my_id,
-                             event_system=event_system,
+                             event_system=mock_event_system,
                              data_factory=DefaultDataFactory(my_id),
                              vote_factory=DefaultVoteFactory(my_id),
                              term_factory=RotateTermFactory(1))
@@ -32,7 +41,7 @@ async def setup_order_layer() -> Tuple[OrderLayer, MagicMock, Sequence[bytes], E
         prev_votes=[]
     )
 
-    await event_system.simulator.raise_event(
+    order_layer._on_event_initialize(
         InitializeEvent(
             term_num=0,
             round_num=0,
@@ -41,12 +50,12 @@ async def setup_order_layer() -> Tuple[OrderLayer, MagicMock, Sequence[bytes], E
             voters=voters
         )
     )
-
-    await event_system.simulator.raise_event(
+    order_layer._on_event_start_round(
         StartRoundEvent(
             term_num=0,
             round_num=1,
             voters=voters
         )
     )
-    return order_layer, mock_sync_layer, voters, event_system
+
+    return order_layer, mock_sync_layer, voters, mock_event_system
