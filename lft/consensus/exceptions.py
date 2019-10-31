@@ -56,3 +56,18 @@ class InvalidVoter(Exception):
     def __init__(self, voter: bytes, expected: bytes):
         self.voter = voter
         self.expected = expected
+
+
+class PastDataReceived(Exception):
+    def __init__(self, data_id: bytes, term_num: int, round_num: int):
+        self.data_id = data_id
+        self.term_num = term_num
+        self.round_num = round_num
+
+
+class PastVoteReceived(Exception):
+    def __init__(self, data_id: bytes, voter_id: bytes, term_num: int, round_num: int):
+        self.data_id = data_id
+        self.voter_id = voter_id
+        self.term_num = term_num
+        self.round_num = round_num
