@@ -19,6 +19,7 @@ from typing import Tuple
 import pytest
 
 from lft.app.data import DefaultData
+from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.data import Data, Vote
 from lft.consensus.events import BroadcastDataEvent, ReceivedDataEvent
@@ -40,10 +41,10 @@ async def test_start_round():
     await do_success_vote(round_layer, voters)
 
     # WHEN
+    term = RotateTerm(0, voters)
     await round_layer.start_round(
-        term_num=0,
-        round_num=2,
-        voters=voters
+        term=term,
+        round_num=2
     )
     # pop done_round
     await get_event(event_system)
@@ -84,10 +85,10 @@ async def test_prev_round_is_failed():
         await round_layer.vote_data(vote)
 
     # WHEN
+    term = RotateTerm(0, voters)
     await round_layer.start_round(
-        term_num=0,
-        round_num=2,
-        voters=voters
+        term=term,
+        round_num=2
     )
     event = await get_event(event_system)
 
@@ -107,10 +108,10 @@ async def test_prev_round_is_failed():
 @pytest.mark.asyncio
 async def test_start_past_round():
     round_layer, event_system, voters = await test_start_round()
+    term = RotateTerm(0, voters)
     await round_layer.start_round(
-        term_num=0,
-        round_num=1,
-        voters=voters
+        term=term,
+        round_num=1
     )
     await verify_no_events(event_system)
 
@@ -122,10 +123,10 @@ async def test_start_future_round():
     await do_success_vote(round_layer, voters)
     event = await get_event(event_system)
 
+    term = RotateTerm(0, voters)
     await round_layer.start_round(
-        term_num=0,
-        round_num=9,
-        voters=voters
+        term=term,
+        round_num=9
     )
     await verify_no_events(event_system)
 

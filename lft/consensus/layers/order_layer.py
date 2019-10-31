@@ -1,7 +1,7 @@
 import logging
-from typing import Optional
+from typing import Optional, Sequence
 
-from lft.consensus.data import DataFactory
+from lft.consensus.data import DataFactory, Data
 from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent
 from lft.consensus.layers import SyncLayer, RoundLayer
 from lft.consensus.term import TermFactory, Term
@@ -35,7 +35,14 @@ class OrderLayer(EventRegister):
         self._vote_timeout_started = False
 
     def _on_event_initialize(self, event: InitializeEvent):
-        pass
+        self._initialize(
+            term_num=event.term_num,
+            round_num=event.round_num,
+            candidate_data=event.candidate_data,
+            votes=event.votes,
+            voters=event.voters
+        )
+        self._term = self._term_factory.create_term(event.tem)
 
     def _on_event_start_round(self, event: StartRoundEvent):
         pass
@@ -47,6 +54,10 @@ class OrderLayer(EventRegister):
         pass
 
     def _on_event_received_vote(self, event: ReceivedVoteEvent):
+        pass
+
+    def _initialize(self, term_num: int, round_num: int, candidate_data: Data,
+                    votes: Sequence['Vote'], voters: Sequence[bytes]):
         pass
 
     _handler_prototypes = {
