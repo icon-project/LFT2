@@ -34,13 +34,11 @@ class OrderLayer(EventRegister):
 
     def _on_event_initialize(self, event: InitializeEvent):
         self._initialize(
-            term_num=event.term_num,
+            term=event.term,
             round_num=event.round_num,
             candidate_data=event.candidate_data,
-            votes=event.votes,
-            voters=event.voters
+            votes=event.votes
         )
-        self._term = self._term_factory.create_term(event.tem)
 
     def _on_event_start_round(self, event: StartRoundEvent):
         pass
@@ -54,8 +52,7 @@ class OrderLayer(EventRegister):
     def _on_event_received_vote(self, event: ReceivedVoteEvent):
         pass
 
-    def _initialize(self, term_num: int, round_num: int, candidate_data: Data,
-                    votes: Sequence['Vote'], voters: Sequence[bytes]):
+    def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         pass
 
     _handler_prototypes = {
