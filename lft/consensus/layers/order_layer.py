@@ -1,5 +1,7 @@
 import logging
-from typing import Optional, Sequence
+from typing import Optional, Sequence, OrderedDict, DefaultDict, Set
+
+from collections import defaultdict
 
 from lft.consensus.data import DataFactory, Data
 from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent
@@ -26,6 +28,8 @@ class OrderLayer(EventRegister):
         self._logger = logging.getLogger(node_id.hex())
 
         self._term: Optional[Term] = None
+        self._datums: Datums = defaultdict(lambda: defaultdict(set))
+
         self._round_num = -1
         self._candidate_data = None
 
@@ -74,7 +78,13 @@ class OrderLayer(EventRegister):
         elif data.term_num == self._term.num and data.round_num == self._round_num:
             self._sync_layer.receive_data(data)
         else:
-            pass
+            self._save_data(data)
+
+    def _save_data(self, data: Data):
+        self._datums[data.term_num][data.round_num].add(data)
+
+    def _get_messages(self, term_num: int, round_num: int) -> Sequence:
+        return list(self._datums[term_num][round_num])
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
@@ -83,3 +93,6 @@ class OrderLayer(EventRegister):
         ReceivedDataEvent: _on_event_received_data,
         ReceivedVoteEvent: _on_event_received_vote
     }
+
+
+Datums = DefaultDict[int, DefaultDict[int, Set[Data]]]

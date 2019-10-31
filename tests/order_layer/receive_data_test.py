@@ -81,5 +81,20 @@ async def test_receive_past_term_data():
 
 @pytest.mark.asyncio
 async def test_receive_future_round_data():
-    pass
+    # GIVEN
+    order_layer, sync_layer, voters, event_system = await setup_order_layer()
+    data = DefaultData(id_=b'first',
+                       prev_id=b'genesis',
+                       proposer_id=voters[1],
+                       number=2,
+                       term_num=0,
+                       round_num=10,
+                       prev_votes=[])
 
+    # WHEN
+    order_layer._on_event_received_data(
+        ReceivedDataEvent(data)
+    )
+
+    # THEN
+    order_layer._get_messages(0, 10)[0] == data
