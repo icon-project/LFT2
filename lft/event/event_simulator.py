@@ -55,7 +55,8 @@ class EventSimulator:
             await self._execute_event(event)
 
     async def _execute_event(self, event: Event):
-        self._logger.debug(event)
+        if not isinstance(event, AnyEvent):
+            self._logger.debug(event)
         if type(event) is AnyEvent:
             handlers = self._handlers[AnyEvent][:]
         else:

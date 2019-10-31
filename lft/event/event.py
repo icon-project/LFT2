@@ -10,7 +10,7 @@ class Event(Serializable):
     deterministic = True
 
     def _serialize(self) -> dict:
-        items = self.__dict__
+        items = self.__dict__.copy()
         items.pop("deterministic", None)
         return items
 
