@@ -17,12 +17,12 @@ async def test_receive_now_round_data():
     # GIVEN
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
     data = DefaultData(id_=b'first',
-                             prev_id=b'genesis',
-                             proposer_id=voters[1],
-                             number=1,
-                             term_num=0,
-                             round_num=1,
-                             prev_votes=[])
+                       prev_id=b'genesis',
+                       proposer_id=voters[1],
+                       number=1,
+                       term_num=0,
+                       round_num=1,
+                       prev_votes=[])
 
     # WHEN
     order_layer._on_event_received_data(

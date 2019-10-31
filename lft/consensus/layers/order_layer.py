@@ -3,7 +3,7 @@ from typing import Optional
 
 from lft.consensus.data import DataFactory
 from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent
-from lft.consensus.layers import SyncLayer, AsyncLayer
+from lft.consensus.layers import SyncLayer, RoundLayer
 from lft.consensus.term import TermFactory, Term
 from lft.consensus.vote import VoteFactory
 from lft.event import EventRegister, EventSystem
@@ -12,7 +12,7 @@ from lft.event import EventRegister, EventSystem
 class OrderLayer(EventRegister):
     def __init__(self,
                  sync_layer: SyncLayer,
-                 async_layer: AsyncLayer,
+                 round_layer: RoundLayer,
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,
@@ -20,6 +20,7 @@ class OrderLayer(EventRegister):
                  term_factory: TermFactory):
         super().__init__(event_system.simulator)
         self._sync_layer = sync_layer
+        self._order_layer = round_layer
         self._node_id = node_id
         self._event_system = event_system
         self._data_factory = data_factory

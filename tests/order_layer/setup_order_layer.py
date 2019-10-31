@@ -23,8 +23,8 @@ async def setup_order_layer() -> Tuple[OrderLayer, SyncLayer, Sequence[bytes], E
         vote_factory=DefaultVoteFactory(my_id),
         term_factory=RotateTermFactory(1)
     ))
-    order_layer = OrderLayer(sync_layer=MagicMock,
-                             async_layer=mock_sync_layer,
+    order_layer = OrderLayer(sync_layer=mock_sync_layer,
+                             round_layer=MagicMock(),
                              node_id=my_id,
                              event_system=mock_event_system,
                              data_factory=DefaultDataFactory(my_id),
