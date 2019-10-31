@@ -2,6 +2,7 @@ from typing import Sequence, Tuple
 from unittest.mock import MagicMock
 
 from lft.app.data import DefaultDataFactory, DefaultData
+from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.events import InitializeEvent, StartRoundEvent
 from lft.consensus.layers import OrderLayer, SyncLayer
@@ -38,20 +39,19 @@ async def setup_order_layer() -> Tuple[OrderLayer, SyncLayer, Sequence[bytes], E
         prev_votes=[]
     )
 
+    term = RotateTerm(0, voters)
     order_layer._on_event_initialize(
         InitializeEvent(
-            term_num=0,
+            term=term,
             round_num=0,
             candidate_data=genesis_data,
-            votes=[],
-            voters=voters
+            votes=[]
         )
     )
     order_layer._on_event_start_round(
         StartRoundEvent(
-            term_num=0,
-            round_num=1,
-            voters=voters
+            term=term,
+            round_num=1
         )
     )
 
