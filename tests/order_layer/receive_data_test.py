@@ -31,5 +31,5 @@ async def test_receive_now_round_data():
 
     # THEN
     assert len(sync_layer.receive_data.call_args_list) == 1
-    call_data = sync_layer.receive_data.call_args_list[0][0]
+    call_data = sync_layer.receive_data.call_args_list[0][0][0]
     assert call_data == data
