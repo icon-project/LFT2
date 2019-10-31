@@ -58,6 +58,5 @@ class DoneRoundEvent(Event):
 
 @dataclass
 class StartRoundEvent(Event):
-    term_num: int
+    term: Term
     round_num: int
-    voters: Sequence[bytes]

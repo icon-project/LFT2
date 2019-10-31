@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from unittest.mock import MagicMock
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
-from lft.app.term import RotateTermFactory
+from lft.app.term import RotateTermFactory, RotateTerm
 from lft.consensus.layers.sync_layer import SyncLayer
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem
@@ -20,16 +20,17 @@ async def setup_items(voter_num: int, round_num: int):
     vote_factory = DefaultVoteFactory(voter)
     term_factor = RotateTermFactory(1)
 
-    round_layer = MagicMock(RoundLayer(voter, event_system, data_factory, vote_factory, term_factor))
+    round_layer = MagicMock(RoundLayer(voter, event_system, data_factory, vote_factory))
     sync_layer = SyncLayer(round_layer,
                            voter,
                            event_system,
                            data_factory,
-                           vote_factory,
-                           term_factor)
+                           vote_factory)
+
     try:
         genesis_data = await data_factory.create_data(0, b'', 0, round_num, [])
-        await sync_layer.initialize(0, round_num, genesis_data, [], voters)
+        term = RotateTerm(0, voters)
+        await sync_layer.initialize(term, round_num, genesis_data, [])
 
         yield voters, event_system, sync_layer, round_layer, genesis_data
     finally:
