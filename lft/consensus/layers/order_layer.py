@@ -43,7 +43,10 @@ class OrderLayer(EventRegister):
         self._round_start(event.term, event.round_num)
 
     def _on_event_received_data(self, event: ReceivedDataEvent):
-        self._receive_data(event.data)
+        try:
+            self._receive_data(event.data)
+        except PastDataReceived:
+            pass
 
     def _on_event_received_vote(self, event: ReceivedVoteEvent):
         pass
