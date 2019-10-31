@@ -7,7 +7,6 @@ from lft.app.term import RotateTermFactory
 from lft.consensus.layers.sync_layer import SyncLayer
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem
-from lft.event.mediators import DelayedEventMediator
 
 
 @asynccontextmanager
@@ -16,8 +15,6 @@ async def setup_items(voter_num: int, round_num: int):
     voter = voters[0]
 
     event_system = MagicMock(EventSystem(use_priority=True))
-    event_system.set_mediator(DelayedEventMediator)
-    event_system.start(blocking=False)
 
     data_factory = DefaultDataFactory(voter)
     vote_factory = DefaultVoteFactory(voter)

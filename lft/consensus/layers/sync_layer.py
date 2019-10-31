@@ -107,6 +107,8 @@ class SyncLayer(EventRegister):
             return
         if not self._votes_reach_quorum():
             return
+        if self._votes_reach_quorum_consensus():
+            return
 
         self._vote_timeout_started = True
         for voter in self._term.get_voters_id():
@@ -186,14 +188,14 @@ class SyncLayer(EventRegister):
             raise AlreadyVoteReceived
 
     def _votes_reach_quorum(self):
-        count = 0
-        for vote in self._votes:
-            if vote.is_not():
-                continue
-            count += 1
-            if count >= self._term.quorum_num:
-                return True
-        return False
+        return sum(1 for vote in self._votes if not vote.is_not()) >= self._term.quorum_num
+
+    def _votes_reach_quorum_consensus(self):
+        def _first(values):
+            return next(iter(values))
+
+        return any(len(votes) >= self._term.quorum_num and not _first(votes.values()).is_not()
+                   for votes in self._votes.votes_by_data_id.values())
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
@@ -209,25 +211,25 @@ Datums = OrderedDict[bytes, Data]
 
 class Votes:
     def __init__(self):
-        self._votes_by_data_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
-        self._votes_by_voter_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
+        self.votes_by_data_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
+        self.votes_by_voter_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
 
     def get_votes(self, *, data_id: Optional[bytes] = None, voter_id: Optional[bytes] = None):
         if data_id is not None and voter_id is None:
-            return self._votes_by_data_id[data_id]
+            return self.votes_by_data_id[data_id]
         if voter_id is not None and data_id is None:
-            return self._votes_by_voter_id[voter_id]
+            return self.votes_by_voter_id[voter_id]
         raise RuntimeError
 
     def add_vote(self, vote: Vote):
-        self._votes_by_data_id[vote.data_id][vote.id] = vote
-        self._votes_by_voter_id[vote.voter_id][vote.id] = vote
+        self.votes_by_data_id[vote.data_id][vote.id] = vote
+        self.votes_by_voter_id[vote.voter_id][vote.id] = vote
 
     def __iter__(self):
-        for votes in self._votes_by_data_id.values():
+        for votes in self.votes_by_data_id.values():
             yield from votes.values()
 
     def clear(self):
-        self._votes_by_data_id.clear()
-        self._votes_by_voter_id.clear()
+        self.votes_by_data_id.clear()
+        self.votes_by_voter_id.clear()
 

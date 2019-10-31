@@ -112,3 +112,23 @@ async def test_sync_layer_reach_quorum(voter_num: int):
         await sync_layer._receive_vote(none_vote)
 
         assert len(voters) == len(mediator.execute.call_args_list)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("voter_num", range(4, 20))
+async def test_sync_layer_reach_quorum_consensus(voter_num: int):
+    round_num = 0
+
+    async with setup_items(voter_num, round_num) as items:
+        voters, event_system, sync_layer, round_layer, genesis_data = items
+
+        vote_factories = [DefaultVoteFactory(voter) for voter in voters]
+        random.shuffle(vote_factories)
+
+        quorum_vote_factories = vote_factories[:sync_layer._term.quorum_num]
+        for vote_factory in quorum_vote_factories:
+            vote = await vote_factory.create_vote(genesis_data.id, genesis_data.prev_id, 0, round_num)
+            await sync_layer._receive_vote(vote)
+
+        mediator = event_system.get_mediator(DelayedEventMediator)
+        mediator.execute.assert_not_called()
