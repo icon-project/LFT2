@@ -1,8 +1,8 @@
 import os
 import pytest
 
-from lft.app.term import RotateTermFactory
 from lft.app.data import DefaultDataFactory
+from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.round import Round
 from lft.consensus.exceptions import DataIDNotFound
@@ -80,7 +80,7 @@ async def setup():
     round_num = 0
     voters = [os.urandom(16) for _ in range(7)]
 
-    term = RotateTermFactory(1).create_term(term_num, voters)
+    term = RotateTerm(term_num, voters)
     round_ = Round(round_num, term)
 
     data = await DefaultDataFactory(voters[0]).create_data(0, b'', term.num, round_.num, [])

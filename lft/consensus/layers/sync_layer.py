@@ -4,7 +4,7 @@ from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEve
                                   ReceivedDataEvent, ReceivedVoteEvent)
 from lft.consensus.data import Data, DataFactory
 from lft.consensus.vote import Vote, VoteFactory
-from lft.consensus.term import Term, TermFactory
+from lft.consensus.term import Term
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
                                       AlreadyDataReceived, AlreadyVoteReceived)

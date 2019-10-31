@@ -20,7 +20,7 @@ import pytest
 
 from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.vote import DefaultVoteFactory
-from lft.app.term import RotateTermFactory, RotateTerm
+from lft.app.term import RotateTerm
 from lft.consensus.data import Data
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem

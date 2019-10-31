@@ -1,7 +1,7 @@
 from typing import IO, Dict, Type
 from lft.app.data import DefaultDataFactory
+from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.app.term import RotateTermFactory
 from lft.app.network import Network
 from lft.app.logger import Logger
 from lft.event import EventSystem, EventMediator
@@ -23,8 +23,7 @@ class Node:
             self.event_system,
             self.node_id,
             DefaultDataFactory(self.node_id),
-            DefaultVoteFactory(self.node_id),
-            RotateTermFactory(1)
+            DefaultVoteFactory(self.node_id)
         )
         self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
         self.event_system.simulator.register_handler(DoneRoundEvent, self._on_done_round_event)
@@ -34,9 +33,8 @@ class Node:
 
     async def _on_done_round_event(self, done_round_event: DoneRoundEvent):
         round_start_event = StartRoundEvent(
-            term_num=done_round_event.term_num,
-            round_num=done_round_event.round_num + 1,
-            voters=self._nodes
+            term=RotateTerm(0, self._nodes),
+            round_num=done_round_event.round_num + 1
         )
         round_start_event.deterministic = False
         mediator = self.event_system.get_mediator(DelayedEventMediator)
