@@ -12,7 +12,7 @@ T = TypeVar("T")
 def test_event_system_priority(use_priority: bool, final_results: List[int]):
     results = []
 
-    event_system = EventSystem(use_priority)
+    event_system = EventSystem(use_priority=use_priority)
 
     event_system.simulator.register_handler(Event1, lambda e: on_test1(e, results, event_system))
     event_system.simulator.register_handler(Event2, lambda e: on_test2(e, results, event_system))

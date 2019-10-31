@@ -6,6 +6,8 @@ from lft.consensus.data import Data, DataFactory
 from lft.consensus.vote import Vote, VoteFactory
 from lft.consensus.term import Term, TermFactory
 from lft.consensus.layers.round_layer import RoundLayer
+from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
+                                      AlreadyDataReceived, AlreadyVoteReceived)
 from lft.event import EventSystem, EventRegister
 from lft.event.mediators import DelayedEventMediator
 
@@ -66,8 +68,13 @@ class SyncLayer(EventRegister):
             self._candidate_num = candidate_data.number
 
     async def receive_data(self, data: Data):
-        if not self._is_acceptable_data(data):
-            return
+        try:
+            await self._receive_data(data)
+        except (InvalidTerm, InvalidRound, AlreadyProposed, AlreadyDataReceived):
+            pass
+
+    async def _receive_data(self, data: Data):
+        self._verify_acceptable_data(data)
 
         if self._candidate_num == data.number or self._candidate_num + 1 == data.number:
             if not data.is_not():
@@ -83,8 +90,13 @@ class SyncLayer(EventRegister):
                 await self._round_layer.vote_data(vote)
 
     async def receive_vote(self, vote: Vote):
-        if not self._is_acceptable_vote(vote):
-            return
+        try:
+            await self._receive_vote(vote)
+        except (InvalidTerm, InvalidRound, AlreadyVoted, AlreadyVoteReceived):
+            pass
+
+    async def _receive_vote(self, vote: Vote):
+        self._verify_acceptable_vote(vote)
 
         self._term.verify_vote(vote)
         self._votes.add_vote(vote)
@@ -94,6 +106,8 @@ class SyncLayer(EventRegister):
         if self._vote_timeout_started:
             return
         if not self._votes_reach_quorum():
+            return
+        if self._votes_reach_quorum_consensus():
             return
 
         self._vote_timeout_started = True
@@ -151,41 +165,37 @@ class SyncLayer(EventRegister):
                                                             expected_proposer)
             await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
 
-    def _is_acceptable_data(self, data: Data):
+    def _verify_acceptable_data(self, data: Data):
         if self._term.num != data.term_num:
-            return False
+            raise InvalidTerm(data.term_num, self._term.num)
         if self._round_num != data.round_num:
-            return False
-        if self._candidate_num > data.number:
+            raise InvalidRound(data.round_num, self._round_num)
+        if self._candidate_num > data.number:  # This will be deleted
             return False
         if data.id in self._datums:
-            return False
+            raise AlreadyProposed(data.id, data.proposer_id)
         if data.is_not() and self._datums:
-            return False
+            raise AlreadyDataReceived
 
-        return True
-
-    def _is_acceptable_vote(self, vote: Vote):
+    def _verify_acceptable_vote(self, vote: Vote):
         if self._term.num != vote.term_num:
-            return False
+            raise InvalidTerm(vote.term_num, self._term.num)
         if self._round_num != vote.round_num:
-            return False
+            raise InvalidRound(vote.round_num, self._round_num)
         if vote.id in self._votes.get_votes(data_id=vote.data_id):
-            return False
+            raise AlreadyVoted(vote.id, vote.voter_id)
         if vote.is_not() and self._votes.get_votes(voter_id=vote.voter_id):
-            return False
-
-        return True
+            raise AlreadyVoteReceived
 
     def _votes_reach_quorum(self):
-        count = 0
-        for vote in self._votes:
-            if vote.is_not():
-                continue
-            count += 1
-            if count >= self._term.quorum_num:
-                return True
-        return False
+        return sum(1 for vote in self._votes if not vote.is_not()) >= self._term.quorum_num
+
+    def _votes_reach_quorum_consensus(self):
+        def _first(values):
+            return next(iter(values))
+
+        return any(len(votes) >= self._term.quorum_num and not _first(votes.values()).is_not()
+                   for votes in self._votes.votes_by_data_id.values())
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
@@ -201,25 +211,25 @@ Datums = OrderedDict[bytes, Data]
 
 class Votes:
     def __init__(self):
-        self._votes_by_data_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
-        self._votes_by_voter_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
+        self.votes_by_data_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
+        self.votes_by_voter_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
 
     def get_votes(self, *, data_id: Optional[bytes] = None, voter_id: Optional[bytes] = None):
         if data_id is not None and voter_id is None:
-            return self._votes_by_data_id[data_id]
+            return self.votes_by_data_id[data_id]
         if voter_id is not None and data_id is None:
-            return self._votes_by_voter_id[voter_id]
+            return self.votes_by_voter_id[voter_id]
         raise RuntimeError
 
     def add_vote(self, vote: Vote):
-        self._votes_by_data_id[vote.data_id][vote.voter_id] = vote
-        self._votes_by_voter_id[vote.voter_id][vote.voter_id] = vote
+        self.votes_by_data_id[vote.data_id][vote.id] = vote
+        self.votes_by_voter_id[vote.voter_id][vote.id] = vote
 
     def __iter__(self):
-        for votes in self._votes_by_data_id.values():
+        for votes in self.votes_by_data_id.values():
             yield from votes.values()
 
     def clear(self):
-        self._votes_by_data_id.clear()
-        self._votes_by_voter_id.clear()
+        self.votes_by_data_id.clear()
+        self.votes_by_voter_id.clear()
 
