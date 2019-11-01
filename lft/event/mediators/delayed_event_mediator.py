@@ -1,26 +1,50 @@
 import asyncio
-from lft.event import Event
-from lft.event import EventMediator, EventInstantMediatorExecutor
-from lft.event import EventReplayerMediatorExecutor, EventRecorderMediatorExecutor
+from typing import Set, Optional
+from lft.event import (Event, EventSimulator, EventRecorder, EventMediator,
+                       EventInstantMediatorExecutor, EventReplayerMediatorExecutor, EventRecorderMediatorExecutor)
 
 
 class DelayedEventInstantMediatorExecutor(EventInstantMediatorExecutor):
+    def __init__(self, event_simulator: EventSimulator):
+        super().__init__(event_simulator)
+        self.handlers: Set['DelayedHandler'] = set()
+
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         _is_valid_event(event)
 
+        delayed_handler = DelayedHandler()
+        self.handlers.add(delayed_handler)
+
         loop = loop or asyncio.get_event_loop()
-        loop.call_later(delay, lambda: self._event_simulator.raise_event(event))
+        timer_handler = loop.call_later(delay, delayed_handler)
+
+        delayed_handler.event = event
+        delayed_handler.event_simulator = self._event_simulator
+        delayed_handler.timer_handler = timer_handler
+        delayed_handler.handlers = self.handlers
 
     async def execute_async(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         return self.execute(delay, event, loop)
 
 
 class DelayedEventRecorderMediatorExecutor(EventRecorderMediatorExecutor):
+    def __init__(self, event_recorder: EventRecorder):
+        super().__init__(event_recorder)
+        self.handlers: Set['DelayedHandler'] = set()
+
     def execute(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         _is_valid_event(event)
 
+        delayed_handler = DelayedHandler()
+        self.handlers.add(delayed_handler)
+
         loop = loop or asyncio.get_event_loop()
-        loop.call_later(delay, lambda: self._event_recorder.event_simulator.raise_event(event))
+        timer_handler = loop.call_later(delay, delayed_handler)
+
+        delayed_handler.event = event
+        delayed_handler.event_simulator = self._event_recorder.event_simulator
+        delayed_handler.timer_handler = timer_handler
+        delayed_handler.handlers = self.handlers
 
     async def execute_async(self, delay: float, event: Event, loop: asyncio.AbstractEventLoop=None):
         return self.execute(delay, event, loop)
@@ -47,3 +71,16 @@ class DelayedEventMediator(EventMediator):
 def _is_valid_event(event: Event):
     if event.deterministic:
         raise RuntimeError(f"Delayed event must not be deterministic :{event.serialize()}")
+
+
+class DelayedHandler:
+    def __init__(self):
+        self.event: Optional[Event] = None
+        self.event_simulator: Optional[EventSimulator] = None
+        self.timer_handler: Optional[asyncio.TimerHandle] = None
+        self.handlers: Optional[Set['DelayedHandler']] = None
+
+    def __call__(self):
+        self.handlers.remove(self)
+        self.event_simulator.raise_event(self.event)
+
