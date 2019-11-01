@@ -17,6 +17,7 @@ except:
             pass
 else:
     import asyncio
+    from typing import Optional
     from threading import Thread
     from IPython import embed
 
@@ -25,16 +26,16 @@ else:
             self._app = app
             self._running = False
             self._queue = asyncio.Queue(1)
+            self._loop: Optional[asyncio.AbstractEventLoop] = None
 
             self._thread = Thread(target=self._detect)
             self._listener = None
 
         def start(self):
             self._running = True
+            self._loop = asyncio.get_event_loop()
+            self._loop.create_task(self._execute())
             self._thread.start()
-
-            loop = asyncio.get_event_loop()
-            loop.create_task(self._execute())
 
         def stop(self):
             self._running = False
@@ -42,15 +43,17 @@ else:
                 self._listener.stop()
 
         def _detect(self):
-            def _queue(key):
-                try:
-                    self._queue.put_nowait(key)
-                except asyncio.QueueFull:
-                    pass
-
-            with Listener(on_press=_queue) as listener:
+            with Listener(on_press=self._put) as listener:
                 self._listener = listener
                 listener.join()
+
+        def _put(self, key: Key):
+            async def _put_threadsafe():
+                try:
+                    await self._queue.put(key)
+                except asyncio.QueueFull:
+                    pass
+            asyncio.run_coroutine_threadsafe(_put_threadsafe(), self._loop)
 
         async def _execute(self):
             handler = Handler()
