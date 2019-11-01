@@ -28,6 +28,7 @@ else:
         def __init__(self, app: 'App'):
             self._app = app
             self._running = False
+            self._handling = False
             self._queue = asyncio.Queue(1)
             self._loop: Optional[asyncio.AbstractEventLoop] = None
 
@@ -53,21 +54,24 @@ else:
         def _put(self, key: Key):
             async def _put_threadsafe():
                 try:
-                    await self._queue.put(key)
+                    self._queue.put_nowait(key)
                 except asyncio.QueueFull:
                     pass
+
+            if self._handling:
+                return
             asyncio.run_coroutine_threadsafe(_put_threadsafe(), self._loop)
 
         async def _execute(self):
             handler = Handler()
             while self._running:
                 key = await self._queue.get()
+
+                self._handling = True
                 await handler.handle(key, self._app)
 
-                try:
-                    self._queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    pass
+                self._queue = asyncio.Queue(1)
+                self._handling = False
 
 
     class Handler:
