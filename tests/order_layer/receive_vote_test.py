@@ -74,6 +74,7 @@ async def test_receive_invalid_term_vote():
     order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
     # THEN
     sync_layer.receive_vote.assert_not_called()
+    assert len(order_layer._get_messages(1, 0)) == 0
 
 @pytest.mark.asyncio
 async def test_receive_invalid_voter_vote():
@@ -84,10 +85,11 @@ async def test_receive_invalid_voter_vote():
         data_id=b'data_id',
         commit_id=b'genesis',
         voter_id=b'invalid_voter',
-        term_num=1,
-        round_num=0
+        term_num=0,
+        round_num=1
     )
     # WHEN
     order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
     # THEN
     sync_layer.receive_vote.assert_not_called()
+    assert len(order_layer._get_messages(0, 1)) == 0

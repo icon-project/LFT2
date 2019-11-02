@@ -76,6 +76,7 @@ async def test_receive_past_term_data():
 
     # THEN
     sync_layer.receive_data.assert_not_called()
+    assert len(order_layer._get_messages(0, 1)) == 0
 
 
 @pytest.mark.asyncio
@@ -97,3 +98,55 @@ async def test_receive_future_data():
 
     # THEN
     order_layer._get_messages(0, 10)[0] == data
+
+
+@pytest.mark.asyncio
+async def test_receive_invalid_term_data():
+    order_layer, sync_layer, voters, event_system = await setup_order_layer()
+    order_layer._on_event_start_round(
+        StartRoundEvent(
+            term=RotateTerm(1, voters),
+            round_num=1
+        )
+    )
+    data = DefaultData(id_=b'first',
+                       prev_id=b'genesis',
+                       proposer_id=voters[1],
+                       number=1,
+                       term_num=10,
+                       round_num=11,
+                       prev_votes=[])
+    # WHEN
+    order_layer._on_event_received_data(
+        ReceivedDataEvent(data)
+    )
+
+    # THEN
+    sync_layer.receive_data.assert_not_called()
+    assert len(order_layer._get_messages(10, 11)) == 0
+
+
+@pytest.mark.asyncio
+async def test_receive_invalid_term_data():
+    order_layer, sync_layer, voters, event_system = await setup_order_layer()
+    order_layer._on_event_start_round(
+        StartRoundEvent(
+            term=RotateTerm(1, voters),
+            round_num=1
+        )
+    )
+    data = DefaultData(id_=b'first',
+                       prev_id=b'genesis',
+                       proposer_id=voters[3],
+                       number=1,
+                       term_num=0,
+                       round_num=1,
+                       prev_votes=[])
+    # WHEN
+    order_layer._on_event_received_data(
+        ReceivedDataEvent(data)
+    )
+
+    # THEN
+    sync_layer.receive_data.assert_not_called()
+    assert len(order_layer._get_messages(0, 1)) == 0
