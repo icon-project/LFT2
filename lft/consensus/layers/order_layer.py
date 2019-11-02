@@ -1,14 +1,14 @@
 import logging
-from typing import Optional, Sequence, OrderedDict, DefaultDict, Set
+from typing import Optional, Sequence
 
 from collections import defaultdict
 
 from lft.consensus.data import DataFactory, Data
 from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent
-from lft.consensus.exceptions import PastDataReceived
+from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter
 from lft.consensus.layers import SyncLayer, RoundLayer
 from lft.consensus.term import Term
-from lft.consensus.vote import VoteFactory
+from lft.consensus.vote import VoteFactory, Vote
 from lft.event import EventRegister, EventSystem
 
 
@@ -28,7 +28,7 @@ class OrderLayer(EventRegister):
         self._logger = logging.getLogger(node_id.hex())
 
         self._term: Optional[Term] = None
-        self._datums: Datums = defaultdict(lambda: defaultdict(set))
+        self._messages = defaultdict(lambda: defaultdict(set))
 
         self._round_num = -1
         self._candidate_data = None
@@ -49,11 +49,14 @@ class OrderLayer(EventRegister):
     def _on_event_received_data(self, event: ReceivedDataEvent):
         try:
             self._receive_data(event.data)
-        except PastDataReceived:
+        except (InvalidTerm, InvalidRound, InvalidProposer):
             pass
 
     def _on_event_received_vote(self, event: ReceivedVoteEvent):
-        pass
+        try:
+            self._receive_vote(event.vote)
+        except (InvalidTerm, InvalidRound, InvalidVoter):
+            pass
 
     def _on_event_done_round(self, event: DoneRoundEvent):
         pass
@@ -72,19 +75,41 @@ class OrderLayer(EventRegister):
         self._sync_layer.start_round(term, round_num)
 
     def _receive_data(self, data: Data):
-        if data.term_num < self._term.num or \
-                (data.term_num == self._term.num and data.round_num < self._round_num):
-            raise PastDataReceived(data.id, data.term_num, data.round_num)
-        elif data.term_num == self._term.num and data.round_num == self._round_num:
+        self._verify_acceptable_data(data)
+
+        if self._round_num == data.round_num:
             self._sync_layer.receive_data(data)
         else:
-            self._save_data(data)
+            self._save_message(data)
 
-    def _save_data(self, data: Data):
-        self._datums[data.term_num][data.round_num].add(data)
+    def _verify_acceptable_data(self, data: Data):
+        self._verify_acceptable_round_message(data)
+        if self._term.verify_proposer(data.proposer_id, data.round_num):
+            raise InvalidProposer(data.proposer_id, self._term.get_proposer_id(data.round_num))
+
+    def _verify_acceptable_round_message(self, message):
+        if message.term_num != self._term.num:
+            raise InvalidTerm(message.term_num, self._term.num)
+        elif message.round_num < self._round_num:
+            raise InvalidRound(message.round_num, self._round_num)
+
+    def _save_message(self, message):
+        self._messages[message.term_num][message.round_num].add(message)
+
+    def _receive_vote(self, vote: Vote):
+        self._verify_acceptable_vote(vote)
+        if vote.round_num == self._round_num:
+            self._sync_layer.receive_vote(vote)
+        else:
+            self._save_message(vote)
+
+    def _verify_acceptable_vote(self, vote: Vote):
+        self._verify_acceptable_round_message(vote)
+        if not (vote.voter_id in self._term.voters):
+            raise InvalidVoter(vote.voter_id, b'')
 
     def _get_messages(self, term_num: int, round_num: int) -> Sequence:
-        return list(self._datums[term_num][round_num])
+        return list(self._messages[term_num][round_num])
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
@@ -94,5 +119,3 @@ class OrderLayer(EventRegister):
         ReceivedVoteEvent: _on_event_received_vote
     }
 
-
-Datums = DefaultDict[int, DefaultDict[int, Set[Data]]]

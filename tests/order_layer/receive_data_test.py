@@ -31,7 +31,6 @@ async def test_receive_now_round_data():
     )
 
     # THEN
-    assert len(sync_layer.receive_data.call_args_list) == 1
     sync_layer.receive_data.assert_called_once_with(data)
 
 @pytest.mark.asyncio
@@ -80,18 +79,15 @@ async def test_receive_past_term_data():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("term_num, round_num",
-                         [(0, 10), (10, 10), (1, 0), (1, 1)]
-                         )
-async def test_receive_future_data(term_num, round_num):
+async def test_receive_future_data():
     # GIVEN
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
     data = DefaultData(id_=b'first',
                        prev_id=b'genesis',
-                       proposer_id=voters[1],
+                       proposer_id=voters[2],
                        number=2,
-                       term_num=term_num,
-                       round_num=round_num,
+                       term_num=0,
+                       round_num=10,
                        prev_votes=[])
 
     # WHEN
@@ -100,4 +96,4 @@ async def test_receive_future_data(term_num, round_num):
     )
 
     # THEN
-    order_layer._get_messages(term_num, round_num)[0] == data
+    order_layer._get_messages(0, 10)[0] == data
