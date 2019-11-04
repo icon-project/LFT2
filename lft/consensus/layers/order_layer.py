@@ -36,48 +36,63 @@ class OrderLayer(EventRegister):
 
         self._vote_timeout_started = False
 
-    def _on_event_initialize(self, event: InitializeEvent):
-        self._initialize(
+    async def _on_event_initialize(self, event: InitializeEvent):
+        await self._initialize(
             term=event.term,
             round_num=event.round_num,
             candidate_data=event.candidate_data,
             votes=event.votes
         )
 
-    def _on_event_start_round(self, event: StartRoundEvent):
-        self._round_start(event.term, event.round_num)
+    async def _on_event_start_round(self, event: StartRoundEvent):
+        await self._round_start(event.term, event.round_num)
 
-    def _on_event_received_data(self, event: ReceivedDataEvent):
+    async def _on_event_received_data(self, event: ReceivedDataEvent):
         try:
-            self._receive_data(event.data)
+            await self._receive_data(event.data)
         except (InvalidTerm, InvalidRound, InvalidProposer):
             pass
 
-    def _on_event_received_vote(self, event: ReceivedVoteEvent):
+    async def _on_event_received_vote(self, event: ReceivedVoteEvent):
         try:
-            self._receive_vote(event.vote)
+            await self._receive_vote(event.vote)
         except (InvalidTerm, InvalidRound, InvalidVoter):
             pass
 
-    def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
+    async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
         self._round_num = round_num
         self._candidate_data = candidate_data
 
-        self._sync_layer.initialize(term, round_num, candidate_data, votes)
+        await self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
-    def _round_start(self, term: Term, round_num: int):
+    async def _round_start(self, term: Term, round_num: int):
         self._verify_acceptable_start_round(term, round_num)
 
         self._term = term
         self._round_num = round_num
-        self._sync_layer.start_round(term, round_num)
+        await self._sync_layer.start_round(term, round_num)
 
         for data in self._get_datums(self._term.num, self._round_num):
-            self._sync_layer.receive_data(data)
+            await self._sync_layer.receive_data(data)
 
         for vote in self._get_votes(self._term.num, self._round_num):
-            self._sync_layer.receive_vote(vote)
+            await self._sync_layer.receive_vote(vote)
+
+    async def _receive_data(self, data: Data):
+        self._verify_acceptable_data(data)
+
+        if self._round_num == data.round_num:
+            await self._sync_layer.receive_data(data)
+        else:
+            self._save_data(data)
+
+    async def _receive_vote(self, vote: Vote):
+        self._verify_acceptable_vote(vote)
+        if vote.round_num == self._round_num:
+            await self._sync_layer.receive_vote(vote)
+        else:
+            self._save_vote(vote)
 
     def _verify_acceptable_start_round(self, term: Term, round_num: int):
         if term.num > self._term.num + 2 or term.num < self._term.num:
@@ -86,14 +101,6 @@ class OrderLayer(EventRegister):
             raise InvalidRound(round_num, self._round_num)
         elif term.num == self._term.num + 1 and round_num != 0:
             raise InvalidRound(round_num, 0)
-
-    def _receive_data(self, data: Data):
-        self._verify_acceptable_data(data)
-
-        if self._round_num == data.round_num:
-            self._sync_layer.receive_data(data)
-        else:
-            self._save_data(data)
 
     def _verify_acceptable_data(self, data: Data):
         self._verify_acceptable_round_message(data)
@@ -105,13 +112,6 @@ class OrderLayer(EventRegister):
             raise InvalidTerm(message.term_num, self._term.num)
         elif message.round_num < self._round_num:
             raise InvalidRound(message.round_num, self._round_num)
-
-    def _receive_vote(self, vote: Vote):
-        self._verify_acceptable_vote(vote)
-        if vote.round_num == self._round_num:
-            self._sync_layer.receive_vote(vote)
-        else:
-            self._save_vote(vote)
 
     def _verify_acceptable_vote(self, vote: Vote):
         self._verify_acceptable_round_message(vote)

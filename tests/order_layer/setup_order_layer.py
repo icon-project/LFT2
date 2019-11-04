@@ -39,7 +39,7 @@ async def setup_order_layer() -> Tuple[OrderLayer, SyncLayer, Sequence[bytes], E
     )
 
     term = RotateTerm(0, voters)
-    order_layer._on_event_initialize(
+    await order_layer._on_event_initialize(
         InitializeEvent(
             term=term,
             round_num=0,
@@ -47,7 +47,7 @@ async def setup_order_layer() -> Tuple[OrderLayer, SyncLayer, Sequence[bytes], E
             votes=[]
         )
     )
-    order_layer._on_event_start_round(
+    await order_layer._on_event_start_round(
         StartRoundEvent(
             term=term,
             round_num=1

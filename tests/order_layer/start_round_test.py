@@ -36,13 +36,13 @@ async def test_pass_messages_with_start_round(term_num, round_num):
         )
         votes.append(vote)
 
-    order_layer._on_event_received_data(ReceivedDataEvent(data))
+    await order_layer._on_event_received_data(ReceivedDataEvent(data))
     for vote in votes:
-        order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
+        await order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
 
     # WHEN
     term = RotateTerm(term_num, voters)
-    order_layer._on_event_start_round(
+    await order_layer._on_event_start_round(
         StartRoundEvent(
             term=term,
             round_num=round_num
@@ -65,7 +65,7 @@ async def test_invalid_round_start(term_num, round_num):
 
     # WHEN
     try:
-        order_layer._on_event_start_round(
+        await order_layer._on_event_start_round(
             StartRoundEvent(RotateTerm(term_num, voters), round_num)
         )
     except InvalidTerm:
