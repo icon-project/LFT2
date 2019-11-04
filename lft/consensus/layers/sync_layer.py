@@ -100,7 +100,7 @@ class SyncLayer(EventRegister):
 
         self._term.verify_vote(vote)
         self._votes.add_vote(vote)
-        if vote.data_id in self._datums:
+        if vote.is_none() or vote.data_id in self._datums:
             await self._round_layer.vote_data(vote)
 
         if self._vote_timeout_started:
