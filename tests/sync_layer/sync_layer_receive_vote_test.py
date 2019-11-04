@@ -79,6 +79,27 @@ async def test_sync_layer_already_vote_received():
 
 
 @pytest.mark.asyncio
+async def test_sync_layer_none_vote_received():
+    round_num = 0
+    voter_num = 7
+
+    async with setup_items(voter_num, round_num) as items:
+        voters, event_system, sync_layer, round_layer, genesis_data = items
+
+        random.shuffle(voters)
+        none_votes = []
+        for voter in voters[:sync_layer._term.quorum_num]:
+            none_vote = await DefaultVoteFactory(voter).create_none_vote(0, round_num)
+            none_votes.append(none_vote)
+            await sync_layer.receive_vote(none_vote)
+
+        assert len(round_layer.vote_data.call_args_list) == sync_layer._term.quorum_num
+        for none_vote, call_args in zip(none_votes, round_layer.vote_data.call_args_list):
+            vote, = call_args[0]
+            assert vote is none_vote
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("voter_num", range(4, 20))
 async def test_sync_layer_reach_quorum(voter_num: int):
     round_num = 0
