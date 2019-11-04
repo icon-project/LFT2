@@ -3,23 +3,39 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from lft.app import Node
 from lft.app.data import DefaultData
+from lft.app.console import Console
 from lft.consensus.events import InitializeEvent
 
 RECORD_PATH = "record.log"
 
 
 class App(ABC):
-    def start(self):
-        nodes = self._gen_nodes()
+    def __init__(self):
+        self.console = Console(self)
+        self.nodes: Optional[List[Node]] = None
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
 
-        for node in nodes:
-            for peer in (peer for peer in nodes if peer != node):
+    def __del__(self):
+        self.close()
+
+    def start(self):
+        self.nodes = self._gen_nodes()
+
+        for node in self.nodes:
+            for peer in (peer for peer in self.nodes if peer != node):
                 node.register_peer(peer)
-        self._start(nodes)
-        self._run_forever(nodes)
+
+        self.console.start()
+        self._start(self.nodes)
+        self._run_forever(self.nodes)
+
+    def close(self):
+        self.console.stop()
+        if self.loop and self.loop.is_running():
+            self.loop.stop()
 
     @abstractmethod
     def _start(self, nodes: List[Node]):
@@ -30,9 +46,9 @@ class App(ABC):
         raise NotImplementedError
 
     def _run_forever(self, nodes: List[Node]):
-        loop = asyncio.get_event_loop()
+        self.loop = asyncio.get_event_loop()
         try:
-            loop.run_forever()
+            self.loop.run_forever()
         except KeyboardInterrupt:
             print()
             print("Keyboard Interrupt")
@@ -41,8 +57,8 @@ class App(ABC):
                 node.close()
             for task in asyncio.Task.all_tasks():
                 task.cancel()
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
+            self.loop.run_until_complete(self.loop.shutdown_asyncgens())
+            self.loop.close()
 
     def _raise_init_event(self, init_node: Node, nodes: List[Node]):
         genesis_data = DefaultData(

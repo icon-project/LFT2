@@ -5,7 +5,8 @@ deps = {
         "jsonrpcclient[requests,aiohttp]==3.3.3"
     ],
     'app': [
-        "coloredlogs==10.0"
+        "coloredlogs==10.0",
+        "ipython==7.9.0"
     ],
     'test': [
         "pytest==4.6.3",
@@ -21,7 +22,7 @@ setup(
     version='0.1.0',
     description='Loopchain Fault Tolerance',
     author='ICON Foundation',
-    python_requires=">=3.6.5",
+    python_requires=">=3.8.0",
     install_requires=install_requires,
     extras_require=deps,
     license='Apache License 2.0',
@@ -34,8 +35,7 @@ setup(
         'Natural Language :: English',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6.5',
-        'Programming Language :: Python :: 3.7'
+        'Programming Language :: Python :: 3.8'
     ],
     entry_points={
         'console_scripts': [
