@@ -15,16 +15,19 @@ class EventMediatorExecutor(ABC):
 
 class EventInstantMediatorExecutor(EventMediatorExecutor):
     def __init__(self, event_simulator: EventSimulator):
+        super().__init__()
         self._event_simulator = event_simulator
 
 
 class EventRecorderMediatorExecutor(EventMediatorExecutor):
     def __init__(self, event_recorder: EventRecorder):
+        super().__init__()
         self._event_recorder = event_recorder
 
 
 class EventReplayerMediatorExecutor(EventMediatorExecutor):
     def __init__(self, event_replayer: EventReplayer):
+        super().__init__()
         self._event_replayer = event_replayer
 
 
