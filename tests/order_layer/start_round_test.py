@@ -13,7 +13,7 @@ from tests.order_layer.setup_order_layer import setup_order_layer
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("term_num,round_num", (0, 2), (1, 0))
+@pytest.mark.parametrize("term_num,round_num",[(0, 2), (1, 0)])
 async def test_pass_messages_with_start_round(term_num, round_num):
     # GIVEN
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
@@ -58,3 +58,16 @@ async def test_pass_messages_with_start_round(term_num, round_num):
     assert len(sync_layer.receive_vote.call_args_list) == 2
     for i in range(2):
         assert sync_layer.receive_vote.call_args_list[i][0][0] == votes[i]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('term_num,round_num', [(10, 0), (1, 1), (0, 3)])
+async def test_invalid_round_start(term_num, round_num):
+    # GIVEN
+    order_layer, sync_layer, voters, event_system = await setup_order_layer()
+
+    # WHEN
+    with pytest.raises(InvalidStartRound):
+        order_layer._on_event_start_round(
+            StartRoundEvent(RotateTerm(term_num, voters), round_num)
+        )
