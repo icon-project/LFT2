@@ -6,7 +6,6 @@ deps = {
     ],
     'app': [
         "coloredlogs==10.0",
-        "pynput==1.4.4",
         "ipython==7.9.0"
     ],
     'test': [

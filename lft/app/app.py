@@ -16,6 +16,7 @@ class App(ABC):
     def __init__(self):
         self.console = Console(self)
         self.nodes: Optional[List[Node]] = None
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
 
     def __del__(self):
         self.close()
@@ -33,6 +34,8 @@ class App(ABC):
 
     def close(self):
         self.console.stop()
+        if self.loop and self.loop.is_running():
+            self.loop.stop()
 
     @abstractmethod
     def _start(self, nodes: List[Node]):
@@ -43,9 +46,9 @@ class App(ABC):
         raise NotImplementedError
 
     def _run_forever(self, nodes: List[Node]):
-        loop = asyncio.get_event_loop()
+        self.loop = asyncio.get_event_loop()
         try:
-            loop.run_forever()
+            self.loop.run_forever()
         except KeyboardInterrupt:
             print()
             print("Keyboard Interrupt")
@@ -54,8 +57,8 @@ class App(ABC):
                 node.close()
             for task in asyncio.Task.all_tasks():
                 task.cancel()
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
+            self.loop.run_until_complete(self.loop.shutdown_asyncgens())
+            self.loop.close()
 
     def _raise_init_event(self, init_node: Node, nodes: List[Node]):
         genesis_data = DefaultData(
