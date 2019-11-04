@@ -59,7 +59,7 @@ async def test_receive_past_term_data():
     order_layer._on_event_start_round(
         StartRoundEvent(
             term=RotateTerm(1, voters),
-            round_num=1
+            round_num=0
         )
     )
     data = DefaultData(id_=b'first',
@@ -101,12 +101,12 @@ async def test_receive_future_data():
 
 
 @pytest.mark.asyncio
-async def test_receive_invalid_term_data():
+async def test_receive_future_term_data():
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
     order_layer._on_event_start_round(
         StartRoundEvent(
             term=RotateTerm(1, voters),
-            round_num=1
+            round_num=0
         )
     )
     data = DefaultData(id_=b'first',
@@ -127,12 +127,12 @@ async def test_receive_invalid_term_data():
 
 
 @pytest.mark.asyncio
-async def test_receive_invalid_term_data():
+async def test_receive_past_term_data():
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
     order_layer._on_event_start_round(
         StartRoundEvent(
             term=RotateTerm(1, voters),
-            round_num=1
+            round_num=0
         )
     )
     data = DefaultData(id_=b'first',

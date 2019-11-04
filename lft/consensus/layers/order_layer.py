@@ -66,10 +66,19 @@ class OrderLayer(EventRegister):
         self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
     def _round_start(self, term: Term, round_num: int):
+        self._verify_acceptable_start_round(term, round_num)
         self._term = term
         self._round_num = round_num
 
         self._sync_layer.start_round(term, round_num)
+
+    def _verify_acceptable_start_round(self, term: Term, round_num: int):
+        if term.num > self._term.num + 2 or term.num < self._term.num:
+            raise InvalidTerm(term=term.num, expected=self._term.num)
+        elif term.num == self._term.num and round_num != self._round_num + 1:
+            raise InvalidRound(round_num, self._round_num)
+        elif term.num == self._term.num + 1 and round_num != 0:
+            raise InvalidRound(round_num, 0)
 
     def _receive_data(self, data: Data):
         self._verify_acceptable_data(data)

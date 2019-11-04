@@ -4,7 +4,7 @@ from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVote
 from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent
-from lft.consensus.exceptions import InvalidStartRound
+from lft.consensus.exceptions import InvalidTerm, InvalidRound
 from lft.consensus.term import Term
 from tests.order_layer.setup_order_layer import setup_order_layer
 # @pytest.mark.asyncio
@@ -68,7 +68,15 @@ async def test_invalid_round_start(term_num, round_num):
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
 
     # WHEN
-    with pytest.raises(InvalidStartRound):
+    try:
         order_layer._on_event_start_round(
             StartRoundEvent(RotateTerm(term_num, voters), round_num)
         )
+    except InvalidTerm:
+        if 0 <= term_num < 1:
+            pytest.fail("raise unexpect exception invalid term")
+    except InvalidRound:
+        if term_num == 0 and round_num == 2:
+            pytest.fail("raise unexpect exception invalid round")
+        elif term_num == 1 and round_num == 0:
+            pytest.fail("raise unexpect exception invalid round")
