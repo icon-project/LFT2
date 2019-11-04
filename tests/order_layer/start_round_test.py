@@ -7,14 +7,10 @@ from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent, StartRoun
 from lft.consensus.exceptions import InvalidTerm, InvalidRound
 from lft.consensus.term import Term
 from tests.order_layer.setup_order_layer import setup_order_layer
-# @pytest.mark.asyncio
-# async def test_invalid_round_start():
-#     order_layer, sync_layer, voters, event_system = await setup_order_layer()
-#     order_layer._on
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("term_num,round_num",[(0, 2), (1, 0)])
+@pytest.mark.parametrize("term_num,round_num", [(0, 2)])
 async def test_pass_messages_with_start_round(term_num, round_num):
     # GIVEN
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
@@ -31,10 +27,10 @@ async def test_pass_messages_with_start_round(term_num, round_num):
     votes = []
     for i in range(2):
         vote = DefaultVote(
-            id_=b"vote_id",
+            id_=b"vote_id"+voters[i],
             data_id=b'second',
             commit_id=b'genesis',
-            voter_id=voters[0],
+            voter_id=voters[i],
             term_num=term_num,
             round_num=round_num
         )

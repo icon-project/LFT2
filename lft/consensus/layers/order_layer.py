@@ -68,10 +68,16 @@ class OrderLayer(EventRegister):
 
     def _round_start(self, term: Term, round_num: int):
         self._verify_acceptable_start_round(term, round_num)
+
         self._term = term
         self._round_num = round_num
-
         self._sync_layer.start_round(term, round_num)
+
+        for data in self._get_datums(self._term.num, self._round_num):
+            self._sync_layer.receive_data(data)
+
+        for vote in self._get_votes(self._term.num, self._round_num):
+            self._sync_layer.receive_vote(vote)
 
     def _verify_acceptable_start_round(self, term: Term, round_num: int):
         if term.num > self._term.num + 2 or term.num < self._term.num:
@@ -113,9 +119,11 @@ class OrderLayer(EventRegister):
             raise InvalidVoter(vote.voter_id, b'')
 
     def _save_data(self, data: Data):
+        self._logger.debug(f"save data: {data.serialize()}")
         self._datums[data.term_num][data.round_num][data.id] = data
 
     def _save_vote(self, vote: Vote):
+        self._logger.debug(f"save vote : {Vote}")
         self._votes[vote.term_num][vote.round_num][vote.id] = vote
 
     def _get_datums(self, term_num: int, round_num: int) -> Sequence:
