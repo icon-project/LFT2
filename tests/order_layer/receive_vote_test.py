@@ -55,7 +55,9 @@ async def test_receive_future_vote():
     # WHEN
     order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
     # THEN
-    assert order_layer._get_messages(0, 10)[0] == vote
+    votes = order_layer._get_votes(0, 10)
+    assert len(votes) == 1
+    assert next(iter(votes)) == vote
 
 
 @pytest.mark.asyncio
@@ -74,7 +76,7 @@ async def test_receive_invalid_term_vote():
     order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
     # THEN
     sync_layer.receive_vote.assert_not_called()
-    assert len(order_layer._get_messages(1, 0)) == 0
+    assert len(order_layer._get_votes(1, 0)) == 0
 
 @pytest.mark.asyncio
 async def test_receive_invalid_voter_vote():
@@ -92,4 +94,4 @@ async def test_receive_invalid_voter_vote():
     order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
     # THEN
     sync_layer.receive_vote.assert_not_called()
-    assert len(order_layer._get_messages(0, 1)) == 0
+    assert len(order_layer._get_votes(0, 1)) == 0

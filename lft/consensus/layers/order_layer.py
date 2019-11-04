@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Sequence
+from typing import Optional, Sequence, OrderedDict, Set, List, Dict
 
 from collections import defaultdict
 
@@ -28,7 +28,8 @@ class OrderLayer(EventRegister):
         self._logger = logging.getLogger(node_id.hex())
 
         self._term: Optional[Term] = None
-        self._messages = defaultdict(lambda: defaultdict(set))
+        self._datums: Datums = defaultdict(lambda: defaultdict(OrderedDict))
+        self._votes: Votes = defaultdict(lambda: defaultdict(OrderedDict))
 
         self._round_num = -1
         self._candidate_data = None
@@ -86,7 +87,7 @@ class OrderLayer(EventRegister):
         if self._round_num == data.round_num:
             self._sync_layer.receive_data(data)
         else:
-            self._save_message(data)
+            self._save_data(data)
 
     def _verify_acceptable_data(self, data: Data):
         self._verify_acceptable_round_message(data)
@@ -99,23 +100,29 @@ class OrderLayer(EventRegister):
         elif message.round_num < self._round_num:
             raise InvalidRound(message.round_num, self._round_num)
 
-    def _save_message(self, message):
-        self._messages[message.term_num][message.round_num].add(message)
-
     def _receive_vote(self, vote: Vote):
         self._verify_acceptable_vote(vote)
         if vote.round_num == self._round_num:
             self._sync_layer.receive_vote(vote)
         else:
-            self._save_message(vote)
+            self._save_vote(vote)
 
     def _verify_acceptable_vote(self, vote: Vote):
         self._verify_acceptable_round_message(vote)
         if not (vote.voter_id in self._term.voters):
             raise InvalidVoter(vote.voter_id, b'')
 
-    def _get_messages(self, term_num: int, round_num: int) -> Sequence:
-        return list(self._messages[term_num][round_num])
+    def _save_data(self, data: Data):
+        self._datums[data.term_num][data.round_num][data.id] = data
+
+    def _save_vote(self, vote: Vote):
+        self._votes[vote.term_num][vote.round_num][vote.id] = vote
+
+    def _get_datums(self, term_num: int, round_num: int) -> Sequence:
+        return self._datums[term_num][round_num].values()
+
+    def _get_votes(self, term_num: int, round_num: int) -> Sequence:
+        return self._votes[term_num][round_num].values()
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
@@ -124,3 +131,6 @@ class OrderLayer(EventRegister):
         ReceivedVoteEvent: _on_event_received_vote
     }
 
+
+Datums = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
+Votes = Dict[int, Dict[int, OrderedDict[bytes, Data]]]

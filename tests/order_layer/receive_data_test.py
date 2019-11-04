@@ -76,7 +76,7 @@ async def test_receive_past_term_data():
 
     # THEN
     sync_layer.receive_data.assert_not_called()
-    assert len(order_layer._get_messages(0, 1)) == 0
+    assert len(order_layer._get_datums(0, 1)) == 0
 
 
 @pytest.mark.asyncio
@@ -97,7 +97,9 @@ async def test_receive_future_data():
     )
 
     # THEN
-    order_layer._get_messages(0, 10)[0] == data
+    datums = order_layer._get_datums(0, 10)
+    assert len(datums) == 1
+    assert next(iter(datums)) == data
 
 
 @pytest.mark.asyncio
@@ -123,7 +125,7 @@ async def test_receive_future_term_data():
 
     # THEN
     sync_layer.receive_data.assert_not_called()
-    assert len(order_layer._get_messages(10, 11)) == 0
+    assert len(order_layer._get_datums(10, 11)) == 0
 
 
 @pytest.mark.asyncio
@@ -149,4 +151,4 @@ async def test_receive_past_term_data():
 
     # THEN
     sync_layer.receive_data.assert_not_called()
-    assert len(order_layer._get_messages(0, 1)) == 0
+    assert len(order_layer._get_datums(0, 1)) == 0
