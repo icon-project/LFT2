@@ -4,6 +4,7 @@ from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVote
 from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent
+from lft.consensus.exceptions import InvalidStartRound
 from lft.consensus.term import Term
 from tests.order_layer.setup_order_layer import setup_order_layer
 # @pytest.mark.asyncio

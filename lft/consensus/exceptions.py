@@ -60,3 +60,9 @@ class InvalidVoter(Exception):
     def __init__(self, voter: bytes, expected: bytes):
         self.voter = voter
         self.expected = expected
+
+
+class InvalidStartRound(Exception):
+    def __init__(self, round_num: int, expected: int):
+        self.round_num = round_num
+        self.expected = expected
