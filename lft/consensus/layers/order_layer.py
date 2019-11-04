@@ -58,9 +58,6 @@ class OrderLayer(EventRegister):
         except (InvalidTerm, InvalidRound, InvalidVoter):
             pass
 
-    def _on_event_done_round(self, event: DoneRoundEvent):
-        pass
-
     def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
         self._round_num = round_num
@@ -114,7 +111,6 @@ class OrderLayer(EventRegister):
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
         StartRoundEvent: _on_event_start_round,
-        DoneRoundEvent: _on_event_done_round,
         ReceivedDataEvent: _on_event_received_data,
         ReceivedVoteEvent: _on_event_received_vote
     }
