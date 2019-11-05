@@ -33,4 +33,4 @@ async def setup_items(voter_num: int, round_num: int):
 
         yield voters, event_system, sync_layer, round_layer, genesis_data
     finally:
-        sync_layer.close()
+        pass
