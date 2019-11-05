@@ -103,11 +103,11 @@ class OrderLayer(EventRegister):
         if term.num == self._term.num:
             if round_num != self._round_num + 1:
                 raise InvalidRound(round_num, self._round_num)
-            elif term.num == self._term.num + 1:
-                if round_num != 0:
-                    raise InvalidRound(round_num, 0)
-            else:
-                raise InvalidTerm(term=term.num, expected=self._term.num)
+        elif term.num == self._term.num + 1:
+            if round_num != 0:
+                raise InvalidRound(round_num, 0)
+        else:
+            raise InvalidTerm(term=term.num, expected=self._term.num)
 
     def _verify_acceptable_data(self, data: Data):
         self._verify_acceptable_round_message(data)

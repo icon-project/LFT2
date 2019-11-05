@@ -58,7 +58,7 @@ async def test_pass_messages_with_start_round(term_num, round_num):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('term_num,round_num', [(10, 0), (1, 1), (0, 3)])
+@pytest.mark.parametrize('term_num,round_num', [(10, 0), (1, 1), (0, 3), (2, 0)])
 async def test_invalid_round_start(term_num, round_num):
     # GIVEN
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
