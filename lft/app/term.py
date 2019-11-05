@@ -15,7 +15,7 @@ import math
 from typing import Sequence
 
 from lft.consensus.data import Data
-from lft.consensus.term import Term, TermFactory
+from lft.consensus.term import Term
 from lft.consensus.vote import Vote
 from lft.consensus.exceptions import InvalidProposer, InvalidVoter
 
@@ -74,14 +74,3 @@ class RotateTerm(Term):
 
     def get_voters_id(self) -> Sequence[bytes]:
         return self._voters
-
-
-class RotateTermFactory(TermFactory):
-    def __init__(self, rotate_bound: int):
-        self._rotate_bound = rotate_bound
-
-    def create_term(self, term_num: int, voters: Sequence[bytes]) -> Term:
-        return RotateTerm(num=term_num,
-                          voters=voters,
-                          rotate_bound=self._rotate_bound)
-

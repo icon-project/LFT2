@@ -6,18 +6,17 @@ from lft.consensus.data import Data, DataVerifier, DataFactory
 from lft.consensus.vote import Vote, VoteVerifier, VoteFactory
 from lft.consensus.events import (DoneRoundEvent, BroadcastDataEvent, BroadcastVoteEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent)
-from lft.consensus.term import Term, TermFactory
+from lft.consensus.term import Term
 from lft.consensus.exceptions import InvalidProposer, AlreadyCompleted, AlreadyVoted, CannotComplete
 from lft.event import EventSystem
 
 
 class RoundLayer:
     def __init__(self, node_id: bytes, event_system: EventSystem, data_factory: DataFactory,
-                 vote_factory: VoteFactory, term_factory: TermFactory):
+                 vote_factory: VoteFactory):
         self._event_system: EventSystem = event_system
         self._data_factory: DataFactory = data_factory
         self._vote_factory: VoteFactory = vote_factory
-        self._term_factory: TermFactory = term_factory
         self._logger = logging.getLogger(node_id.hex())
 
         self._data_verifier: DataVerifier = None
@@ -29,8 +28,8 @@ class RoundLayer:
         self._node_id: bytes = node_id
         self._is_voted = False
 
-    async def initialize(self, term_num: int, round_num: int, candidate_data: Data,
-                         voters: Sequence[bytes], votes: Sequence[Vote]):
+    async def initialize(self, term: Term, round_num: int, candidate_data: Data,
+                         votes: Sequence[Vote]):
         self._data_verifier = await self._data_factory.create_data_verifier()
         self._vote_verifier = await self._vote_factory.create_vote_verifier()
 
@@ -39,19 +38,17 @@ class RoundLayer:
             votes=votes
         )
         await self._start_new_round(
-            term_num=term_num,
-            round_num=round_num,
-            voters=voters
+            term=term,
+            round_num=round_num
         )
 
-    async def start_round(self, term_num: int, round_num: int, voters: Sequence[bytes]):
-        if not self._is_next_round(term_num, round_num):
+    async def start_round(self, term: Term, round_num: int):
+        if not self._is_next_round(term, round_num):
             return
 
         await self._start_new_round(
-            term_num=term_num,
-            round_num=round_num,
-            voters=voters
+            term=term,
+            round_num=round_num
         )
         self._is_voted = False
 
@@ -134,13 +131,8 @@ class RoundLayer:
             )
         self._event_system.simulator.raise_event(done_round)
 
-    async def _start_new_round(self, term_num: int, round_num: int, voters: Sequence[bytes]):
-        if not self._term or self._term.num != term_num:
-            self._term = self._term_factory.create_term(
-                term_num=term_num,
-                voters=voters
-            )
-
+    async def _start_new_round(self, term: Term, round_num: int):
+        self._term = term
         self._round = Round(
             num=round_num,
             term=self._term
@@ -189,9 +181,9 @@ class RoundLayer:
     def _is_genesis_or_is_connected_genesis(self, data: Data) -> bool:
         return data.number == 0 or data.number == 1
 
-    def _is_next_round(self, term_num: int, round_num: int) -> bool:
-        if term_num == self._term.num and round_num == self._round.num + 1:
+    def _is_next_round(self, term: Term, round_num: int) -> bool:
+        if term.num == self._term.num and round_num == self._round.num + 1:
             return True
-        if term_num == self._term.num + 1 and round_num == 0:
+        if term.num == self._term.num + 1 and round_num == 0:
             return True
         return False

@@ -15,9 +15,10 @@ from abc import ABC, abstractmethod
 from typing import Sequence
 
 from lft.consensus.data import Data, Vote
+from lft.serialization import Serializable
 
 
-class Term(ABC):
+class Term(Serializable):
     @property
     @abstractmethod
     def num(self) -> int:
@@ -60,10 +61,4 @@ class Term(ABC):
 
     @abstractmethod
     def get_voters_id(self) -> Sequence[bytes]:
-        raise NotImplementedError
-
-
-class TermFactory(ABC):
-    @abstractmethod
-    def create_term(self, term_num: int, voters: Sequence[bytes]) -> Term:
         raise NotImplementedError

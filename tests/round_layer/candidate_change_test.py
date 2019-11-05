@@ -38,10 +38,10 @@ async def test_candidate_change_by_vote():
     # pop done_round_event
     await get_event(event_system)
     # WHEN
+    term = RotateTerm(0, voters)
     await round_layer.start_round(
-        term_num=0,
-        round_num=2,
-        voters=voters
+        term=term,
+        round_num=2
     )
     await get_event(event_system)
     await get_event(event_system)

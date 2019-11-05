@@ -35,7 +35,6 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     """
     # GIVEN
     event_system, round_layer, voters, genesis_data = await setup_round_layer(peer_num=7)
-    event_system, round_layer, voters, genesis_data = await setup_round_layer(peer_num=7)
     propose = DefaultData(id_=PROPOSE_ID,
                           prev_id=propose_prev_id,
                           proposer_id=LEADER_ID,

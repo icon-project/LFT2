@@ -20,7 +20,7 @@ import pytest
 
 from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.vote import DefaultVoteFactory
-from lft.app.term import RotateTermFactory
+from lft.app.term import RotateTerm
 from lft.consensus.data import Data
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.event import EventSystem
@@ -31,11 +31,10 @@ LEADER_ID = bytes([1])
 
 
 async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, List[bytes], Data]:
-    event_system = EventSystem(True)
+    event_system = EventSystem()
     voters = [bytes([x]) for x in range(peer_num)]
     vote_factory = DefaultVoteFactory(TEST_NODE_ID)
     data_factory = DefaultDataFactory(TEST_NODE_ID)
-    term_factory = RotateTermFactory(1)
     genesis_data = DefaultData(
         id_=CANDIDATE_ID,
         prev_id=b'',
@@ -46,8 +45,8 @@ async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, Lis
         prev_votes=[]
     )
 
-    round_layer = RoundLayer(TEST_NODE_ID, event_system, data_factory, vote_factory, term_factory)
-    await round_layer.initialize(term_num=0, round_num=1, candidate_data=genesis_data, voters=voters, votes=[])
+    round_layer = RoundLayer(TEST_NODE_ID, event_system, data_factory, vote_factory)
+    await round_layer.initialize(term=RotateTerm(0, voters), round_num=1, candidate_data=genesis_data, votes=[])
 
     return event_system, round_layer, voters, genesis_data
 

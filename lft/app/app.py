@@ -7,6 +7,7 @@ from typing import List, Optional
 from lft.app import Node
 from lft.app.data import DefaultData
 from lft.app.console import Console
+from lft.app.term import RotateTerm
 from lft.consensus.events import InitializeEvent
 
 RECORD_PATH = "record.log"
@@ -70,7 +71,8 @@ class App(ABC):
             round_num=0,
             prev_votes=[]
         )
-        event = InitializeEvent(0, 0, genesis_data, [], [node.node_id for node in nodes])
+
+        event = InitializeEvent(RotateTerm(0, [node.node_id for node in nodes]), 0, genesis_data, [])
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 

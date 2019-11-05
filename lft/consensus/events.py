@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Sequence, Optional
 
+from lft.consensus.term import Term
 from lft.event import Event
 from lft.consensus.data import Data, Vote
 
@@ -9,11 +10,10 @@ from lft.consensus.data import Data, Vote
 class InitializeEvent(Event):
     """ application to async layer
     """
-    term_num: int
+    term: 'Term'
     round_num: int
     candidate_data: 'Data'
     votes: Sequence['Vote']
-    voters: Sequence[bytes]
 
 
 @dataclass
@@ -58,6 +58,5 @@ class DoneRoundEvent(Event):
 
 @dataclass
 class StartRoundEvent(Event):
-    term_num: int
+    term: Term
     round_num: int
-    voters: Sequence[bytes]
