@@ -1,12 +1,9 @@
-from unittest.mock import MagicMock
-
 import pytest
 
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.consensus.events import ReceivedDataEvent, StartRoundEvent
 from tests.order_layer.setup_order_layer import setup_order_layer
-from tests.test_exception import IsCalled
 
 
 @pytest.mark.asyncio
@@ -33,6 +30,7 @@ async def test_receive_now_round_data():
     # THEN
     sync_layer.receive_data.assert_called_once_with(data)
 
+
 @pytest.mark.asyncio
 async def test_receive_past_round_data():
     # GIVEN
@@ -52,6 +50,7 @@ async def test_receive_past_round_data():
 
     # THEN
     sync_layer.receive_data.assert_not_called()
+
 
 @pytest.mark.asyncio
 async def test_receive_past_term_data():

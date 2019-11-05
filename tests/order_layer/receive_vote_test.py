@@ -22,6 +22,7 @@ async def test_receive_now_round_vote():
     # THEN
     sync_layer.receive_vote.assert_called_once_with(vote)
 
+
 @pytest.mark.asyncio
 async def test_receive_past_vote():
     # GIVEN
@@ -77,6 +78,7 @@ async def test_receive_invalid_term_vote():
     # THEN
     sync_layer.receive_vote.assert_not_called()
     assert len(order_layer._get_votes(1, 0)) == 0
+
 
 @pytest.mark.asyncio
 async def test_receive_invalid_voter_vote():
