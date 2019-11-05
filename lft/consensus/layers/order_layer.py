@@ -100,12 +100,14 @@ class OrderLayer(EventRegister):
             self._save_vote(vote)
 
     def _verify_acceptable_start_round(self, term: Term, round_num: int):
-        if not (self._term.num <= term.num <= self._term.num + 2):
-            raise InvalidTerm(term=term.num, expected=self._term.num)
-        elif term.num == self._term.num and round_num != self._round_num + 1:
-            raise InvalidRound(round_num, self._round_num)
-        elif term.num == self._term.num + 1 and round_num != 0:
-            raise InvalidRound(round_num, 0)
+        if term.num == self._term.num:
+            if round_num != self._round_num + 1:
+                raise InvalidRound(round_num, self._round_num)
+            elif term.num == self._term.num + 1:
+                if round_num != 0:
+                    raise InvalidRound(round_num, 0)
+            else:
+                raise InvalidTerm(term=term.num, expected=self._term.num)
 
     def _verify_acceptable_data(self, data: Data):
         self._verify_acceptable_round_message(data)
