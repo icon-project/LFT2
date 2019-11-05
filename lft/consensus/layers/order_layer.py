@@ -100,7 +100,7 @@ class OrderLayer(EventRegister):
             self._save_vote(vote)
 
     def _verify_acceptable_start_round(self, term: Term, round_num: int):
-        if term.num > self._term.num + 2 or term.num < self._term.num:
+        if not (self._term.num <= term.num <= self._term.num + 2):
             raise InvalidTerm(term=term.num, expected=self._term.num)
         elif term.num == self._term.num and round_num != self._round_num + 1:
             raise InvalidRound(round_num, self._round_num)
