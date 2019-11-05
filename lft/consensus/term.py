@@ -15,9 +15,10 @@ from abc import ABC, abstractmethod
 from typing import Sequence
 
 from lft.consensus.data import Data, Vote
+from lft.serialization import Serializable
 
 
-class Term(ABC):
+class Term(Serializable):
     @property
     @abstractmethod
     def num(self) -> int:

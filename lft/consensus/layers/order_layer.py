@@ -59,6 +59,11 @@ class OrderLayer(EventRegister):
         except (InvalidTerm, InvalidRound, InvalidVoter):
             pass
 
+    async def _on_event_done_round(self, event: DoneRoundEvent):
+        if event.is_success:
+            self._candidate_data = event.candidate_data
+            await self._sync_layer.done_round(event.candidate_data)
+
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
         self._round_num = round_num
@@ -119,11 +124,9 @@ class OrderLayer(EventRegister):
             raise InvalidVoter(vote.voter_id, b'')
 
     def _save_data(self, data: Data):
-        self._logger.debug(f"save data: {data.serialize()}")
         self._datums[data.term_num][data.round_num][data.id] = data
 
     def _save_vote(self, vote: Vote):
-        self._logger.debug(f"save vote : {Vote}")
         self._votes[vote.term_num][vote.round_num][vote.id] = vote
 
     def _get_datums(self, term_num: int, round_num: int) -> Sequence:
@@ -136,7 +139,8 @@ class OrderLayer(EventRegister):
         InitializeEvent: _on_event_initialize,
         StartRoundEvent: _on_event_start_round,
         ReceivedDataEvent: _on_event_received_data,
-        ReceivedVoteEvent: _on_event_received_vote
+        ReceivedVoteEvent: _on_event_received_vote,
+        DoneRoundEvent: _on_event_done_round
     }
 
 

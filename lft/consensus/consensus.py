@@ -1,4 +1,6 @@
 from typing import TYPE_CHECKING
+
+from lft.consensus.layers import OrderLayer
 from lft.consensus.layers.sync_layer import SyncLayer
 from lft.consensus.layers.round_layer import RoundLayer
 
@@ -17,9 +19,12 @@ class Consensus:
         self._sync_layer = SyncLayer(
             self._round_layer, node_id, event_system, data_factory, vote_factory
         )
+        self._order_layer = OrderLayer(
+            self._sync_layer, node_id, event_system, data_factory, vote_factory
+        )
 
     def __del__(self):
         self.close()
 
     def close(self):
-        self._sync_layer.close()
+        self._order_layer.close()

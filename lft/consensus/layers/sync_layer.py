@@ -17,14 +17,13 @@ TIMEOUT_PROPOSE = 2.0
 TIMEOUT_VOTE = 2.0
 
 
-class SyncLayer(EventRegister):
+class SyncLayer:
     def __init__(self,
                  round_layer: RoundLayer,
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,
                  vote_factory: VoteFactory):
-        super().__init__(event_system.simulator)
         self._round_layer = round_layer
         self._node_id = node_id
         self._event_system = event_system

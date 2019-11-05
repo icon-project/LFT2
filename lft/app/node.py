@@ -29,7 +29,7 @@ class Node:
         self.event_system.simulator.register_handler(DoneRoundEvent, self._on_done_round_event)
 
     async def _on_init_event(self, init_event: InitializeEvent):
-        self._nodes = init_event.voters
+        self._nodes = init_event.term.voters
 
     async def _on_done_round_event(self, done_round_event: DoneRoundEvent):
         round_start_event = StartRoundEvent(

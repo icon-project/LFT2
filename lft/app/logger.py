@@ -48,7 +48,6 @@ class LoggerPatcher:
         logging_method(msg, *arg, **kwargs)
 
     def _make_log(self, event: Event):
-        print(f"event: {event}")
         event_encoded = self._encoder.encode(event)
         event_serialized = json.loads(event_encoded)
 
