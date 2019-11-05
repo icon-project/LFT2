@@ -1,7 +1,3 @@
-from lft.consensus.data import Data
-from lft.consensus.vote import Vote
-
-
 class CannotComplete(Exception):
     pass
 

@@ -34,8 +34,6 @@ class OrderLayer(EventRegister):
         self._round_num = -1
         self._candidate_data = None
 
-        self._vote_timeout_started = False
-
     async def _on_event_initialize(self, event: InitializeEvent):
         await self._initialize(
             term=event.term,
