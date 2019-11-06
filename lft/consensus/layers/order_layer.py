@@ -30,6 +30,7 @@ class OrderLayer(EventRegister):
         self._term: Optional[Term] = None
         self._datums: Datums = defaultdict(lambda: defaultdict(OrderedDict))
         self._votes: Votes = defaultdict(lambda: defaultdict(OrderedDict))
+        self._message_container: MessageContainer = None
 
         self._round_num = -1
         self._candidate_data = None
@@ -66,6 +67,7 @@ class OrderLayer(EventRegister):
         self._term = term
         self._round_num = round_num
         self._candidate_data = candidate_data
+        self._message_container = MessageContainer(self._candidate_data)
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
@@ -76,10 +78,10 @@ class OrderLayer(EventRegister):
         self._round_num = round_num
         await self._sync_layer.start_round(term, round_num)
 
-        for data in self._get_datums(self._term.num, self._round_num):
+        for data in self._get_datums(self._round_num):
             await self._sync_layer.receive_data(data)
 
-        for vote in self._get_votes(self._term.num, self._round_num):
+        for vote in self._get_votes(self._round_num):
             await self._sync_layer.receive_vote(vote)
 
     async def _receive_data(self, data: Data):
@@ -124,16 +126,16 @@ class OrderLayer(EventRegister):
             raise InvalidVoter(vote.voter_id, b'')
 
     def _save_data(self, data: Data):
-        self._datums[data.term_num][data.round_num][data.id] = data
+        self._message_container.add_data(data)
 
     def _save_vote(self, vote: Vote):
-        self._votes[vote.term_num][vote.round_num][vote.id] = vote
+        self._message_container.add_vote(vote)
 
-    def _get_datums(self, term_num: int, round_num: int) -> Sequence:
-        return self._datums[term_num][round_num].values()
+    def _get_datums(self, round_num: int) -> Sequence:
+        return self._message_container.get_datums(round_num)
 
-    def _get_votes(self, term_num: int, round_num: int) -> Sequence:
-        return self._votes[term_num][round_num].values()
+    def _get_votes(self, round_num: int) -> Sequence:
+        return self._message_container.get_votes(round_num)
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
@@ -146,3 +148,28 @@ class OrderLayer(EventRegister):
 
 Datums = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
 Votes = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
+
+
+class MessageContainer:
+    def __init__(self, candidate_data: Data):
+        self.candidate_data = candidate_data
+        self._datums = defaultdict(OrderedDict)  # [round_num][data_id][data]
+        self._votes = defaultdict(lambda: defaultdict(OrderedDict))  # [round_num][data_id][vote_id][vote]
+
+    def update_candidate(self, candidate_data: Data):
+        pass
+
+    def add_vote(self, vote: Vote):
+        self._votes[vote.round_num][vote.data_id][vote.voter_id] = vote
+
+    def add_data(self, data: Data):
+        self._datums[data.round_num][data.id] = data
+
+    def get_datums(self, round_num: int) -> Sequence:
+        return self._datums[round_num].values()
+
+    def get_votes(self, round_num: int) -> Sequence:
+        round_votes = []
+        for votes_by_data_id in self._votes[round_num].values():
+            round_votes.extend(votes_by_data_id.values())
+        return round_votes
