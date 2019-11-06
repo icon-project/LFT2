@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Optional
 from lft.app import Node
 from lft.app.data import DefaultData
-from lft.app.console import Console
+from lft.app.ui.listener import Listener
 from lft.app.term import RotateTerm
 from lft.consensus.events import InitializeEvent
 
@@ -15,7 +15,7 @@ RECORD_PATH = "record.log"
 
 class App(ABC):
     def __init__(self):
-        self.console = Console(self)
+        self.listener = Listener(self)
         self.nodes: Optional[List[Node]] = None
         self.loop: Optional[asyncio.AbstractEventLoop] = None
 
@@ -29,12 +29,12 @@ class App(ABC):
             for peer in (peer for peer in self.nodes if peer != node):
                 node.register_peer(peer)
 
-        self.console.start()
+        self.listener.start()
         self._start(self.nodes)
         self._run_forever(self.nodes)
 
     def close(self):
-        self.console.stop()
+        self.listener.stop()
         if self.loop and self.loop.is_running():
             self.loop.stop()
 

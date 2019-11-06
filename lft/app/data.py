@@ -62,7 +62,7 @@ class DefaultData(Data):
             "number": self.number,
             "term": self.term_num,
             "round": self.round_num,
-            "prev_votes": list(self.prev_votes)
+            "prev_votes": tuple(self.prev_votes)
         }
 
     @classmethod
@@ -76,6 +76,13 @@ class DefaultData(Data):
             round_num=kwargs["round"],
             prev_votes=tuple(kwargs["prev_votes"])
         )
+
+    def __repr__(self):
+        return f"{self.__class__.__qualname__}({self._serialize()})"
+
+    def __str__(self):
+        serialized = {k: "0x" + v.hex() if isinstance(v, bytes) else v for k, v in self._serialize().items()}
+        return f"{self.__class__.__qualname__}({serialized})"
 
 
 class DefaultDataVerifier(DataVerifier):

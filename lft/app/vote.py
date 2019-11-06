@@ -67,6 +67,13 @@ class DefaultVote(Vote):
             round_num=kwargs["round"]
         )
 
+    def __repr__(self):
+        return f"{self.__class__.__qualname__}({self._serialize()})"
+
+    def __str__(self):
+        serialized = {k: "0x" + v.hex() if isinstance(v, bytes) else v for k, v in self._serialize().items()}
+        return f"{self.__class__.__qualname__}({serialized})"
+
 
 class DefaultVoteVerifier(VoteVerifier):
     async def verify(self, vote: 'DefaultVote'):

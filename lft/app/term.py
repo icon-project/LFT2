@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import math
-from typing import Sequence
+from typing import Sequence, Type
 
 from lft.consensus.data import Data
 from lft.consensus.term import Term
@@ -74,3 +74,15 @@ class RotateTerm(Term):
 
     def get_voters_id(self) -> Sequence[bytes]:
         return self._voters
+
+    def _serialize(self) -> dict:
+        return {
+            "num": self.num,
+            "rotate_bound": self._rotate_bound,
+            "voters": self.voters
+        }
+
+    @classmethod
+    def _deserialize(cls: Type['RotateTerm'], **kwargs) -> 'RotateTerm':
+        return RotateTerm(**kwargs)
+
