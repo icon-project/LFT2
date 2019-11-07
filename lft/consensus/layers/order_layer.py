@@ -30,7 +30,7 @@ class OrderLayer(EventRegister):
         self._term: Optional[Term] = None
         self._datums: Datums = defaultdict(lambda: defaultdict(OrderedDict))
         self._votes: Votes = defaultdict(lambda: defaultdict(OrderedDict))
-        self._message_container: MessageContainer = MessageContainer()
+        self._message_container: MessageContainer = None
 
         self._round_num = -1
 
@@ -65,7 +65,7 @@ class OrderLayer(EventRegister):
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
         self._round_num = round_num
-        self._message_container.update_candidate(candidate_data)
+        self._message_container = MessageContainer(candidate_data)
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
@@ -149,8 +149,8 @@ Votes = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
 
 
 class MessageContainer:
-    def __init__(self):
-        self._candidate_data = None
+    def __init__(self, candidate_data: Data):
+        self._candidate_data = candidate_data
         self._datums = defaultdict(OrderedDict)  # [round_num][data_id][data]
         self._votes = defaultdict(lambda: defaultdict(OrderedDict))  # [round_num][data_id][vote_id][vote]
 
