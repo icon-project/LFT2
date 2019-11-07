@@ -86,3 +86,9 @@ class RotateTerm(Term):
     def _deserialize(cls: Type['RotateTerm'], **kwargs) -> 'RotateTerm':
         return RotateTerm(**kwargs)
 
+    def __eq__(self, other):
+        if isinstance(other, RotateTerm):
+            if self.voters == other.voters and self.num == other.num and self.quorum_num == other.quorum_num:
+                if self._rotate_bound == other._rotate_bound:
+                    return True
+        return False

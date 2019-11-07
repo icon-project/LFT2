@@ -46,7 +46,9 @@ async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, Lis
     )
 
     round_layer = RoundLayer(TEST_NODE_ID, event_system, data_factory, vote_factory)
-    await round_layer.initialize(term=RotateTerm(0, voters), round_num=1, candidate_data=genesis_data, votes=[])
+    term = RotateTerm(0, voters)
+    await round_layer.initialize(term=term, round_num=1, candidate_data=genesis_data, votes=[])
+    await round_layer.start_round(term, round_num=1)
 
     return event_system, round_layer, voters, genesis_data
 

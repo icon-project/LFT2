@@ -37,15 +37,8 @@ class RoundLayer:
             data=candidate_data,
             votes=votes
         )
-        await self._start_new_round(
-            term=term,
-            round_num=round_num
-        )
 
     async def start_round(self, term: Term, round_num: int):
-        if not self._is_next_round(term, round_num):
-            return
-
         await self._start_new_round(
             term=term,
             round_num=round_num
@@ -180,10 +173,3 @@ class RoundLayer:
 
     def _is_genesis_or_is_connected_genesis(self, data: Data) -> bool:
         return data.number == 0 or data.number == 1
-
-    def _is_next_round(self, term: Term, round_num: int) -> bool:
-        if term.num == self._term.num and round_num == self._round.num + 1:
-            return True
-        if term.num == self._term.num + 1 and round_num == 0:
-            return True
-        return False

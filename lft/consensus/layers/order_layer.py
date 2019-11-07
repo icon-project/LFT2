@@ -30,7 +30,7 @@ class OrderLayer(EventRegister):
         self._term: Optional[Term] = None
         self._datums: Datums = defaultdict(lambda: defaultdict(OrderedDict))
         self._votes: Votes = defaultdict(lambda: defaultdict(OrderedDict))
-        self._message_container: MessageContainer = None
+        self._message_container: MessageContainer = MessageContainer()
 
         self._round_num = -1
         self._candidate_data = None
@@ -67,9 +67,11 @@ class OrderLayer(EventRegister):
         self._term = term
         self._round_num = round_num
         self._candidate_data = candidate_data
-        self._message_container = MessageContainer(self._candidate_data)
+        self._message_container.update_candidate(candidate_data)
+        # self._message_container = MessageContainer(self._candidate_data) -> 매번 초기화 되면 안됨
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
+        await self._sync_layer.start_round(term, round_num)
 
     async def _round_start(self, term: Term, round_num: int):
         self._verify_acceptable_start_round(term, round_num)
@@ -151,13 +153,17 @@ Votes = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
 
 
 class MessageContainer:
-    def __init__(self, candidate_data: Data):
-        self.candidate_data = candidate_data
+    def __init__(self):
+        self._candidate_data = None
         self._datums = defaultdict(OrderedDict)  # [round_num][data_id][data]
         self._votes = defaultdict(lambda: defaultdict(OrderedDict))  # [round_num][data_id][vote_id][vote]
 
+    @property
+    def candidate_data(self) -> Data:
+        return self._candidate_data
+
     def update_candidate(self, candidate_data: Data):
-        pass
+        self._candidate_data = candidate_data
 
     def add_vote(self, vote: Vote):
         self._votes[vote.round_num][vote.data_id][vote.voter_id] = vote

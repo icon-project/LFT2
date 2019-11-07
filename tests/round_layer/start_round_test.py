@@ -105,34 +105,6 @@ async def test_prev_round_is_failed():
     await verify_no_events(event_system)
 
 
-@pytest.mark.asyncio
-async def test_start_past_round():
-    round_layer, event_system, voters = await test_start_round()
-    term = RotateTerm(0, voters)
-    await round_layer.start_round(
-        term=term,
-        round_num=1
-    )
-    await verify_no_events(event_system)
-
-
-@pytest.mark.asyncio
-async def test_start_future_round():
-    event_system, round_layer, voters, genesis_data = await setup_round_layer(PEER_NUM)
-    await add_propose(event_system, round_layer, voters)
-    await do_success_vote(round_layer, voters)
-    event = await get_event(event_system)
-
-    term = RotateTerm(0, voters)
-    await round_layer.start_round(
-        term=term,
-        round_num=9
-    )
-    await verify_no_events(event_system)
-
-    assert round_layer._round.num == 1
-
-
 async def do_success_vote(round_layer, voters):
     for voter in voters:
         vote = await DefaultVoteFactory(voter).create_vote(
