@@ -62,17 +62,21 @@ class App(ABC):
             self.loop.close()
 
     def _raise_init_event(self, init_node: Node, nodes: List[Node]):
+        genesis_round_num = 0
+        genesis_term_num = 0
         genesis_data = DefaultData(
             id_=b'genesis',
             prev_id=b'',
-            proposer_id=nodes[0].node_id,
+            proposer_id=b'',
             number=0,
-            term_num=0,
-            round_num=0,
-            prev_votes=[]
+            term_num=genesis_term_num,
+            round_num=genesis_round_num,
+            prev_votes=()
         )
 
-        event = InitializeEvent(RotateTerm(0, [node.node_id for node in nodes]), 0, genesis_data, [])
+        term = RotateTerm(1, tuple(node.node_id for node in nodes))
+        round_num = 0
+        event = InitializeEvent(term, round_num, genesis_data, ())
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 

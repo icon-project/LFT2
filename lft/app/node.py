@@ -39,7 +39,7 @@ class Node:
 
     async def _start_new_round(self):
         round_start_event = RoundStartEvent(
-            term=RotateTerm(0, self._nodes),
+            term=RotateTerm(1, self._nodes),
             round_num=self._round_num
         )
         round_start_event.deterministic = False

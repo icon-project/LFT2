@@ -27,10 +27,16 @@ async def setup_items(voter_num: int, round_num: int):
                            vote_factory)
 
     try:
-        genesis_data = await data_factory.create_data(0, b'', 0, round_num, [])
-        term = RotateTerm(0, voters)
-        await sync_layer.initialize(term, round_num, genesis_data, [])
+        genesis_term_num = 0
+        genesis_round_num = 0
+        genesis_data = await data_factory.create_data(0, b'', genesis_term_num, genesis_round_num, ())
+        genesis_votes = ()
 
-        yield voters, event_system, sync_layer, round_layer, genesis_data
+        term = RotateTerm(1, voters)
+        await sync_layer.initialize(term, round_num, genesis_data, genesis_votes)
+
+        candidate_data = genesis_data
+        candidate_votes = genesis_votes
+        yield voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes
     finally:
         pass
