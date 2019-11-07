@@ -33,7 +33,6 @@ class OrderLayer(EventRegister):
         self._message_container: MessageContainer = MessageContainer()
 
         self._round_num = -1
-        self._candidate_data = None
 
     async def _on_event_initialize(self, event: InitializeEvent):
         await self._initialize(
@@ -60,13 +59,12 @@ class OrderLayer(EventRegister):
 
     async def _on_event_done_round(self, event: DoneRoundEvent):
         if event.is_success:
-            self._candidate_data = event.candidate_data
+            self._message_container.update_candidate(event.candidate_data)
             await self._sync_layer.done_round(event.candidate_data)
 
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
         self._round_num = round_num
-        self._candidate_data = candidate_data
         self._message_container.update_candidate(candidate_data)
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
