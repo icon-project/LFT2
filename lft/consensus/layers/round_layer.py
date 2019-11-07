@@ -37,6 +37,10 @@ class RoundLayer:
             data=candidate_data,
             votes=votes
         )
+        await self._start_new_round(
+            term=term,
+            round_num=round_num
+        )
 
     async def start_round(self, term: Term, round_num: int):
         await self._start_new_round(

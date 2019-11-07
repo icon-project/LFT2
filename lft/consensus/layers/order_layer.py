@@ -68,10 +68,8 @@ class OrderLayer(EventRegister):
         self._round_num = round_num
         self._candidate_data = candidate_data
         self._message_container.update_candidate(candidate_data)
-        # self._message_container = MessageContainer(self._candidate_data) -> 매번 초기화 되면 안됨
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
-        await self._sync_layer.start_round(term, round_num)
 
     async def _round_start(self, term: Term, round_num: int):
         self._verify_acceptable_start_round(term, round_num)
