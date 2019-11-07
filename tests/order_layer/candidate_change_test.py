@@ -53,14 +53,8 @@ async def test_change_by_data():
     )
 
     # THEN
-    assert len(sync_layer.initialize.call_args_list) == 2
-
-    init_params = sync_layer.initialize.call_args_list[1][0]
-    assert init_params[0] == RotateTerm(0, voters)
-    assert init_params[1] == 2
-    assert init_params[2] == change_candidate_data
-    assert init_params[3] == prev_votes
-
+    assert order_layer._message_container.candidate_data == change_candidate_data
+    sync_layer.change_candidate.assert_called_once_with(RotateTerm(0, voters), 2, change_candidate_data, prev_votes)
 
 
 @pytest.mark.asyncio
