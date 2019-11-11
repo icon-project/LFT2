@@ -165,11 +165,11 @@ class MessageContainer:
     def candidate_data(self, candidate_data: Data):
         self._candidate_data = candidate_data
         for round_num in list(self._datums.keys()):
-            if round_num <= candidate_data.round_num:
+            if round_num < candidate_data.round_num:
                 del self._datums[round_num]
 
         for round_num in list(self._votes.keys()):
-            if round_num <= candidate_data.round_num:
+            if round_num < candidate_data.round_num:
                 del self._votes[round_num]
 
     @property
