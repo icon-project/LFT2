@@ -1,3 +1,9 @@
+from collections import Sequence
+
+from lft.consensus.data import Data
+from lft.consensus.vote import Vote
+
+
 class CannotComplete(Exception):
     pass
 
@@ -56,3 +62,15 @@ class InvalidVoter(Exception):
     def __init__(self, voter: bytes, expected: bytes):
         self.voter = voter
         self.expected = expected
+
+
+class ReachCandidate(Exception):
+    def __init__(self, candidate, votes):
+        self.candidate = candidate
+        self.votes = votes
+
+
+class NeedSync(Exception):
+    def __init__(self, before_candidate_id: bytes, new_candidate_id: bytes):
+        self.new_candidate_id = new_candidate_id
+        self.before_candidate_id = before_candidate_id

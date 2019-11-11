@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from lft.consensus.data import DataFactory, Data
 from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent
-from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter
+from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter, ReachCandidate, NeedSync
 from lft.consensus.layers import SyncLayer, RoundLayer
 from lft.consensus.term import Term
 from lft.consensus.vote import VoteFactory, Vote
@@ -59,7 +59,7 @@ class OrderLayer(EventRegister):
 
     async def _on_event_done_round(self, event: DoneRoundEvent):
         if event.is_success:
-            self._message_container.update_candidate(event.candidate_data)
+            self._message_container.candidate_data = event.candidate_data
             await self._sync_layer.done_round(event.candidate_data)
 
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
@@ -149,23 +149,49 @@ Votes = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
 
 
 class MessageContainer:
-    def __init__(self, candidate_data: Data):
+    def __init__(self, term: Term, candidate_data: Data):
+        self._term = term
+        self._old_term = None
         self._candidate_data = candidate_data
         self._datums = defaultdict(OrderedDict)  # [round_num][data_id][data]
         self._votes = defaultdict(lambda: defaultdict(OrderedDict))  # [round_num][data_id][vote_id][vote]
+        self._sync_request_datums = []
 
     @property
     def candidate_data(self) -> Data:
         return self._candidate_data
 
-    def update_candidate(self, candidate_data: Data):
+    @candidate_data.setter
+    def candidate_data(self, candidate_data: Data):
         self._candidate_data = candidate_data
 
+    @property
+    def term(self) -> Term:
+        return self._term
+
+    @term.setter
+    def term(self, term: Term):
+        self._old_term = self.term
+        self._term = term
+
     def add_vote(self, vote: Vote):
-        self._votes[vote.round_num][vote.data_id][vote.voter_id] = vote
+        same_data_votes = self._votes[vote.round_num][vote.data_id]
+        same_data_votes[vote.voter_id] = vote
+        if len(same_data_votes) >= self.term.quorum_num and vote.data_id != self.candidate_data.id:
+            try:
+                data = self._datums[vote.round_num][vote.data_id]
+            except KeyError:
+                if vote.data_id not in self._sync_request_datums:
+                    self._sync_request_datums.append(vote.data_id)
+                    raise NeedSync(self.candidate_data.id, vote.data_id)
+            else:
+                self.candidate_data = data
+                raise ReachCandidate(data, same_data_votes.values())
 
     def add_data(self, data: Data):
         self._datums[data.round_num][data.id] = data
+        for vote in data.prev_votes:
+            self.add_vote(vote)
 
     def get_datums(self, round_num: int) -> Sequence:
         return self._datums[round_num].values()

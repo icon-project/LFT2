@@ -54,7 +54,7 @@ async def test_change_by_data():
 
     # THEN
     assert order_layer._message_container.candidate_data == change_candidate_data
-    sync_layer.change_candidate.assert_called_once_with(RotateTerm(0, voters), 2, change_candidate_data, prev_votes)
+    sync_layer.change_candidate.assert_called_one_with(RotateTerm(0, voters), 2, change_candidate_data, prev_votes)
 
 
 @pytest.mark.asyncio
