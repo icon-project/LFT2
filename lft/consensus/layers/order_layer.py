@@ -164,6 +164,13 @@ class MessageContainer:
     @candidate_data.setter
     def candidate_data(self, candidate_data: Data):
         self._candidate_data = candidate_data
+        for round_num in list(self._datums.keys()):
+            if round_num <= candidate_data.round_num:
+                del self._datums[round_num]
+
+        for round_num in list(self._votes.keys()):
+            if round_num <= candidate_data.round_num:
+                del self._votes[round_num]
 
     @property
     def term(self) -> Term:
@@ -175,6 +182,8 @@ class MessageContainer:
         self._term = term
 
     def add_vote(self, vote: Vote):
+        if vote.round_num < self.candidate_data.round_num:
+            return
         same_data_votes = self._votes[vote.round_num][vote.data_id]
         same_data_votes[vote.voter_id] = vote
         if len(same_data_votes) >= self.term.quorum_num and vote.data_id != self.candidate_data.id:
@@ -189,6 +198,8 @@ class MessageContainer:
                 raise ReachCandidate(data, same_data_votes.values())
 
     def add_data(self, data: Data):
+        if data.round_num < self.candidate_data.round_num:
+            return
         self._datums[data.round_num][data.id] = data
         for vote in data.prev_votes:
             self.add_vote(vote)
