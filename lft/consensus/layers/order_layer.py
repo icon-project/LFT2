@@ -49,7 +49,7 @@ class OrderLayer(EventRegister):
     async def _on_event_received_data(self, event: ReceivedDataEvent):
         try:
             await self._receive_data(event.data)
-        except (InvalidTerm, InvalidRound, InvalidProposer):
+        except (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter):
             pass
 
     async def _on_event_received_vote(self, event: ReceivedVoteEvent):
@@ -164,8 +164,8 @@ Votes = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
 
 class MessageContainer:
     def __init__(self, term: Term, candidate_data: Data):
-        self._term = term
-        self._old_term = None
+        self._term: Term = term
+        self._old_term: Term = None
         self._candidate_data = candidate_data
         self._datums = defaultdict(OrderedDict)  # [round_num][data_id][data]
         self._votes = defaultdict(lambda: defaultdict(OrderedDict))  # [round_num][data_id][vote_id][vote]
@@ -201,22 +201,33 @@ class MessageContainer:
                 return
         elif vote.term_num < self.candidate_data.term_num:
             return
-        same_data_votes = self._votes[vote.round_num][vote.data_id]
-        same_data_votes[vote.voter_id] = vote
-        if len(same_data_votes) >= self.term.quorum_num and vote.data_id != self.candidate_data.id:
+
+        if vote.term_num == self._term.num:
+            self._term.verify_vote(vote)
+        elif vote.term_num == self._old_term.num:
+            self._old_term.verify_vote(vote)
+        else:
+            return
+
+        votes_has_same_data_id = self._votes[vote.round_num][vote.data_id]
+        votes_has_same_data_id[vote.voter_id] = vote
+
+        if len(votes_has_same_data_id) >= self.term.quorum_num and vote.data_id != self.candidate_data.id:
             try:
                 data = self._datums[vote.round_num][vote.data_id]
             except KeyError:
-                if vote.data_id not in self._sync_request_datums:
-                    self._sync_request_datums.append(vote.data_id)
-                    raise NeedSync(self.candidate_data.id, vote.data_id)
+                self._raise_need_sync(vote)
             else:
                 if data.number == self.candidate_data.number or data.prev_id == self.candidate_data.id:
                     self.candidate_data = data
-                    raise ReachCandidate(data, list(same_data_votes.values()))
+                    raise ReachCandidate(data, list(votes_has_same_data_id.values()))
                 else:
-                    self._sync_request_datums.append(vote.data_id)
-                    raise NeedSync(self.candidate_data.id, vote.data_id)
+                    self._raise_need_sync(vote)
+
+    def _raise_need_sync(self, vote):
+        if vote.data_id not in self._sync_request_datums:
+            self._sync_request_datums.append(vote.data_id)
+            raise NeedSync(self.candidate_data.id, vote.data_id)
 
     def add_data(self, data: Data):
         if data.round_num < self.candidate_data.round_num:
