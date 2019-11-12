@@ -69,6 +69,6 @@ class SyncRequestEvent(Event):
 
 
 @dataclass
-class ChangeCandidateEvent(Event):
+class ChangedCandidateEvent(Event):
     candidate_data: Data
     candidate_votes: Sequence[Vote]
