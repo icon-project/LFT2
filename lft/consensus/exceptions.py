@@ -71,6 +71,6 @@ class ReachCandidate(Exception):
 
 
 class NeedSync(Exception):
-    def __init__(self, before_candidate_id: bytes, new_candidate_id: bytes):
+    def __init__(self, old_candidate_id: bytes, new_candidate_id: bytes):
         self.new_candidate_id = new_candidate_id
-        self.before_candidate_id = before_candidate_id
+        self.old_candidate_id = old_candidate_id

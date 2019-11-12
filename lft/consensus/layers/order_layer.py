@@ -4,7 +4,8 @@ from typing import Optional, Sequence, OrderedDict, Set, List, Dict
 from collections import defaultdict
 
 from lft.consensus.data import DataFactory, Data
-from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent
+from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent, \
+    SyncRequestEvent
 from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter, ReachCandidate, NeedSync
 from lft.consensus.layers import SyncLayer, RoundLayer
 from lft.consensus.term import Term
@@ -90,7 +91,9 @@ class OrderLayer(EventRegister):
         except ReachCandidate as e:
             self._sync_layer.change_candidate(e.candidate, e.votes)
         except NeedSync as e:
-            pass
+            self._event_system.simulator.raise_event(
+                SyncRequestEvent(e.old_candidate_id, e.new_candidate_id)
+            )
         finally:
             if self._round_num == data.round_num:
                 await self._sync_layer.receive_data(data)
@@ -102,7 +105,9 @@ class OrderLayer(EventRegister):
         except ReachCandidate as e:
             self._sync_layer.change_candidate(e.candidate, e.votes)
         except NeedSync as e:
-            pass
+            self._event_system.simulator.raise_event(
+                SyncRequestEvent(e.old_candidate_id, e.new_candidate_id)
+            )
         finally:
             if vote.round_num == self._round_num:
                 await self._sync_layer.receive_vote(vote)

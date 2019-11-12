@@ -85,7 +85,7 @@ async def test_raise_block_sync_by_vote():
                 message_container.add_vote(vote)
             except NeedSync as e:
                 assert e.new_candidate_id == b'first'
-                assert e.before_candidate_id == b'genesis'
+                assert e.old_candidate_id == b'genesis'
             else:
                 pytest.fail("Should raise NeedSync")
         else:
@@ -116,7 +116,7 @@ async def test_raise_block_sync_by_data():
         )
     except NeedSync as e:
         assert e.new_candidate_id == b'first'
-        assert e.before_candidate_id == b'genesis'
+        assert e.old_candidate_id == b'genesis'
     else:
         pytest.fail("Should raise NeedSync")
 

@@ -60,3 +60,9 @@ class DoneRoundEvent(Event):
 class StartRoundEvent(Event):
     term: Term
     round_num: int
+
+
+@dataclass(eq=True)
+class SyncRequestEvent(Event):
+    old_candidate_id: bytes
+    new_candidate_id: bytes
