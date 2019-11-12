@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, DefaultDict, Set
 from lft.event import EventRegister, EventSystem
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent)
+                                  ReceivedDataEvent, ReceivedVoteEvent, RoundStartEvent)
 
 
 if TYPE_CHECKING:
@@ -65,7 +65,7 @@ class Network(EventRegister):
     def _on_event_broadcast_vote(self, event: 'BroadcastVoteEvent'):
         self.broadcast_vote(event.vote)
 
-    def _on_event_start_round(self, event: 'StartRoundEvent'):
+    def _on_event_start_round(self, event: 'RoundStartEvent'):
         self._round_num = event.round_num
         for data in self._datums[event.round_num]:
             received_data_event = ReceivedDataEvent(data)
@@ -86,5 +86,5 @@ class Network(EventRegister):
     _handler_prototypes = {
         BroadcastDataEvent: _on_event_broadcast_data,
         BroadcastVoteEvent: _on_event_broadcast_vote,
-        StartRoundEvent: _on_event_start_round
+        RoundStartEvent: _on_event_start_round
     }

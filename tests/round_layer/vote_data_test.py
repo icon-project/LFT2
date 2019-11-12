@@ -19,7 +19,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.messages.data import Data
-from lft.consensus.events import DoneRoundEvent, BroadcastVoteEvent, ReceivedVoteEvent
+from lft.consensus.events import RoundEndEvent, BroadcastVoteEvent, ReceivedVoteEvent
 from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 
 PEER_NUM = 7
@@ -94,7 +94,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
 
     # THEN
     if expected_complete:
-        done_round: DoneRoundEvent = await get_event(event_system)
+        done_round: RoundEndEvent = await get_event(event_system)
         if expected_success:
             verify_success_done_round(done_round=done_round,
                                       expected_candidate=consensus_data,
@@ -106,13 +106,13 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
     await verify_no_events(event_system)
 
 
-def verify_fail_done_round(done_round: DoneRoundEvent):
+def verify_fail_done_round(done_round: RoundEndEvent):
     verify_round_num_is_correct(done_round)
     assert not done_round.candidate_data
     assert not done_round.commit_id
 
 
-def verify_success_done_round(done_round: DoneRoundEvent,
+def verify_success_done_round(done_round: RoundEndEvent,
                               expected_candidate: Data,
                               expected_commit: Data):
     assert done_round.candidate_data

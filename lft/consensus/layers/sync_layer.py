@@ -1,9 +1,9 @@
 import logging
 from typing import DefaultDict, OrderedDict, Optional, Sequence
-from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent)
+from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent
 from lft.consensus.messages.data import Data, DataFactory
-from lft.consensus.round import Candidate
 from lft.consensus.messages.vote import Vote, VoteFactory
+from lft.consensus.round import Candidate
 from lft.consensus.term import Term
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,

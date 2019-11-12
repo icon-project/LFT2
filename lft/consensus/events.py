@@ -45,7 +45,13 @@ class BroadcastVoteEvent(Event):
 
 
 @dataclass
-class DoneRoundEvent(Event):
+class RoundStartEvent(Event):
+    term: Term
+    round_num: int
+
+
+@dataclass
+class RoundEndEvent(Event):
     """ from sync layer to its async layer and application
     """
     is_success: bool

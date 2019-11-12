@@ -3,14 +3,14 @@ from typing import Optional, Sequence, OrderedDict, Dict
 
 from collections import defaultdict
 
-from lft.consensus.messages.data import DataFactory, Data
-from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent, \
-    SyncRequestEvent
-from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter, NeedSync, \
-    NotReachCandidate, AlreadyCandidate, AlreadySync
+from lft.consensus.events import (InitializeEvent, RoundStartEvent, RoundEndEvent,
+                                  ReceivedDataEvent, ReceivedVoteEvent, SyncRequestEvent)
+from lft.consensus.exceptions import (InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter,
+                                      AlreadySync, AlreadyCandidate, NotReachCandidate, NeedSync)
 from lft.consensus.layers import SyncLayer
 from lft.consensus.round import Candidate
 from lft.consensus.term import Term
+from lft.consensus.messages.data import DataFactory, Data
 from lft.consensus.messages.vote import VoteFactory, Vote
 from lft.event import EventRegister, EventSystem
 
@@ -45,7 +45,7 @@ class OrderLayer(EventRegister):
             votes=event.votes
         )
 
-    async def _on_event_start_round(self, event: StartRoundEvent):
+    async def _on_event_start_round(self, event: RoundStartEvent):
         await self._round_start(event.term, event.round_num)
 
     async def _on_event_received_data(self, event: ReceivedDataEvent):
@@ -60,7 +60,7 @@ class OrderLayer(EventRegister):
         except (InvalidTerm, InvalidRound, InvalidVoter, AlreadySync):
             pass
 
-    async def _on_event_done_round(self, event: DoneRoundEvent):
+    async def _on_event_done_round(self, event: RoundEndEvent):
         if event.is_success:
             self._message_container.candidate = Candidate(event.candidate_data, event.candidate_votes)
             await self._sync_layer.done_round(event.candidate_data)
@@ -171,10 +171,10 @@ class OrderLayer(EventRegister):
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
-        StartRoundEvent: _on_event_start_round,
+        RoundStartEvent: _on_event_start_round,
         ReceivedDataEvent: _on_event_received_data,
         ReceivedVoteEvent: _on_event_received_vote,
-        DoneRoundEvent: _on_event_done_round
+        RoundEndEvent: _on_event_done_round
     }
 
 

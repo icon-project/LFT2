@@ -4,7 +4,7 @@ from typing import Sequence
 from lft.consensus.round import Round, Candidate
 from lft.consensus.messages.data import Data, DataVerifier, DataFactory
 from lft.consensus.messages.vote import Vote, VoteVerifier, VoteFactory
-from lft.consensus.events import (DoneRoundEvent, BroadcastDataEvent, BroadcastVoteEvent,
+from lft.consensus.events import (RoundEndEvent, BroadcastDataEvent, BroadcastVoteEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent, ChangedCandidateEvent)
 from lft.consensus.term import Term
 from lft.consensus.exceptions import InvalidProposer, AlreadyCompleted, AlreadyVoted, CannotComplete
@@ -120,7 +120,7 @@ class RoundLayer:
 
     async def _raise_done_round(self, candidate: Candidate):
         if candidate.data:
-            done_round = DoneRoundEvent(
+            done_round = RoundEndEvent(
                 is_success=True,
                 term_num=self._term.num,
                 round_num=self._round.num,
@@ -129,7 +129,7 @@ class RoundLayer:
                 commit_id=candidate.data.prev_id
             )
         else:
-            done_round = DoneRoundEvent(
+            done_round = RoundEndEvent(
                 is_success=False,
                 term_num=self._term.num,
                 round_num=self._round.num,

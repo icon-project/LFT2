@@ -3,7 +3,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVote
-from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent
+from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent, RoundStartEvent
 from lft.consensus.exceptions import InvalidTerm, InvalidRound
 from tests.order_layer.setup_order_layer import setup_order_layer
 
@@ -45,7 +45,7 @@ async def test_pass_messages_with_start_round(term_num, round_num):
     # WHEN
     term = RotateTerm(term_num, voters)
     await order_layer._on_event_start_round(
-        StartRoundEvent(
+        RoundStartEvent(
             term=term,
             round_num=round_num
         )
@@ -68,7 +68,7 @@ async def test_invalid_round_start(term_num, round_num):
     # WHEN
     try:
         await order_layer._on_event_start_round(
-            StartRoundEvent(RotateTerm(term_num, voters), round_num)
+            RoundStartEvent(RotateTerm(term_num, voters), round_num)
         )
     except InvalidTerm:
         if term_num == 0 or term_num == 1:

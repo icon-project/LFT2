@@ -7,7 +7,7 @@ from lft.app.logger import Logger
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
-from lft.consensus.events import StartRoundEvent, DoneRoundEvent, InitializeEvent, ChangedCandidateEvent
+from lft.consensus.events import RoundStartEvent, RoundEndEvent, InitializeEvent, ChangedCandidateEvent
 
 
 class Node:
@@ -25,19 +25,20 @@ class Node:
             DefaultDataFactory(self.node_id),
             DefaultVoteFactory(self.node_id)
         )
-        self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
-        self.event_system.simulator.register_handler(DoneRoundEvent, self._on_done_round_event)
         self._round_num = 0
+
+        self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
+        self.event_system.simulator.register_handler(RoundEndEvent, self._on_done_round_event)
 
     async def _on_init_event(self, init_event: InitializeEvent):
         self._nodes = init_event.term.voters
 
-    async def _on_done_round_event(self, done_round_event: DoneRoundEvent):
+    async def _on_done_round_event(self, done_round_event: RoundEndEvent):
         self._round_num = done_round_event.round_num + 1
         await self._start_new_round()
 
     async def _start_new_round(self):
-        round_start_event = StartRoundEvent(
+        round_start_event = RoundStartEvent(
             term=RotateTerm(0, self._nodes),
             round_num=self._round_num
         )

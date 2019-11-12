@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from lft.consensus.events import DoneRoundEvent, BroadcastVoteEvent
+from lft.consensus.events import RoundEndEvent, BroadcastVoteEvent
 from tests.round_layer.setup_round_layer import *
 
 
@@ -75,8 +75,8 @@ async def test_candidate_change_by_vote():
         )
 
     # THEN
-    event: DoneRoundEvent = await get_event(event_system)
-    assert isinstance(event, DoneRoundEvent)
+    event: RoundEndEvent = await get_event(event_system)
+    assert isinstance(event, RoundEndEvent)
     assert event.candidate_data == second_candidate_data
     assert event.commit_id == genesis_data.id
     assert event.round_num == 2

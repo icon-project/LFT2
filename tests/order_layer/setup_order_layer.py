@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.events import InitializeEvent, StartRoundEvent
+from lft.consensus.events import InitializeEvent, RoundStartEvent
 from lft.consensus.layers import OrderLayer, SyncLayer
 from lft.event import EventSystem
 
@@ -48,7 +48,7 @@ async def setup_order_layer() -> Tuple[OrderLayer, SyncLayer, Sequence[bytes], E
         )
     )
     await order_layer._on_event_start_round(
-        StartRoundEvent(
+        RoundStartEvent(
             term=term,
             round_num=1
         )
