@@ -53,7 +53,7 @@ class DoneRoundEvent(Event):
     round_num: int
     candidate_data: Optional['Data']
     commit_id: Optional['bytes']
-    votes: Sequence['Vote']
+    candidate_votes: Sequence['Vote']
 
 
 @dataclass
