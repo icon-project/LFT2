@@ -43,7 +43,7 @@ async def test_candidate_change_by_vote():
             try:
                 message_container.add_vote(vote)
             except ReachCandidate as e:
-                assert e.candidate == candidate
+                assert e.candidate_data == candidate
                 assert message_container.candidate_data == candidate
             else:
                 pytest.fail("Should raise ReachCandidate")
@@ -73,7 +73,7 @@ async def test_candidate_change_by_candidate_connected_vote():
             try:
                 message_container.add_vote(vote)
             except ReachCandidate as e:
-                assert e.candidate == candidate
+                assert e.candidate_data == candidate
                 assert message_container.candidate_data == candidate
             else:
                 pytest.fail("Should raise ReachCandidate")
@@ -114,7 +114,7 @@ async def test_candidate_change_by_data():
             )
         )
     except ReachCandidate as e:
-        assert e.candidate == candidate
+        assert e.candidate_data == candidate
         assert message_container.candidate_data == candidate
     else:
         pytest.fail("Should raise NeedSync")
@@ -153,7 +153,7 @@ async def test_candidate_change_by_candidate_connected_data():
             )
         )
     except ReachCandidate as e:
-        assert e.candidate == candidate
+        assert e.candidate_data == candidate
         assert message_container.candidate_data == candidate
     else:
         pytest.fail("Should raise ReachCandidate")
@@ -193,7 +193,7 @@ async def test_candidate_change_by_candidate_connected_another_term_data():
             )
         )
     except ReachCandidate as e:
-        assert e.candidate == candidate
+        assert e.candidate_data == candidate
         assert message_container.candidate_data == candidate
     else:
         pytest.fail("Should raise ReachCandidate")

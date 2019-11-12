@@ -98,7 +98,7 @@ class OrderLayer(EventRegister):
             elif isinstance(message, Vote):
                 self._save_vote(message)
         except ReachCandidate as e:
-            await self._sync_layer.change_candidate(e.candidate, e.votes)
+            await self._sync_layer.change_candidate(e.candidate_data, e.candidate_votes)
         except NeedSync as e:
             self._event_system.simulator.raise_event(
                 SyncRequestEvent(e.old_candidate_id, e.new_candidate_id)

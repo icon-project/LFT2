@@ -65,9 +65,9 @@ class InvalidVoter(Exception):
 
 
 class ReachCandidate(Exception):
-    def __init__(self, candidate, votes):
-        self.candidate = candidate
-        self.votes = votes
+    def __init__(self, candidate_data, candidate_votes):
+        self.candidate_data = candidate_data
+        self.candidate_votes = candidate_votes
 
 
 class NeedSync(Exception):
