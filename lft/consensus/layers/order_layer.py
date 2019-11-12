@@ -85,32 +85,30 @@ class OrderLayer(EventRegister):
 
     async def _receive_data(self, data: Data):
         self._verify_acceptable_data(data)
-
-        try:
-            self._save_data(data)
-        except ReachCandidate as e:
-            self._sync_layer.change_candidate(e.candidate, e.votes)
-        except NeedSync as e:
-            self._event_system.simulator.raise_event(
-                SyncRequestEvent(e.old_candidate_id, e.new_candidate_id)
-            )
-        finally:
-            if self._round_num == data.round_num:
-                await self._sync_layer.receive_data(data)
+        await self._save_and_pass_message(data)
 
     async def _receive_vote(self, vote: Vote):
         self._verify_acceptable_vote(vote)
+        await self._save_and_pass_message(vote)
+
+    async def _save_and_pass_message(self, message):
         try:
-            self._save_vote(vote)
+            if isinstance(message, Data):
+                self._save_data(message)
+            elif isinstance(message, Vote):
+                self._save_vote(message)
         except ReachCandidate as e:
-            self._sync_layer.change_candidate(e.candidate, e.votes)
+            await self._sync_layer.change_candidate(e.candidate, e.votes)
         except NeedSync as e:
             self._event_system.simulator.raise_event(
                 SyncRequestEvent(e.old_candidate_id, e.new_candidate_id)
             )
         finally:
-            if vote.round_num == self._round_num:
-                await self._sync_layer.receive_vote(vote)
+            if message.round_num == self._round_num:
+                if isinstance(message, Data):
+                    await self._sync_layer.receive_data(message)
+                elif isinstance(message, Vote):
+                    await self._sync_layer.receive_vote(message)
 
     def _verify_acceptable_start_round(self, term: Term, round_num: int):
         if term.num == self._term.num:

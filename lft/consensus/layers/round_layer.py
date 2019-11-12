@@ -71,7 +71,7 @@ class RoundLayer:
         else:
             await self._update_round_if_complete()
 
-    def change_candidate(self, candidate_data: Data, candidate_votes: Sequence[Vote]):
+    async def change_candidate(self, candidate_data: Data, candidate_votes: Sequence[Vote]):
         self._candidate.data = candidate_data
         self._candidate.votes = candidate_votes
         self._event_system.simulator.raise_event(
@@ -79,6 +79,8 @@ class RoundLayer:
                 candidate_data, candidate_votes
             )
         )
+        if candidate_data.round_num > self._round.num:
+            self._round.num = candidate_data.round_num
 
     async def _update_round_if_complete(self):
         try:

@@ -109,6 +109,10 @@ class SyncLayer:
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
+    async def change_candidate(self, candidate_data: Data, candidate_votes: Sequence[Vote]):
+        self._candidate_num = candidate_data.number
+        await self._round_layer.change_candidate(candidate_data, candidate_votes)
+
     async def _raise_received_consensus_data(self, delay: float, data: Data):
         event = ReceivedDataEvent(data)
         event.deterministic = False
@@ -172,10 +176,6 @@ class SyncLayer:
 
         return any(len(votes) >= self._term.quorum_num and not _first(votes.values()).is_not()
                    for votes in self._votes.votes_by_data_id.values())
-
-    def change_candidate(self, candidate_data: Data, candidate_votes: Sequence[Vote]):
-        self._candidate_num = candidate_data.number
-        self._round_layer.candidate_change(candidate_data, candidate_votes)
 
 
 Datums = OrderedDict[bytes, Data]
