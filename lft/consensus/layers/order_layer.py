@@ -210,8 +210,12 @@ class MessageContainer:
                     self._sync_request_datums.append(vote.data_id)
                     raise NeedSync(self.candidate_data.id, vote.data_id)
             else:
-                self.candidate_data = data
-                raise ReachCandidate(data, list(same_data_votes.values()))
+                if data.number == self.candidate_data.number or data.prev_id == self.candidate_data.id:
+                    self.candidate_data = data
+                    raise ReachCandidate(data, list(same_data_votes.values()))
+                else:
+                    self._sync_request_datums.append(vote.data_id)
+                    raise NeedSync(self.candidate_data.id, vote.data_id)
 
     def add_data(self, data: Data):
         if data.round_num < self.candidate_data.round_num:

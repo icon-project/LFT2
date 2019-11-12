@@ -66,3 +66,9 @@ class StartRoundEvent(Event):
 class SyncRequestEvent(Event):
     old_candidate_id: bytes
     new_candidate_id: bytes
+
+
+@dataclass
+class ChangeCandidateEvent(Event):
+    candidate_data: Data
+    candidate_votes: Sequence[Vote]

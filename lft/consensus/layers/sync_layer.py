@@ -71,18 +71,17 @@ class SyncLayer:
     async def _receive_data(self, data: Data):
         self._verify_acceptable_data(data)
 
-        if self._candidate_num == data.number or self._candidate_num + 1 == data.number:
-            if not data.is_not():
-                self._term.verify_data(data)
-            self._datums[data.id] = data
-            await self._round_layer.propose_data(data)
+        if not data.is_not():
+            self._term.verify_data(data)
+        self._datums[data.id] = data
+        await self._round_layer.propose_data(data)
 
-            if data.is_not():
-                return
+        if data.is_not():
+            return
 
-            votes_by_vote_id = self._votes.get_votes(data_id=data.id)
-            for vote in votes_by_vote_id.values():
-                await self._round_layer.vote_data(vote)
+        votes_by_vote_id = self._votes.get_votes(data_id=data.id)
+        for vote in votes_by_vote_id.values():
+            await self._round_layer.vote_data(vote)
 
     async def receive_vote(self, vote: Vote):
         try:
@@ -175,7 +174,8 @@ class SyncLayer:
                    for votes in self._votes.votes_by_data_id.values())
 
     def change_candidate(self, candidate_data: Data, candidate_votes: Sequence[Vote]):
-        pass
+        self._candidate_num = candidate_data.number
+        self._round_layer.candidate_change(candidate_data, candidate_votes)
 
 
 Datums = OrderedDict[bytes, Data]
