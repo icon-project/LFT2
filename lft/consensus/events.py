@@ -62,7 +62,7 @@ class StartRoundEvent(Event):
     round_num: int
 
 
-@dataclass(eq=True)
+@dataclass
 class SyncRequestEvent(Event):
     old_candidate_id: bytes
     new_candidate_id: bytes

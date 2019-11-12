@@ -124,7 +124,7 @@ class RoundLayer:
                 is_success=True,
                 term_num=self._term.num,
                 round_num=self._round.num,
-                votes=candidate.votes,
+                candidate_votes=candidate.votes,
                 candidate_data=candidate.data,
                 commit_id=candidate.data.prev_id
             )
@@ -133,7 +133,7 @@ class RoundLayer:
                 is_success=False,
                 term_num=self._term.num,
                 round_num=self._round.num,
-                votes=candidate.votes,
+                candidate_votes=candidate.votes,
                 candidate_data=None,
                 commit_id=None
             )
