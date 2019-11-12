@@ -47,13 +47,13 @@ class OrderLayer(EventRegister):
     async def _on_event_round_start(self, event: RoundStartEvent):
         await self._round_start(event.term, event.round_num)
 
-    async def _on_event_received_data(self, event: ReceiveDataEvent):
+    async def _on_event_receive_data(self, event: ReceiveDataEvent):
         try:
             await self._receive_data(event.data)
         except (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter, AlreadySync):
             pass
 
-    async def _on_event_received_vote(self, event: ReceiveVoteEvent):
+    async def _on_event_receive_vote(self, event: ReceiveVoteEvent):
         try:
             await self._receive_vote(event.vote)
         except (InvalidTerm, InvalidRound, InvalidVoter, AlreadySync):
@@ -171,8 +171,8 @@ class OrderLayer(EventRegister):
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
         RoundStartEvent: _on_event_round_start,
-        ReceiveDataEvent: _on_event_received_data,
-        ReceiveVoteEvent: _on_event_received_vote,
+        ReceiveDataEvent: _on_event_receive_data,
+        ReceiveVoteEvent: _on_event_receive_vote,
         RoundEndEvent: _on_event_round_end
     }
 

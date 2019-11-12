@@ -21,7 +21,7 @@ async def test_change_by_data():
         round_num=1,
         prev_votes=[]
     )
-    await order_layer._on_event_received_data(
+    await order_layer._on_event_receive_data(
         ReceiveDataEvent(change_candidate_data)
     )
     await order_layer._on_event_round_start(
@@ -39,7 +39,7 @@ async def test_change_by_data():
     prev_votes = [await vote_factory.create_vote(b'first', b'genesis', 0, 1)
                   for vote_factory in vote_factories]
 
-    await order_layer._on_event_received_data(
+    await order_layer._on_event_receive_data(
         ReceiveDataEvent(
             DefaultData(
                 id_=b'second',
@@ -71,7 +71,7 @@ async def test_change_by_vote():
         round_num=1,
         prev_votes=[]
     )
-    await order_layer._on_event_received_data(
+    await order_layer._on_event_receive_data(
         ReceiveDataEvent(change_candidate_data)
     )
     await order_layer._on_event_round_start(
@@ -90,7 +90,7 @@ async def test_change_by_vote():
                   for vote_factory in vote_factories]
 
     for vote in prev_votes:
-        await order_layer._on_event_received_vote(
+        await order_layer._on_event_receive_vote(
             ReceiveVoteEvent(vote)
         )
     # THEN
@@ -128,7 +128,7 @@ async def test_change_by_data_with_missing_data():
     prev_votes = [await vote_factory.create_vote(b'first', b'genesis', 0, 1)
                   for vote_factory in vote_factories]
 
-    await order_layer._on_event_received_data(
+    await order_layer._on_event_receive_data(
         ReceiveDataEvent(
             DefaultData(
                 id_=b'second',
@@ -176,7 +176,7 @@ async def test_change_by_vote_with_missing_data():
                   for vote_factory in vote_factories]
 
     for vote in prev_votes:
-        await order_layer._on_event_received_vote(
+        await order_layer._on_event_receive_vote(
             ReceiveVoteEvent(vote)
         )
     event_system.simulator.raise_event.assert_called_once_with(

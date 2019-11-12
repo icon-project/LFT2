@@ -68,16 +68,16 @@ class Network(EventRegister):
     def _on_event_round_start(self, event: 'RoundStartEvent'):
         self._round_num = event.round_num
         for data in self._datums[event.round_num]:
-            received_data_event = ReceiveDataEvent(data)
-            received_data_event.deterministic = False
+            receive_data_event = ReceiveDataEvent(data)
+            receive_data_event.deterministic = False
 
-            self._delayed_mediator.execute(0, received_data_event)
+            self._delayed_mediator.execute(0, receive_data_event)
 
         for vote in self._votes[event.round_num]:
-            received_vote_event = ReceiveVoteEvent(vote)
-            received_vote_event.deterministic = False
+            receive_vote_event = ReceiveVoteEvent(vote)
+            receive_vote_event.deterministic = False
 
-            self._delayed_mediator.execute(0, received_vote_event)
+            self._delayed_mediator.execute(0, receive_vote_event)
 
     @classmethod
     def random_delay(cls):

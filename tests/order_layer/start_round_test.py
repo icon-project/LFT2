@@ -35,9 +35,9 @@ async def test_pass_messages_with_round_start(term_num, round_num):
         )
         votes.append(vote)
 
-    await order_layer._on_event_received_data(ReceiveDataEvent(data))
+    await order_layer._on_event_receive_data(ReceiveDataEvent(data))
     for vote in votes:
-        await order_layer._on_event_received_vote(ReceiveVoteEvent(vote))
+        await order_layer._on_event_receive_vote(ReceiveVoteEvent(vote))
 
     sync_layer.receive_data.assert_not_called()
     sync_layer.receive_vote.assert_not_called()

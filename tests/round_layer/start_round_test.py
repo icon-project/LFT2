@@ -141,11 +141,11 @@ async def verify_data_events(event_system, prev_id, round_num, proposer_id, term
     assert broadcast_data_event.data.term_num == term_num
     assert broadcast_data_event.data.number == number
 
-    received_data_event: ReceiveDataEvent = await get_event(event_system)
-    assert isinstance(received_data_event, ReceiveDataEvent)
-    assert received_data_event.data == broadcast_data_event.data
+    receive_data_event: ReceiveDataEvent = await get_event(event_system)
+    assert isinstance(receive_data_event, ReceiveDataEvent)
+    assert receive_data_event.data == broadcast_data_event.data
 
-    return received_data_event.data
+    return receive_data_event.data
 
 
 def verify_prev_votes(consensus_data: Data, prev_id, round_num, term_num, commit_id, voters):
