@@ -89,13 +89,14 @@ class OrderLayer(EventRegister):
     async def _receive_data(self, data: Data):
         self._verify_acceptable_data(data)
         self._save_data(data)
-        sample_vote = self._save_votes_and_get_sample(data)
-
-        if sample_vote:
-            await self._change_candidate_if_reach(sample_vote.term_num, sample_vote.round_num, sample_vote.data_id)
 
         if self._is_now_round_message(data):
             await self._sync_layer.receive_data(data)
+        else:
+            sample_vote = self._save_votes_and_get_sample(data)
+
+            if sample_vote:
+                await self._change_candidate_if_reach(sample_vote.term_num, sample_vote.round_num, sample_vote.data_id)
 
     def _save_votes_and_get_sample(self, data):
         sample_vote = None
@@ -109,9 +110,10 @@ class OrderLayer(EventRegister):
     async def _receive_vote(self, vote: Vote):
         self._verify_acceptable_vote(vote)
         self._save_vote(vote)
-        await self._change_candidate_if_reach(vote.term_num, vote.round_num, vote.data_id)
         if self._is_now_round_message(vote):
             await self._sync_layer.receive_vote(vote)
+        else:
+            await self._change_candidate_if_reach(vote.term_num, vote.round_num, vote.data_id)
 
     async def _change_candidate_if_reach(self, term_num: int, round_num: int, data_id: bytes):
         try:
