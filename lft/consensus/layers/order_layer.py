@@ -196,7 +196,10 @@ class MessageContainer:
         self._term = term
 
     def add_vote(self, vote: Vote):
-        if vote.round_num < self.candidate_data.round_num:
+        if vote.term_num == self.candidate_data.term_num:
+            if vote.round_num < self.candidate_data.round_num:
+                return
+        elif vote.term_num < self.candidate_data.term_num:
             return
         same_data_votes = self._votes[vote.round_num][vote.data_id]
         same_data_votes[vote.voter_id] = vote
