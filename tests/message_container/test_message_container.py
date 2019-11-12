@@ -185,7 +185,7 @@ async def test_candidate_change_by_candidate_connected_another_term_data():
             DefaultData(
                 id_=b'second',
                 prev_id=b'first',
-                proposer_id=nodes[3],
+                proposer_id=nodes[0],
                 number=2,
                 term_num=1,
                 round_num=0,
