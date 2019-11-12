@@ -18,12 +18,14 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVote, DefaultVoteFactory
+from lft.consensus.data import Data
 from lft.consensus.exceptions import ReachCandidate, NeedSync
 from lft.consensus.layers.order_layer import MessageContainer
 
 
 @pytest.mark.asyncio
 async def test_candidate_change_by_vote():
+    # GIVEN
     message_container, nodes = init_container()
     candidate = DefaultData(
         id_=b'first',
@@ -35,24 +37,29 @@ async def test_candidate_change_by_vote():
         prev_votes=[]
     )
     message_container.add_data(candidate)
-    # Term을 가지고 있는게 나을듯
+
+    votes = await _create_votes(nodes, candidate)
+    for vote in votes:
+        message_container.add_vote(vote)
+    # WHEN
+    changed_candidate = message_container.get_reach_candidate(0, 1, b'first')
+    # THEN
+    assert candidate == changed_candidate.data
+    assert votes == list(changed_candidate.votes)
+
+
+async def _create_votes(nodes, candidate: Data):
+    votes = []
     for i, node in enumerate(nodes):
         vote_factory = DefaultVoteFactory(node)
-        vote = await vote_factory.create_vote(b'first', b'', 0, 1)
-        if i == 2:
-            try:
-                message_container.add_vote(vote)
-            except ReachCandidate as e:
-                assert e.candidate_data == candidate
-                assert message_container.candidate_data == candidate
-            else:
-                pytest.fail("Should raise ReachCandidate")
-        else:
-            message_container.add_vote(vote)
+        vote = await vote_factory.create_vote(candidate.id, candidate.prev_id, candidate.term_num, candidate.round_num)
+        votes.append(vote)
+    return votes
 
 
 @pytest.mark.asyncio
 async def test_candidate_change_by_candidate_connected_vote():
+    # GIVEN
     message_container, nodes = init_container()
     candidate = DefaultData(
         id_=b'first',
@@ -65,24 +72,20 @@ async def test_candidate_change_by_candidate_connected_vote():
     )
 
     message_container.add_data(candidate)
+    votes = await _create_votes(nodes, candidate)
+    for vote in votes:
+        message_container.add_vote(vote)
 
-    for i, node in enumerate(nodes):
-        vote_factory = DefaultVoteFactory(node)
-        vote = await vote_factory.create_vote(b'first', b'genesis', 0, 2)
-        if i == 2:
-            try:
-                message_container.add_vote(vote)
-            except ReachCandidate as e:
-                assert e.candidate_data == candidate
-                assert message_container.candidate_data == candidate
-            else:
-                pytest.fail("Should raise ReachCandidate")
-        else:
-            message_container.add_vote(vote)
+    # WHEN
+    changed_candidate = message_container.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
+    # THEN
+    assert candidate == changed_candidate.data
+    assert votes == list(changed_candidate.votes)
 
 
 @pytest.mark.asyncio
 async def test_candidate_change_by_data():
+    # GIVEN
     message_container, nodes = init_container()
     candidate = DefaultData(
         id_=b'first',
@@ -94,30 +97,25 @@ async def test_candidate_change_by_data():
         prev_votes=[]
     )
     message_container.add_data(candidate)
-    # Term을 가지고 있는게 나을듯
-    prev_votes = []
-    for i, node in enumerate(nodes):
-        vote_factory = DefaultVoteFactory(node)
-        vote = await vote_factory.create_vote(b'first', b'', 0, 1)
-        prev_votes.append(vote)
+    votes = await _create_votes(nodes, candidate)
 
-    try:
-        message_container.add_data(
-            DefaultData(
-                id_=b'second',
-                prev_id=b'first',
-                proposer_id=nodes[2],
-                number=1,
-                term_num=0,
-                round_num=1,
-                prev_votes=prev_votes
-            )
+    message_container.add_data(
+        DefaultData(
+            id_=b'second',
+            prev_id=b'first',
+            proposer_id=nodes[2],
+            number=1,
+            term_num=0,
+            round_num=1,
+            prev_votes=votes
         )
-    except ReachCandidate as e:
-        assert e.candidate_data == candidate
-        assert message_container.candidate_data == candidate
-    else:
-        pytest.fail("Should raise NeedSync")
+    )
+
+    # WHEN
+    changed_candidate = message_container.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
+    # THEN
+    assert candidate == changed_candidate.data
+    assert votes == list(changed_candidate.votes)
 
 
 @pytest.mark.asyncio
@@ -134,29 +132,23 @@ async def test_candidate_change_by_candidate_connected_data():
     )
     message_container.add_data(candidate)
 
-    prev_votes = []
-    for i, node in enumerate(nodes):
-        vote_factory = DefaultVoteFactory(node)
-        vote = await vote_factory.create_vote(b'first', b'', 0, 2)
-        prev_votes.append(vote)
-
-    try:
-        message_container.add_data(
-            DefaultData(
-                id_=b'second',
-                prev_id=b'first',
-                proposer_id=nodes[3],
-                number=2,
-                term_num=0,
-                round_num=3,
-                prev_votes=prev_votes
-            )
+    votes = await _create_votes(nodes, candidate)
+    message_container.add_data(
+        DefaultData(
+            id_=b'second',
+            prev_id=b'first',
+            proposer_id=nodes[3],
+            number=2,
+            term_num=0,
+            round_num=3,
+            prev_votes=votes
         )
-    except ReachCandidate as e:
-        assert e.candidate_data == candidate
-        assert message_container.candidate_data == candidate
-    else:
-        pytest.fail("Should raise ReachCandidate")
+    )
+    # WHEN
+    changed_candidate = message_container.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
+    # THEN
+    assert candidate == changed_candidate.data
+    assert votes == list(changed_candidate.votes)
 
 
 @pytest.mark.asyncio
@@ -174,29 +166,23 @@ async def test_candidate_change_by_candidate_connected_another_term_data():
     message_container.add_data(candidate)
     message_container.update_term(RotateTerm(1, nodes))
 
-    prev_votes = []
-    for i, node in enumerate(nodes):
-        vote_factory = DefaultVoteFactory(node)
-        vote = await vote_factory.create_vote(b'first', b'', 0, 2)
-        prev_votes.append(vote)
-
-    try:
-        message_container.add_data(
-            DefaultData(
-                id_=b'second',
-                prev_id=b'first',
-                proposer_id=nodes[0],
-                number=2,
-                term_num=1,
-                round_num=0,
-                prev_votes=prev_votes
-            )
+    votes = await _create_votes(nodes, candidate)
+    message_container.add_data(
+        DefaultData(
+            id_=b'second',
+            prev_id=b'first',
+            proposer_id=nodes[0],
+            number=2,
+            term_num=1,
+            round_num=0,
+            prev_votes=votes
         )
-    except ReachCandidate as e:
-        assert e.candidate_data == candidate
-        assert message_container.candidate_data == candidate
-    else:
-        pytest.fail("Should raise ReachCandidate")
+    )
+    # WHEN
+    changed_candidate = message_container.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
+    # THEN
+    assert candidate == changed_candidate.data
+    assert votes == list(changed_candidate.votes)
 
 
 @pytest.mark.asyncio
@@ -212,19 +198,18 @@ async def test_raise_block_sync_by_vote():
         round_num=1,
         prev_votes=[]
     )
-    for i, node in enumerate(nodes):
-        vote_factory = DefaultVoteFactory(node)
-        vote = await vote_factory.create_vote(b'first', b'', 0, 1)
-        if i == 2:
-            try:
-                message_container.add_vote(vote)
-            except NeedSync as e:
-                assert e.new_candidate_id == b'first'
-                assert e.old_candidate_id == b'genesis'
-            else:
-                pytest.fail("Should raise NeedSync")
-        else:
-            message_container.add_vote(vote)
+    votes = await _create_votes(nodes, candidate)
+    for vote in votes:
+        message_container.add_vote(vote)
+
+    # WHEN
+    try:
+        changed_candidate = message_container.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
+    except NeedSync as e:
+        assert e.new_candidate_id == b'first'
+        assert e.old_candidate_id == b'genesis'
+    else:
+        pytest.fail("Should raise NeedSync")
 
 
 @pytest.mark.asyncio
@@ -239,24 +224,23 @@ async def test_raise_block_sync_by_data():
         round_num=1,
         prev_votes=[]
     )
-    prev_votes = []
-    for i, node in enumerate(nodes):
-        vote_factory = DefaultVoteFactory(node)
-        vote = await vote_factory.create_vote(b'first', b'', 0, 1)
-        prev_votes.append(vote)
 
-    try:
-        message_container.add_data(
-            DefaultData(
-                id_=b'second',
-                prev_id=b'first',
-                proposer_id=nodes[2],
-                number=1,
-                term_num=0,
-                round_num=1,
-                prev_votes=prev_votes
-            )
+    votes = await _create_votes(nodes, candidate)
+
+    message_container.add_data(
+        DefaultData(
+            id_=b'second',
+            prev_id=b'first',
+            proposer_id=nodes[2],
+            number=1,
+            term_num=0,
+            round_num=1,
+            prev_votes=votes
         )
+    )
+    # WHEN
+    try:
+        changed_candidate = message_container.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
     except NeedSync as e:
         assert e.new_candidate_id == b'first'
         assert e.old_candidate_id == b'genesis'
