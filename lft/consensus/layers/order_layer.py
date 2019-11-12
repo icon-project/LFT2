@@ -230,7 +230,10 @@ class MessageContainer:
             raise NeedSync(self.candidate_data.id, vote.data_id)
 
     def add_data(self, data: Data):
-        if data.round_num < self.candidate_data.round_num:
+        if data.term_num == self.candidate_data.term_num:
+            if data.round_num < self.candidate_data.round_num:
+                return
+        elif data.term_num < self.candidate_data.term_num:
             return
         self._datums[data.round_num][data.id] = data
         for vote in data.prev_votes:
