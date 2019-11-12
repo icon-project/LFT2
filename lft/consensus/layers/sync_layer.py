@@ -51,14 +51,14 @@ class SyncLayer:
         await self._new_data()
         await self._round_layer.initialize(term, round_num, candidate_data, votes)
 
-    async def start_round(self,
+    async def round_start(self,
                           term: Term,
                           round_num: int):
         await self._new_round(term, round_num)
         await self._new_data()
-        await self._round_layer.start_round(term, round_num)
+        await self._round_layer.round_start(term, round_num)
 
-    async def done_round(self, candidate_data: Data):
+    async def round_end(self, candidate_data: Data):
         if candidate_data:
             self._candidate_num = candidate_data.number
 

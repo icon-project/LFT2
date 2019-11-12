@@ -28,7 +28,7 @@ PEER_NUM = 7
 
 
 @pytest.mark.asyncio
-async def test_start_round():
+async def test_round_start():
     """GIVEN a sync layer with init, and add complete that round
     WHEN run on_round_start
     THEN new round will be started and broadcast new data
@@ -41,11 +41,11 @@ async def test_start_round():
 
     # WHEN
     term = RotateTerm(0, voters)
-    await round_layer.start_round(
+    await round_layer.round_start(
         term=term,
         round_num=2
     )
-    # pop done_round
+    # pop round_end
     await get_event(event_system)
 
     # THEN
@@ -85,7 +85,7 @@ async def test_prev_round_is_failed():
 
     # WHEN
     term = RotateTerm(0, voters)
-    await round_layer.start_round(
+    await round_layer.round_start(
         term=term,
         round_num=2
     )

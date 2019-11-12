@@ -24,7 +24,7 @@ async def test_change_by_data():
     await order_layer._on_event_received_data(
         ReceiveDataEvent(change_candidate_data)
     )
-    await order_layer._on_event_start_round(
+    await order_layer._on_event_round_start(
         RoundStartEvent(
             term=RotateTerm(0, voters),
             round_num=2
@@ -74,7 +74,7 @@ async def test_change_by_vote():
     await order_layer._on_event_received_data(
         ReceiveDataEvent(change_candidate_data)
     )
-    await order_layer._on_event_start_round(
+    await order_layer._on_event_round_start(
         RoundStartEvent(
             term=RotateTerm(0, voters),
             round_num=2
@@ -113,7 +113,7 @@ async def test_change_by_data_with_missing_data():
         prev_votes=[]
     )
 
-    await order_layer._on_event_start_round(
+    await order_layer._on_event_round_start(
         RoundStartEvent(
             term=RotateTerm(0, voters),
             round_num=2
@@ -160,7 +160,7 @@ async def test_change_by_vote_with_missing_data():
         prev_votes=[]
     )
 
-    await order_layer._on_event_start_round(
+    await order_layer._on_event_round_start(
         RoundStartEvent(
             term=RotateTerm(0, voters),
             round_num=2

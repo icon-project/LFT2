@@ -47,7 +47,7 @@ async def setup_order_layer() -> Tuple[OrderLayer, SyncLayer, Sequence[bytes], E
             votes=[]
         )
     )
-    await order_layer._on_event_start_round(
+    await order_layer._on_event_round_start(
         RoundStartEvent(
             term=term,
             round_num=1

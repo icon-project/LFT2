@@ -44,7 +44,7 @@ class OrderLayer(EventRegister):
             votes=event.votes
         )
 
-    async def _on_event_start_round(self, event: RoundStartEvent):
+    async def _on_event_round_start(self, event: RoundStartEvent):
         await self._round_start(event.term, event.round_num)
 
     async def _on_event_received_data(self, event: ReceiveDataEvent):
@@ -59,10 +59,10 @@ class OrderLayer(EventRegister):
         except (InvalidTerm, InvalidRound, InvalidVoter, AlreadySync):
             pass
 
-    async def _on_event_done_round(self, event: RoundEndEvent):
+    async def _on_event_round_end(self, event: RoundEndEvent):
         if event.is_success:
             self._message_container.candidate = Candidate(event.candidate_data, event.candidate_votes)
-            await self._sync_layer.done_round(event.candidate_data)
+            await self._sync_layer.round_end(event.candidate_data)
 
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
@@ -73,11 +73,11 @@ class OrderLayer(EventRegister):
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
     async def _round_start(self, term: Term, round_num: int):
-        self._verify_acceptable_start_round(term, round_num)
+        self._verify_acceptable_round_start(term, round_num)
 
         self._term = term
         self._round_num = round_num
-        await self._sync_layer.start_round(term, round_num)
+        await self._sync_layer.round_start(term, round_num)
 
         for data in self._get_datums(self._round_num):
             await self._sync_layer.receive_data(data)
@@ -128,7 +128,7 @@ class OrderLayer(EventRegister):
     def _is_now_round_message(self, message):
         return message.round_num == self._round_num
 
-    def _verify_acceptable_start_round(self, term: Term, round_num: int):
+    def _verify_acceptable_round_start(self, term: Term, round_num: int):
         if term.num == self._term.num:
             if round_num != self._round_num + 1:
                 raise InvalidRound(round_num, self._round_num)
@@ -170,10 +170,10 @@ class OrderLayer(EventRegister):
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
-        RoundStartEvent: _on_event_start_round,
+        RoundStartEvent: _on_event_round_start,
         ReceiveDataEvent: _on_event_received_data,
         ReceiveVoteEvent: _on_event_received_vote,
-        RoundEndEvent: _on_event_done_round
+        RoundEndEvent: _on_event_round_end
     }
 
 

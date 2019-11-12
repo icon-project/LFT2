@@ -39,7 +39,7 @@ PROPOSE_ID = b'propose'
 async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, expected_success, expected_complete):
     """ GIVEN SyncRound and propose data,
     WHEN repeats _on_add_votes amount of vote_num
-    THEN raised expected DoneRoundEvent
+    THEN raised expected RoundEndEvent
     """
 
     # GIVEN
@@ -94,33 +94,33 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
 
     # THEN
     if expected_complete:
-        done_round: RoundEndEvent = await get_event(event_system)
+        round_end: RoundEndEvent = await get_event(event_system)
         if expected_success:
-            verify_success_done_round(done_round=done_round,
+            verify_success_round_end(round_end=round_end,
                                       expected_candidate=consensus_data,
                                       expected_commit=genesis_data)
 
         else:
-            verify_fail_done_round(done_round=done_round)
+            verify_fail_round_end(round_end=round_end)
 
     await verify_no_events(event_system)
 
 
-def verify_fail_done_round(done_round: RoundEndEvent):
-    verify_round_num_is_correct(done_round)
-    assert not done_round.candidate_data
-    assert not done_round.commit_id
+def verify_fail_round_end(round_end: RoundEndEvent):
+    verify_round_num_is_correct(round_end)
+    assert not round_end.candidate_data
+    assert not round_end.commit_id
 
 
-def verify_success_done_round(done_round: RoundEndEvent,
+def verify_success_round_end(round_end: RoundEndEvent,
                               expected_candidate: Data,
                               expected_commit: Data):
-    assert done_round.candidate_data
-    verify_round_num_is_correct(done_round)
-    assert done_round.candidate_data == expected_candidate
-    assert done_round.commit_id == expected_commit.id
+    assert round_end.candidate_data
+    verify_round_num_is_correct(round_end)
+    assert round_end.candidate_data == expected_candidate
+    assert round_end.commit_id == expected_commit.id
 
 
-def verify_round_num_is_correct(done_round):
-    assert done_round.round_num == 1
-    assert done_round.term_num == 0
+def verify_round_num_is_correct(round_end):
+    assert round_end.round_num == 1
+    assert round_end.term_num == 0
