@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Type, Sequence, List, TypeVar, Dict, Set
 
+from lft.consensus.messages.message import Message
 from lft.serialization import Serializable
 
 T = TypeVar("T")
 
 
-class Vote(Serializable):
+class Vote(Message):
     @property
     @abstractmethod
     def id(self) -> bytes:

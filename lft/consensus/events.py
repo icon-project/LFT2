@@ -3,7 +3,7 @@ from typing import Sequence, Optional
 
 from lft.consensus.term import Term
 from lft.event import Event
-from lft.consensus.data import Data, Vote
+from lft.consensus.messages.data import Data, Vote
 
 
 @dataclass

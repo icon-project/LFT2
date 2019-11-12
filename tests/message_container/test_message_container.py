@@ -17,9 +17,9 @@ import pytest
 
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
-from lft.app.vote import DefaultVote, DefaultVoteFactory
-from lft.consensus.data import Data
-from lft.consensus.exceptions import ReachCandidate, NeedSync
+from lft.app.vote import DefaultVoteFactory
+from lft.consensus.messages.data import Data
+from lft.consensus.exceptions import NeedSync
 from lft.consensus.layers.order_layer import MessageContainer
 from lft.consensus.round import Candidate
 

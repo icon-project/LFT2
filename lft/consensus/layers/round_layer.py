@@ -2,8 +2,8 @@ import logging
 from typing import Sequence
 
 from lft.consensus.round import Round, Candidate
-from lft.consensus.data import Data, DataVerifier, DataFactory
-from lft.consensus.vote import Vote, VoteVerifier, VoteFactory
+from lft.consensus.messages.data import Data, DataVerifier, DataFactory
+from lft.consensus.messages.vote import Vote, VoteVerifier, VoteFactory
 from lft.consensus.events import (DoneRoundEvent, BroadcastDataEvent, BroadcastVoteEvent,
                                   ReceivedDataEvent, ReceivedVoteEvent, ChangedCandidateEvent)
 from lft.consensus.term import Term
@@ -71,16 +71,16 @@ class RoundLayer:
         else:
             await self._update_round_if_complete()
 
-    async def change_candidate(self, candidate_data: Data, candidate_votes: Sequence[Vote]):
-        self._candidate.data = candidate_data
-        self._candidate.votes = candidate_votes
+    async def change_candidate(self, candidate: Candidate):
+        self._candidate = candidate
         self._event_system.simulator.raise_event(
             ChangedCandidateEvent(
-                candidate_data, candidate_votes
+                candidate.data, candidate.votes
             )
         )
-        if candidate_data.round_num > self._round.num:
-            self._round.num = candidate_data.round_num
+        if candidate.data.term_num == self._term.num:
+            if candidate.data.round_num > self._round.num:
+                await self._start_new_round(self._term, candidate.data.round_num)
 
     async def _update_round_if_complete(self):
         try:

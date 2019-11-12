@@ -1,6 +1,6 @@
 from hashlib import sha3_256
 from typing import Type, TypeVar
-from lft.consensus.vote import Vote, VoteVerifier, VoteFactory
+from lft.consensus.messages.vote import Vote, VoteVerifier, VoteFactory
 
 T = TypeVar("T")
 

@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Sequence
 
-from lft.consensus.data import Data, Vote
+from lft.consensus.messages.data import Data, Vote
 from lft.serialization import Serializable
 
 

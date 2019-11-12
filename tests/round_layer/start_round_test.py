@@ -13,15 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from asyncio import QueueEmpty
-from typing import Tuple
 
 import pytest
 
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.data import Data, Vote
+from lft.consensus.messages.data import Data, Vote
 from lft.consensus.events import BroadcastDataEvent, ReceivedDataEvent
 from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, get_event, verify_no_events
 

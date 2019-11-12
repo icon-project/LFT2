@@ -6,8 +6,8 @@ from lft.consensus.layers.round_layer import RoundLayer
 
 if TYPE_CHECKING:
     from lft.event import EventSystem
-    from lft.consensus.data import DataFactory
-    from lft.consensus.vote import VoteFactory
+    from lft.consensus.messages.data import DataFactory
+    from lft.consensus.messages.vote import VoteFactory
 
 
 class Consensus:

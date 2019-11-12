@@ -14,9 +14,9 @@
 import math
 from typing import Sequence, Type
 
-from lft.consensus.data import Data
+from lft.consensus.messages.data import Data
 from lft.consensus.term import Term
-from lft.consensus.vote import Vote
+from lft.consensus.messages.vote import Vote
 from lft.consensus.exceptions import InvalidProposer, InvalidVoter
 
 

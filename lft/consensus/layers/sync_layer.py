@@ -1,14 +1,14 @@
 import logging
 from typing import DefaultDict, OrderedDict, Optional, Sequence
-from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent)
-from lft.consensus.data import Data, DataFactory
-from lft.consensus.vote import Vote, VoteFactory
+from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent)
+from lft.consensus.messages.data import Data, DataFactory
+from lft.consensus.round import Candidate
+from lft.consensus.messages.vote import Vote, VoteFactory
 from lft.consensus.term import Term
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
                                       AlreadyDataReceived, AlreadyVoteReceived)
-from lft.event import EventSystem, EventRegister
+from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 
 __all__ = ("SyncLayer",)
@@ -109,9 +109,13 @@ class SyncLayer:
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
-    async def change_candidate(self, candidate_data: Data, candidate_votes: Sequence[Vote]):
-        self._candidate_num = candidate_data.number
-        await self._round_layer.change_candidate(candidate_data, candidate_votes)
+    async def change_candidate(self, candidate: Candidate):
+        self._candidate_num = candidate.data.number
+        if self._term.num == candidate.data.term_num:
+            if self._round_num < candidate.data.round_num:
+                await self._new_round(self._term, candidate.data.round_num)
+                await self._new_data()
+        await self._round_layer.change_candidate(candidate)
 
     async def _raise_received_consensus_data(self, delay: float, data: Data):
         event = ReceivedDataEvent(data)

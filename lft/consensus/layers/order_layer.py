@@ -1,17 +1,17 @@
 import logging
-from typing import Optional, Sequence, OrderedDict, Set, List, Dict
+from typing import Optional, Sequence, OrderedDict, Dict
 
 from collections import defaultdict
 
-from lft.consensus.data import DataFactory, Data
+from lft.consensus.messages.data import DataFactory, Data
 from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent, \
     SyncRequestEvent
-from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter, ReachCandidate, NeedSync, \
+from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter, NeedSync, \
     NotReachCandidate, AlreadyCandidate, AlreadySync
-from lft.consensus.layers import SyncLayer, RoundLayer
+from lft.consensus.layers import SyncLayer
 from lft.consensus.round import Candidate
 from lft.consensus.term import Term
-from lft.consensus.vote import VoteFactory, Vote
+from lft.consensus.messages.vote import VoteFactory, Vote
 from lft.event import EventRegister, EventSystem
 
 
@@ -123,6 +123,8 @@ class OrderLayer(EventRegister):
         except (AlreadyCandidate, NotReachCandidate):
             pass
         else:
+            if self._round_num < candidate.data.round_num:
+                self._round_num = candidate.data.round_num
             await self._sync_layer.change_candidate(candidate)
 
     def _is_now_round_message(self, message):
@@ -217,8 +219,6 @@ class MessageContainer:
     def add_data(self, data: Data):
         self._verify_acceptable_message(data)
         self._datums[data.round_num][data.id] = data
-        for vote in data.prev_votes:
-            self.add_vote(vote)
 
     def add_vote(self, vote: Vote):
         self._verify_acceptable_message(vote)

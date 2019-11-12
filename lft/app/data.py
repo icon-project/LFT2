@@ -1,7 +1,7 @@
 from hashlib import sha3_256
 from typing import Sequence, Type, TypeVar
 from lft.app.vote import DefaultVote
-from lft.consensus.data import Data, DataVerifier, DataFactory
+from lft.consensus.messages.data import Data, DataVerifier, DataFactory
 
 T = TypeVar("T")
 
