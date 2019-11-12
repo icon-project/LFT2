@@ -165,7 +165,7 @@ Votes = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
 class MessageContainer:
     def __init__(self, term: Term, candidate_data: Data):
         self._term: Term = term
-        self._old_term: Term = None
+        self._prev_term: Term = None
         self._candidate_data = candidate_data
         self._datums = defaultdict(OrderedDict)  # [round_num][data_id][data]
         self._votes = defaultdict(lambda: defaultdict(OrderedDict))  # [round_num][data_id][vote_id][vote]
@@ -190,10 +190,10 @@ class MessageContainer:
     def term(self) -> Term:
         return self._term
 
-    @term.setter
-    def term(self, term: Term):
-        self._old_term = self.term
-        self._term = term
+    def update_term(self, term: Term):
+        if term != self._term:
+            self._prev_term = self.term
+            self._term = term
 
     def add_vote(self, vote: Vote):
         if vote.term_num == self.candidate_data.term_num:
@@ -204,8 +204,8 @@ class MessageContainer:
 
         if vote.term_num == self._term.num:
             self._term.verify_vote(vote)
-        elif vote.term_num == self._old_term.num:
-            self._old_term.verify_vote(vote)
+        elif vote.term_num == self._prev_term.num:
+            self._prev_term.verify_vote(vote)
         else:
             return
 

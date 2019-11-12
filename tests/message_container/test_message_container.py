@@ -172,7 +172,7 @@ async def test_candidate_change_by_candidate_connected_another_term_data():
         prev_votes=[]
     )
     message_container.add_data(candidate)
-    message_container.term = RotateTerm(1, nodes)
+    message_container.update_term(RotateTerm(1, nodes))
 
     prev_votes = []
     for i, node in enumerate(nodes):
