@@ -24,7 +24,16 @@ from lft.consensus.layers.order_layer import MessageContainer
 
 @pytest.mark.asyncio
 async def test_candidate_change_by_vote():
-    candidate, message_container, nodes = init_container()
+    message_container, nodes = init_container()
+    candidate = DefaultData(
+        id_=b'first',
+        prev_id=b'',
+        proposer_id=nodes[1],
+        number=0,
+        term_num=0,
+        round_num=1,
+        prev_votes=[]
+    )
     message_container.add_data(candidate)
     # Term을 가지고 있는게 나을듯
     for i, node in enumerate(nodes):
@@ -44,7 +53,16 @@ async def test_candidate_change_by_vote():
 
 @pytest.mark.asyncio
 async def test_candidate_change_by_data():
-    candidate, message_container, nodes = init_container()
+    message_container, nodes = init_container()
+    candidate = DefaultData(
+        id_=b'first',
+        prev_id=b'',
+        proposer_id=nodes[1],
+        number=0,
+        term_num=0,
+        round_num=1,
+        prev_votes=[]
+    )
     message_container.add_data(candidate)
     # Term을 가지고 있는게 나을듯
     prev_votes = []
@@ -75,8 +93,16 @@ async def test_candidate_change_by_data():
 @pytest.mark.asyncio
 async def test_raise_block_sync_by_vote():
 
-    candidate, message_container, nodes = init_container()
-    # Term을 가지고 있는게 나을듯
+    message_container, nodes = init_container()
+    candidate = DefaultData(
+        id_=b'first',
+        prev_id=b'',
+        proposer_id=nodes[1],
+        number=0,
+        term_num=0,
+        round_num=1,
+        prev_votes=[]
+    )
     for i, node in enumerate(nodes):
         vote_factory = DefaultVoteFactory(node)
         vote = await vote_factory.create_vote(b'first', b'', 0, 1)
@@ -94,8 +120,16 @@ async def test_raise_block_sync_by_vote():
 
 @pytest.mark.asyncio
 async def test_raise_block_sync_by_data():
-    candidate, message_container, nodes = init_container()
-    # Term을 가지고 있는게 나을듯
+    message_container, nodes = init_container()
+    candidate = DefaultData(
+        id_=b'first',
+        prev_id=b'',
+        proposer_id=nodes[1],
+        number=0,
+        term_num=0,
+        round_num=1,
+        prev_votes=[]
+    )
     prev_votes = []
     for i, node in enumerate(nodes):
         vote_factory = DefaultVoteFactory(node)
@@ -134,13 +168,4 @@ def init_container():
     )
     term = RotateTerm(0, nodes)
     message_container = MessageContainer(term, genesis_data)
-    candidate = DefaultData(
-        id_=b'first',
-        prev_id=b'',
-        proposer_id=nodes[1],
-        number=0,
-        term_num=0,
-        round_num=1,
-        prev_votes=[]
-    )
-    return candidate, message_container, nodes
+    return message_container, nodes
