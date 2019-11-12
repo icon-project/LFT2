@@ -4,6 +4,7 @@ from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.events import ReceivedDataEvent, StartRoundEvent, ReceivedVoteEvent, SyncRequestEvent
+from lft.consensus.round import Candidate
 from tests.order_layer.setup_order_layer import setup_order_layer
 
 
@@ -53,8 +54,9 @@ async def test_change_by_data():
     )
 
     # THEN
-    assert order_layer._message_container.candidate_data == change_candidate_data
-    sync_layer.change_candidate.assert_called_once_with(change_candidate_data, prev_votes[:3])
+    candidate = Candidate(change_candidate_data, prev_votes)
+    assert order_layer._message_container.candidate == candidate
+    sync_layer.change_candidate.assert_called_once_with(candidate)
 
 
 @pytest.mark.asyncio
@@ -92,8 +94,9 @@ async def test_change_by_vote():
             ReceivedVoteEvent(vote)
         )
     # THEN
-    assert order_layer._message_container.candidate_data == change_candidate_data
-    sync_layer.change_candidate.assert_called_once_with(change_candidate_data, prev_votes[:3])
+    candidate = Candidate(change_candidate_data, prev_votes[:3])
+    assert order_layer._message_container.candidate == candidate
+    sync_layer.change_candidate.assert_called_once_with(candidate)
 
 
 @pytest.mark.asyncio

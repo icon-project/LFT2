@@ -7,7 +7,7 @@ from lft.consensus.data import DataFactory, Data
 from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent, \
     SyncRequestEvent
 from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter, ReachCandidate, NeedSync, \
-    NotReachCandidate, AlreadyCandidate
+    NotReachCandidate, AlreadyCandidate, AlreadySync
 from lft.consensus.layers import SyncLayer, RoundLayer
 from lft.consensus.round import Candidate
 from lft.consensus.term import Term
@@ -51,24 +51,25 @@ class OrderLayer(EventRegister):
     async def _on_event_received_data(self, event: ReceivedDataEvent):
         try:
             await self._receive_data(event.data)
-        except (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter):
+        except (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter, AlreadySync):
             pass
 
     async def _on_event_received_vote(self, event: ReceivedVoteEvent):
         try:
             await self._receive_vote(event.vote)
-        except (InvalidTerm, InvalidRound, InvalidVoter):
+        except (InvalidTerm, InvalidRound, InvalidVoter, AlreadySync):
             pass
 
     async def _on_event_done_round(self, event: DoneRoundEvent):
         if event.is_success:
-            self._message_container.candidate_data = event.candidate_data
+            self._message_container.candidate = Candidate(event.candidate_data, event.candidate_votes)
             await self._sync_layer.done_round(event.candidate_data)
 
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
         self._round_num = round_num
-        self._message_container = MessageContainer(term, candidate_data)
+        candidate = Candidate(candidate_data, votes)
+        self._message_container = MessageContainer(term, candidate)
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
@@ -146,8 +147,8 @@ class OrderLayer(EventRegister):
     def _verify_acceptable_round_message(self, message):
         if message.term_num != self._term.num:
             raise InvalidTerm(message.term_num, self._term.num)
-        elif message.round_num < self._message_container.candidate_data.round_num:
-            if message.term_num == self._message_container.candidate_data.term_num:
+        elif message.round_num < self._message_container.candidate.data.round_num:
+            if message.term_num == self._message_container.candidate.data.term_num:
                 raise InvalidRound(message.round_num, self._round_num)
 
     def _verify_acceptable_vote(self, vote: Vote):
@@ -181,27 +182,27 @@ Votes = Dict[int, Dict[int, OrderedDict[bytes, Data]]]
 
 
 class MessageContainer:
-    def __init__(self, term: Term, candidate_data: Data):
+    def __init__(self, term: Term, candidate : Candidate):
         self._term: Term = term
         self._prev_term: Term = None
-        self._candidate_data = candidate_data
+        self._candidate: Candidate = candidate
         self._datums = defaultdict(OrderedDict)  # [round_num][data_id][data]
         self._votes = defaultdict(lambda: defaultdict(OrderedDict))  # [round_num][data_id][vote_id][vote]
         self._sync_request_datums = []
 
     @property
-    def candidate_data(self) -> Data:
-        return self._candidate_data
+    def candidate(self) -> Candidate:
+        return self._candidate
 
-    @candidate_data.setter
-    def candidate_data(self, candidate_data: Data):
-        self._candidate_data = candidate_data
+    @candidate.setter
+    def candidate(self, candidate: Candidate):
+        self._candidate = candidate
         for round_num in list(self._datums.keys()):
-            if round_num < candidate_data.round_num:
+            if round_num < candidate.data.round_num:
                 del self._datums[round_num]
 
         for round_num in list(self._votes.keys()):
-            if round_num < candidate_data.round_num:
+            if round_num < candidate.data.round_num:
                 del self._votes[round_num]
 
     @property
@@ -224,22 +225,22 @@ class MessageContainer:
         self._votes[vote.round_num][vote.data_id][vote.voter_id] = vote
 
     def _verify_acceptable_message(self, message):
-        if message.term_num == self.candidate_data.term_num:
-            if message.round_num < self.candidate_data.round_num:
-                raise InvalidRound(message.round_num, self.candidate_data.round_num)
-        elif message.term_num < self.candidate_data.term_num:
+        if message.term_num == self.candidate.data.term_num:
+            if message.round_num < self.candidate.data.round_num:
+                raise InvalidRound(message.round_num, self.candidate.data.round_num)
+        elif message.term_num < self.candidate.data.term_num:
             raise InvalidTerm(message.term_num, self.term.num)
 
     def get_reach_candidate(self, term_num: int, round_num: int, data_id: bytes) -> Candidate:
-        if data_id == self.candidate_data.id:
+        if data_id == self.candidate.data.id:
             raise AlreadyCandidate
 
         same_data_id_votes = self._votes[round_num][data_id]
 
         if len(same_data_id_votes) >= self.term.quorum_num:
             self._verify_missing_data(term_num, round_num, data_id)
-            return Candidate(self._datums[round_num][data_id],
-                             same_data_id_votes.values())
+            self._candidate = Candidate(self._datums[round_num][data_id], list(same_data_id_votes.values()))
+            return self._candidate
 
         raise NotReachCandidate
 
@@ -258,10 +259,12 @@ class MessageContainer:
         except KeyError:
             self._raise_need_sync(data_id)
         else:
-            if data.number != self.candidate_data.number and data.prev_id != self.candidate_data.id:
+            if data.number != self.candidate.data.number and data.prev_id != self.candidate.data.id:
                 self._raise_need_sync(data_id)
 
     def _raise_need_sync(self, data_id):
         if data_id not in self._sync_request_datums:
             self._sync_request_datums.append(data_id)
-            raise NeedSync(self.candidate_data.id, data_id)
+            raise NeedSync(self.candidate.data.id, data_id)
+        else:
+            raise AlreadySync(data_id)

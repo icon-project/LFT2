@@ -40,6 +40,11 @@ class AlreadyCandidate(Exception):
     pass
 
 
+class AlreadySync(Exception):
+    def __init__(self, data_id: bytes):
+        self.data_id = data_id
+
+
 class DataIDNotFound(Exception):
     pass
 
