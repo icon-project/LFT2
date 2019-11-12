@@ -1,9 +1,9 @@
 import logging
 from typing import DefaultDict, OrderedDict, Optional, Sequence
-from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent
 from lft.consensus.messages.data import Data, DataFactory
 from lft.consensus.messages.vote import Vote, VoteFactory
 from lft.consensus.round import Candidate
+from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.term import Term
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
@@ -118,14 +118,14 @@ class SyncLayer:
         await self._round_layer.change_candidate(candidate)
 
     async def _raise_received_consensus_data(self, delay: float, data: Data):
-        event = ReceivedDataEvent(data)
+        event = ReceiveDataEvent(data)
         event.deterministic = False
 
         mediator = self._event_system.get_mediator(DelayedEventMediator)
         mediator.execute(delay, event)
 
     async def _raise_received_consensus_vote(self, delay: float, vote: Vote):
-        event = ReceivedVoteEvent(vote)
+        event = ReceiveVoteEvent(vote)
         event.deterministic = False
 
         mediator = self._event_system.get_mediator(DelayedEventMediator)

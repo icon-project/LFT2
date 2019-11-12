@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, DefaultDict, Set
 from lft.event import EventRegister, EventSystem
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent, RoundStartEvent)
+                                  ReceiveDataEvent, ReceiveVoteEvent, RoundStartEvent)
 
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ class Network(EventRegister):
         self._datums[data.round_num].add(data)
 
         if data.round_num == self._round_num:
-            event = ReceivedDataEvent(data)
+            event = ReceiveDataEvent(data)
             event.deterministic = False
 
             delay = self.random_delay()
@@ -45,7 +45,7 @@ class Network(EventRegister):
         self._votes[vote.round_num].add(vote)
 
         if vote.round_num == self._round_num:
-            event = ReceivedVoteEvent(vote)
+            event = ReceiveVoteEvent(vote)
             event.deterministic = False
 
             delay = self.random_delay()
@@ -68,13 +68,13 @@ class Network(EventRegister):
     def _on_event_start_round(self, event: 'RoundStartEvent'):
         self._round_num = event.round_num
         for data in self._datums[event.round_num]:
-            received_data_event = ReceivedDataEvent(data)
+            received_data_event = ReceiveDataEvent(data)
             received_data_event.deterministic = False
 
             self._delayed_mediator.execute(0, received_data_event)
 
         for vote in self._votes[event.round_num]:
-            received_vote_event = ReceivedVoteEvent(vote)
+            received_vote_event = ReceiveVoteEvent(vote)
             received_vote_event.deterministic = False
 
             self._delayed_mediator.execute(0, received_vote_event)

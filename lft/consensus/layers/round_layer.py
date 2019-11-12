@@ -5,7 +5,7 @@ from lft.consensus.round import Round, Candidate
 from lft.consensus.messages.data import Data, DataVerifier, DataFactory
 from lft.consensus.messages.vote import Vote, VoteVerifier, VoteFactory
 from lft.consensus.events import (RoundEndEvent, BroadcastDataEvent, BroadcastVoteEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent, ChangedCandidateEvent)
+                                  ReceiveDataEvent, ReceiveVoteEvent, ChangedCandidateEvent)
 from lft.consensus.term import Term
 from lft.consensus.exceptions import InvalidProposer, AlreadyCompleted, AlreadyVoted, CannotComplete
 from lft.event import EventSystem
@@ -102,7 +102,7 @@ class RoundLayer:
             )
         )
         self._event_system.simulator.raise_event(
-            ReceivedDataEvent(
+            ReceiveDataEvent(
                 data=data
             )
         )
@@ -113,7 +113,7 @@ class RoundLayer:
                 vote=vote)
         )
         self._event_system.simulator.raise_event(
-            ReceivedVoteEvent(
+            ReceiveVoteEvent(
                 vote=vote
             )
         )

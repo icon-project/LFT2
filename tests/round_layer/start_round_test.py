@@ -19,8 +19,9 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.messages.data import Data, Vote
-from lft.consensus.events import BroadcastDataEvent, ReceivedDataEvent
+from lft.consensus.messages.data import Data
+from lft.consensus.messages.vote import Vote
+from lft.consensus.events import BroadcastDataEvent, ReceiveDataEvent
 from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, get_event, verify_no_events
 
 PEER_NUM = 7
@@ -140,8 +141,8 @@ async def verify_data_events(event_system, prev_id, round_num, proposer_id, term
     assert broadcast_data_event.data.term_num == term_num
     assert broadcast_data_event.data.number == number
 
-    received_data_event: ReceivedDataEvent = await get_event(event_system)
-    assert isinstance(received_data_event, ReceivedDataEvent)
+    received_data_event: ReceiveDataEvent = await get_event(event_system)
+    assert isinstance(received_data_event, ReceiveDataEvent)
     assert received_data_event.data == broadcast_data_event.data
 
     return received_data_event.data

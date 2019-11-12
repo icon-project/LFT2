@@ -1,14 +1,13 @@
 import logging
+from collections import defaultdict
 from typing import Optional, Sequence, OrderedDict, Dict
 
-from collections import defaultdict
-
-from lft.consensus.events import (InitializeEvent, RoundStartEvent, RoundEndEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent, SyncRequestEvent)
-from lft.consensus.exceptions import (InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter,
-                                      AlreadySync, AlreadyCandidate, NotReachCandidate, NeedSync)
-from lft.consensus.layers import SyncLayer
 from lft.consensus.round import Candidate
+from lft.consensus.events import (InitializeEvent, RoundStartEvent, RoundEndEvent,
+                                  ReceiveDataEvent, ReceiveVoteEvent, SyncRequestEvent)
+from lft.consensus.exceptions import (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter,
+                                      AlreadySync, AlreadyCandidate, NotReachCandidate,NeedSync)
+from lft.consensus.layers import SyncLayer
 from lft.consensus.term import Term
 from lft.consensus.messages.data import DataFactory, Data
 from lft.consensus.messages.vote import VoteFactory, Vote
@@ -48,13 +47,13 @@ class OrderLayer(EventRegister):
     async def _on_event_start_round(self, event: RoundStartEvent):
         await self._round_start(event.term, event.round_num)
 
-    async def _on_event_received_data(self, event: ReceivedDataEvent):
+    async def _on_event_received_data(self, event: ReceiveDataEvent):
         try:
             await self._receive_data(event.data)
         except (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter, AlreadySync):
             pass
 
-    async def _on_event_received_vote(self, event: ReceivedVoteEvent):
+    async def _on_event_received_vote(self, event: ReceiveVoteEvent):
         try:
             await self._receive_vote(event.vote)
         except (InvalidTerm, InvalidRound, InvalidVoter, AlreadySync):
@@ -172,8 +171,8 @@ class OrderLayer(EventRegister):
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
         RoundStartEvent: _on_event_start_round,
-        ReceivedDataEvent: _on_event_received_data,
-        ReceivedVoteEvent: _on_event_received_vote,
+        ReceiveDataEvent: _on_event_received_data,
+        ReceiveVoteEvent: _on_event_received_vote,
         RoundEndEvent: _on_event_done_round
     }
 

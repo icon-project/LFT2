@@ -3,7 +3,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.events import ReceivedDataEvent, StartRoundEvent, ReceivedVoteEvent, SyncRequestEvent
+from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent, RoundStartEvent, SyncRequestEvent
 from lft.consensus.round import Candidate
 from tests.order_layer.setup_order_layer import setup_order_layer
 
@@ -22,10 +22,10 @@ async def test_change_by_data():
         prev_votes=[]
     )
     await order_layer._on_event_received_data(
-        ReceivedDataEvent(change_candidate_data)
+        ReceiveDataEvent(change_candidate_data)
     )
     await order_layer._on_event_start_round(
-        StartRoundEvent(
+        RoundStartEvent(
             term=RotateTerm(0, voters),
             round_num=2
         )
@@ -40,7 +40,7 @@ async def test_change_by_data():
                   for vote_factory in vote_factories]
 
     await order_layer._on_event_received_data(
-        ReceivedDataEvent(
+        ReceiveDataEvent(
             DefaultData(
                 id_=b'second',
                 prev_id=b'first',
@@ -72,10 +72,10 @@ async def test_change_by_vote():
         prev_votes=[]
     )
     await order_layer._on_event_received_data(
-        ReceivedDataEvent(change_candidate_data)
+        ReceiveDataEvent(change_candidate_data)
     )
     await order_layer._on_event_start_round(
-        StartRoundEvent(
+        RoundStartEvent(
             term=RotateTerm(0, voters),
             round_num=2
         )
@@ -91,7 +91,7 @@ async def test_change_by_vote():
 
     for vote in prev_votes:
         await order_layer._on_event_received_vote(
-            ReceivedVoteEvent(vote)
+            ReceiveVoteEvent(vote)
         )
     # THEN
     candidate = Candidate(change_candidate_data, prev_votes[:3])
@@ -114,7 +114,7 @@ async def test_change_by_data_with_missing_data():
     )
 
     await order_layer._on_event_start_round(
-        StartRoundEvent(
+        RoundStartEvent(
             term=RotateTerm(0, voters),
             round_num=2
         )
@@ -129,7 +129,7 @@ async def test_change_by_data_with_missing_data():
                   for vote_factory in vote_factories]
 
     await order_layer._on_event_received_data(
-        ReceivedDataEvent(
+        ReceiveDataEvent(
             DefaultData(
                 id_=b'second',
                 prev_id=b'first',
@@ -161,7 +161,7 @@ async def test_change_by_vote_with_missing_data():
     )
 
     await order_layer._on_event_start_round(
-        StartRoundEvent(
+        RoundStartEvent(
             term=RotateTerm(0, voters),
             round_num=2
         )
@@ -177,7 +177,7 @@ async def test_change_by_vote_with_missing_data():
 
     for vote in prev_votes:
         await order_layer._on_event_received_vote(
-            ReceivedVoteEvent(vote)
+            ReceiveVoteEvent(vote)
         )
     event_system.simulator.raise_event.assert_called_once_with(
         SyncRequestEvent(b'genesis', b'first')

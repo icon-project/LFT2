@@ -15,12 +15,12 @@ class InitializeEvent(Event):
 
 
 @dataclass
-class ReceivedDataEvent(Event):
+class ReceiveDataEvent(Event):
     data: 'Data'
 
 
 @dataclass
-class ReceivedVoteEvent(Event):
+class ReceiveVoteEvent(Event):
     vote: 'Vote'
 
 
@@ -48,12 +48,6 @@ class RoundEndEvent(Event):
     candidate_data: Optional['Data']
     commit_id: Optional['bytes']
     candidate_votes: Sequence['Vote']
-
-
-@dataclass
-class StartRoundEvent(Event):
-    term: Term
-    round_num: int
 
 
 @dataclass

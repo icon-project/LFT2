@@ -1,7 +1,7 @@
 import pytest
 
 from lft.app.vote import DefaultVote
-from lft.consensus.events import ReceivedVoteEvent
+from lft.consensus.events import ReceiveVoteEvent
 from tests.order_layer.setup_order_layer import setup_order_layer
 
 
@@ -18,7 +18,7 @@ async def test_receive_now_round_vote():
         round_num=1
     )
     # WHEN
-    await order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
+    await order_layer._on_event_received_vote(ReceiveVoteEvent(vote))
     # THEN
     sync_layer.receive_vote.assert_called_once_with(vote)
 
@@ -36,7 +36,7 @@ async def test_receive_past_vote():
         round_num=0
     )
     # WHEN
-    await order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
+    await order_layer._on_event_received_vote(ReceiveVoteEvent(vote))
     # THEN
     sync_layer.receive_vote.assert_not_called()
 
@@ -54,7 +54,7 @@ async def test_receive_future_vote():
         round_num=10
     )
     # WHEN
-    await order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
+    await order_layer._on_event_received_vote(ReceiveVoteEvent(vote))
     # THEN
     votes = order_layer._get_votes(10)
     assert len(votes) == 1
@@ -74,7 +74,7 @@ async def test_receive_invalid_term_vote():
         round_num=0
     )
     # WHEN
-    await order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
+    await order_layer._on_event_received_vote(ReceiveVoteEvent(vote))
     # THEN
     sync_layer.receive_vote.assert_not_called()
     assert len(order_layer._get_votes(0)) == 0
@@ -93,7 +93,7 @@ async def test_receive_invalid_voter_vote():
         round_num=1
     )
     # WHEN
-    await order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
+    await order_layer._on_event_received_vote(ReceiveVoteEvent(vote))
     # THEN
     sync_layer.receive_vote.assert_not_called()
     assert len(order_layer._get_votes(1)) == 0

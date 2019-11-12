@@ -19,7 +19,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.messages.data import Data
-from lft.consensus.events import RoundEndEvent, BroadcastVoteEvent, ReceivedVoteEvent
+from lft.consensus.events import RoundEndEvent, BroadcastVoteEvent, ReceiveVoteEvent
 from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 
 PEER_NUM = 7
@@ -60,7 +60,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
 
     # pop unnecessary event
     my_vote: BroadcastVoteEvent = await get_event(event_system)
-    my_vote: ReceivedVoteEvent = await get_event(event_system)
+    my_vote: ReceiveVoteEvent = await get_event(event_system)
 
     # WHEN
     async def do_vote(vote):
