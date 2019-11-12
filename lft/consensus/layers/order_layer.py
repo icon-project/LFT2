@@ -65,7 +65,7 @@ class OrderLayer(EventRegister):
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
         self._round_num = round_num
-        self._message_container = MessageContainer(candidate_data)
+        self._message_container = MessageContainer(term, candidate_data)
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
@@ -85,17 +85,27 @@ class OrderLayer(EventRegister):
     async def _receive_data(self, data: Data):
         self._verify_acceptable_data(data)
 
-        if self._round_num == data.round_num:
-            await self._sync_layer.receive_data(data)
-        else:
+        try:
             self._save_data(data)
+        except ReachCandidate as e:
+            self._sync_layer.change_candidate(e.candidate, e.votes)
+        except NeedSync as e:
+            pass
+        finally:
+            if self._round_num == data.round_num:
+                await self._sync_layer.receive_data(data)
 
     async def _receive_vote(self, vote: Vote):
         self._verify_acceptable_vote(vote)
-        if vote.round_num == self._round_num:
-            await self._sync_layer.receive_vote(vote)
-        else:
+        try:
             self._save_vote(vote)
+        except ReachCandidate as e:
+            self._sync_layer.change_candidate(e.candidate, e.votes)
+        except NeedSync as e:
+            pass
+        finally:
+            if vote.round_num == self._round_num:
+                await self._sync_layer.receive_vote(vote)
 
     def _verify_acceptable_start_round(self, term: Term, round_num: int):
         if term.num == self._term.num:
@@ -115,8 +125,9 @@ class OrderLayer(EventRegister):
     def _verify_acceptable_round_message(self, message):
         if message.term_num != self._term.num:
             raise InvalidTerm(message.term_num, self._term.num)
-        elif message.round_num < self._round_num:
-            raise InvalidRound(message.round_num, self._round_num)
+        elif message.round_num < self._message_container.candidate_data.round_num:
+            if message.term_num == self._message_container.candidate_data.term_num:
+                raise InvalidRound(message.round_num, self._round_num)
 
     def _verify_acceptable_vote(self, vote: Vote):
         self._verify_acceptable_round_message(vote)
@@ -195,7 +206,7 @@ class MessageContainer:
                     raise NeedSync(self.candidate_data.id, vote.data_id)
             else:
                 self.candidate_data = data
-                raise ReachCandidate(data, same_data_votes.values())
+                raise ReachCandidate(data, list(same_data_votes.values()))
 
     def add_data(self, data: Data):
         if data.round_num < self.candidate_data.round_num:

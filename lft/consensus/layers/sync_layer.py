@@ -174,6 +174,9 @@ class SyncLayer:
         return any(len(votes) >= self._term.quorum_num and not _first(votes.values()).is_not()
                    for votes in self._votes.votes_by_data_id.values())
 
+    def change_candidate(self, candidate_data: Data, candidate_votes: Sequence[Vote]):
+        pass
+
 
 Datums = OrderedDict[bytes, Data]
 
