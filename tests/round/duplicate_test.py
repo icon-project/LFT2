@@ -15,7 +15,7 @@ async def test_vote_duplicate():
     voters = [os.urandom(16) for _ in range(7)]
 
     term = RotateTerm(term_num, voters)
-    round_messages = RoundMessages(round_num, term)
+    round_messages = RoundMessages(term)
 
     data = await DefaultDataFactory(voters[0]).create_data(0, b'', term_num, round_num, [])
     vote = await DefaultVoteFactory(voters[0]).create_vote(data.id, b'', term_num, term_num)

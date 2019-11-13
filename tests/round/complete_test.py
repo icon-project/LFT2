@@ -10,12 +10,12 @@ from lft.consensus.exceptions import CannotComplete
 
 @pytest.mark.asyncio
 async def test_complete_round_success():
-    term, round_, data, voters = await setup()
+    term, round_num, round_messages, data, voters = await setup()
 
-    last_vote = await DefaultVoteFactory(voters[-1]).create_vote(data.id, b'', term.num, round_.num)
-    round_.add_vote(last_vote)
-    round_.complete()
-    candidate = round_.result()
+    last_vote = await DefaultVoteFactory(voters[-1]).create_vote(data.id, b'', term.num, round_num)
+    round_messages.add_vote(last_vote)
+    round_messages.complete()
+    candidate = round_messages.result()
 
     assert candidate.data.proposer_id == voters[0]
     assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
@@ -23,13 +23,13 @@ async def test_complete_round_success():
 
 @pytest.mark.asyncio
 async def test_complete_round_failure_none():
-    term, round_, data, voters = await setup()
+    term, round_num, round_messages, data, voters = await setup()
 
     for voter in voters[term.quorum_num - 1:]:
-        vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_.num)
-        round_.add_vote(vote)
-    round_.complete()
-    candidate = round_.result()
+        vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_num)
+        round_messages.add_vote(vote)
+    round_messages.complete()
+    candidate = round_messages.result()
 
     assert candidate.data is None
     assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
@@ -37,13 +37,13 @@ async def test_complete_round_failure_none():
 
 @pytest.mark.asyncio
 async def test_complete_round_failure_not():
-    term, round_, data, voters = await setup()
+    term, round_num, round_messages, data, voters = await setup()
 
     for voter in voters[term.quorum_num - 1:]:
-        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_.num)
-        round_.add_vote(vote)
-    round_.complete()
-    candidate = round_.result()
+        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_num)
+        round_messages.add_vote(vote)
+    round_messages.complete()
+    candidate = round_messages.result()
 
     assert candidate.data is None
     assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
@@ -51,18 +51,18 @@ async def test_complete_round_failure_not():
 
 @pytest.mark.asyncio
 async def test_complete_round_failure_none_not():
-    term, round_, data, voters = await setup()
+    term, round_num, round_messages, data, voters = await setup()
 
     for voter in voters[term.quorum_num - 1:-1]:
-        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_.num)
-        round_.add_vote(vote)
+        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_num)
+        round_messages.add_vote(vote)
 
     voter = voters[-1]
-    vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_.num)
-    round_.add_vote(vote)
+    vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_num)
+    round_messages.add_vote(vote)
 
-    round_.complete()
-    candidate = round_.result()
+    round_messages.complete()
+    candidate = round_messages.result()
 
     assert candidate.data is None
     assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
@@ -74,7 +74,7 @@ async def setup():
 
     voters = [os.urandom(16) for _ in range(7)]
     term = RotateTerm(term_num, voters)
-    round_messages = RoundMessages(round_num, term)
+    round_messages = RoundMessages(term)
 
     # ValueError(Sequence empty)
     with pytest.raises(CannotComplete):
@@ -95,4 +95,4 @@ async def setup():
     with pytest.raises(CannotComplete):
         round_messages.complete()
 
-    return term, round_messages, data, voters
+    return term, round_num, round_messages, data, voters

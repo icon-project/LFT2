@@ -10,9 +10,8 @@ Votes = DefaultDict[bytes, List[Vote]]  # dict[data_id][0] = vote
 
 
 class RoundMessages:
-    def __init__(self, num: int, term: Term):
-        self.num = num
-        self.term = term
+    def __init__(self, term: Term):
+        self._term = term
 
         self._datums: Datums = {}
         self._votes: Votes = DefaultDict(list)
@@ -50,9 +49,9 @@ class RoundMessages:
             raise CannotComplete(f"Datums is empty. {self._datums}")
 
         majority = len(self._votes[max_data_id])
-        if self.term.quorum_num > majority and self.term.voters_num != len(self._voters):
-            raise CannotComplete(f"Majority({majority}) does not reach quorum({self.term.quorum_num} or "
-                                 f"All voters have not voted. ({len(self._voters)}/{self.term.voters_num})")
+        if self._term.quorum_num > majority and self._term.voters_num != len(self._voters):
+            raise CannotComplete(f"Majority({majority}) does not reach quorum({self._term.quorum_num} or "
+                                 f"All voters have not voted. ({len(self._voters)}/{self._term.voters_num})")
 
         vote = self._votes[max_data_id][0]
         if not vote.is_not() and not vote.is_none():
@@ -74,7 +73,7 @@ class RoundMessages:
         if vote.is_none() or vote.is_not():
             return Candidate(None, candidate_votes)
 
-        if self.term.quorum_num > len(unordered_votes):
+        if self._term.quorum_num > len(unordered_votes):
             return Candidate(None, candidate_votes)
         try:
             candidate_data = self._datums[candidate_data_id]
@@ -88,7 +87,7 @@ class RoundMessages:
 
     def _order_votes(self, votes: List[Vote]):
         ordered_votes = []
-        for voter in self.term.voters:
+        for voter in self._term.voters:
             ordered_vote = next((vote for vote in votes if vote.voter_id == voter), None)
             ordered_votes.append(ordered_vote)
         return ordered_votes

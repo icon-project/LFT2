@@ -25,12 +25,14 @@ class RoundLayer:
 
         self._candidate: Candidate = None
         self._messages: RoundMessages = None
+
         self._term: Term = None
+        self._round_num = -1
+
         self._node_id: bytes = node_id
         self._is_voted = False
 
-    async def initialize(self, term: Term, round_num: int, candidate_data: Data,
-                         votes: Sequence[Vote]):
+    async def initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence[Vote]):
         self._data_verifier = await self._data_factory.create_data_verifier()
         self._vote_verifier = await self._vote_factory.create_vote_verifier()
 
@@ -80,7 +82,7 @@ class RoundLayer:
             )
         )
         if candidate.data.term_num == self._term.num:
-            if candidate.data.round_num > self._messages.num:
+            if candidate.data.round_num > self._round_num:
                 await self._start_new_round(self._term, candidate.data.round_num)
 
     async def _update_round_if_complete(self):
@@ -124,7 +126,7 @@ class RoundLayer:
             round_end = RoundEndEvent(
                 is_success=True,
                 term_num=self._term.num,
-                round_num=self._messages.num,
+                round_num=self._round_num,
                 candidate_votes=candidate.votes,
                 candidate_data=candidate.data,
                 commit_id=candidate.data.prev_id
@@ -133,7 +135,7 @@ class RoundLayer:
             round_end = RoundEndEvent(
                 is_success=False,
                 term_num=self._term.num,
-                round_num=self._messages.num,
+                round_num=self._round_num,
                 candidate_votes=candidate.votes,
                 candidate_data=None,
                 commit_id=None
@@ -142,15 +144,13 @@ class RoundLayer:
 
     async def _start_new_round(self, term: Term, round_num: int):
         self._term = term
-        self._messages = RoundMessages(
-            num=round_num,
-            term=self._term
-        )
+        self._round_num = round_num
+        self._messages = RoundMessages(self._term)
         await self._create_data_if_proposer()
 
     async def _create_data_if_proposer(self):
         try:
-            self._term.verify_proposer(self._node_id, self._messages.num)
+            self._term.verify_proposer(self._node_id, self._round_num)
         except InvalidProposer:
             pass
         else:
@@ -158,7 +158,7 @@ class RoundLayer:
                 data_number=self._candidate.data.number + 1,
                 prev_id=self._candidate.data.id,
                 term_num=self._term.num,
-                round_num=self._messages.num,
+                round_num=self._round_num,
                 prev_votes=self._candidate.votes
             )
             await self._raise_broadcast_data(new_data)
@@ -167,11 +167,11 @@ class RoundLayer:
         if not data.is_not() and self._verify_is_connect_to_candidate(data) and await self._verify_data(data):
             vote = await self._vote_factory.create_vote(data_id=data.id,
                                                         commit_id=self._candidate.data.id,
-                                                        term_num=self._messages.term.num,
-                                                        round_num=self._messages.num)
+                                                        term_num=self._term.num,
+                                                        round_num=self._round_num)
         else:
-            vote = await self._vote_factory.create_none_vote(term_num=self._messages.term.num,
-                                                             round_num=self._messages.num)
+            vote = await self._vote_factory.create_none_vote(term_num=self._term.num,
+                                                             round_num=self._round_num)
         await self._raise_broadcast_vote(vote)
 
     def _verify_is_connect_to_candidate(self, data: Data) -> bool:
