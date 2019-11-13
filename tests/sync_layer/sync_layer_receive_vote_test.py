@@ -2,7 +2,7 @@ import random
 import pytest
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.layers.sync_layer import TIMEOUT_VOTE
-from lft.consensus.events import ReceivedVoteEvent
+from lft.consensus.events import ReceiveVoteEvent
 from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyVoted, AlreadyVoteReceived
 from lft.event.mediators import DelayedEventMediator
 from tests.sync_layer.setup_items import setup_items
@@ -125,7 +125,7 @@ async def test_sync_layer_reach_quorum(voter_num: int):
         for voter, call_args in zip(voters, mediator.execute.call_args_list):
             timeout, event = call_args[0]
             assert timeout == TIMEOUT_VOTE
-            assert isinstance(event, ReceivedVoteEvent)
+            assert isinstance(event, ReceiveVoteEvent)
             assert event.vote.is_not()
             assert event.vote.voter_id == voter
 

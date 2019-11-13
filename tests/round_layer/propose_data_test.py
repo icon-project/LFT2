@@ -16,7 +16,7 @@
 import pytest
 
 from lft.app.data import DefaultVote, DefaultData
-from lft.consensus.events import BroadcastVoteEvent, ReceivedVoteEvent
+from lft.consensus.events import BroadcastVoteEvent, ReceiveVoteEvent
 from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, LEADER_ID, verify_no_events
 
 PROPOSE_ID = b"b"
@@ -51,7 +51,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     assert event.vote.data_id == expected_vote_data_id
 
     non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
-    assert isinstance(event, ReceivedVoteEvent)
+    assert isinstance(event, ReceiveVoteEvent)
     assert event.vote.data_id == expected_vote_data_id
 
     # Test double propose

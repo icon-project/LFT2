@@ -3,14 +3,14 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVote
-from lft.consensus.events import ReceivedDataEvent, ReceivedVoteEvent, StartRoundEvent
+from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent, RoundStartEvent
 from lft.consensus.exceptions import InvalidTerm, InvalidRound
 from tests.order_layer.setup_order_layer import setup_order_layer
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("term_num,round_num", [(0, 2)])
-async def test_pass_messages_with_start_round(term_num, round_num):
+async def test_pass_messages_with_round_start(term_num, round_num):
     # GIVEN
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
 
@@ -35,17 +35,17 @@ async def test_pass_messages_with_start_round(term_num, round_num):
         )
         votes.append(vote)
 
-    await order_layer._on_event_received_data(ReceivedDataEvent(data))
+    await order_layer._on_event_receive_data(ReceiveDataEvent(data))
     for vote in votes:
-        await order_layer._on_event_received_vote(ReceivedVoteEvent(vote))
+        await order_layer._on_event_receive_vote(ReceiveVoteEvent(vote))
 
     sync_layer.receive_data.assert_not_called()
     sync_layer.receive_vote.assert_not_called()
 
     # WHEN
     term = RotateTerm(term_num, voters)
-    await order_layer._on_event_start_round(
-        StartRoundEvent(
+    await order_layer._on_event_round_start(
+        RoundStartEvent(
             term=term,
             round_num=round_num
         )
@@ -67,8 +67,8 @@ async def test_invalid_round_start(term_num, round_num):
 
     # WHEN
     try:
-        await order_layer._on_event_start_round(
-            StartRoundEvent(RotateTerm(term_num, voters), round_num)
+        await order_layer._on_event_round_start(
+            RoundStartEvent(RotateTerm(term_num, voters), round_num)
         )
     except InvalidTerm:
         if term_num == 0 or term_num == 1:

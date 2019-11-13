@@ -8,8 +8,6 @@ from lft.consensus.messages.data import Data, Vote
 
 @dataclass
 class InitializeEvent(Event):
-    """ application to async layer
-    """
     term: 'Term'
     round_num: int
     candidate_data: 'Data'
@@ -17,49 +15,39 @@ class InitializeEvent(Event):
 
 
 @dataclass
-class ReceivedDataEvent(Event):
-    """ from application to async layer
-    """
+class ReceiveDataEvent(Event):
     data: 'Data'
 
 
 @dataclass
-class ReceivedVoteEvent(Event):
-    """ from application to async layer
-    """
+class ReceiveVoteEvent(Event):
     vote: 'Vote'
 
 
 @dataclass
 class BroadcastDataEvent(Event):
-    """ from sync layer to application
-    """
     data: 'Data'
 
 
 @dataclass
 class BroadcastVoteEvent(Event):
-    """ from sync layer to application
-    """
     vote: 'Vote'
 
 
 @dataclass
-class DoneRoundEvent(Event):
-    """ from sync layer to its async layer and application
-    """
+class RoundStartEvent(Event):
+    term: Term
+    round_num: int
+
+
+@dataclass
+class RoundEndEvent(Event):
     is_success: bool
     term_num: int
     round_num: int
     candidate_data: Optional['Data']
     commit_id: Optional['bytes']
     candidate_votes: Sequence['Vote']
-
-
-@dataclass
-class StartRoundEvent(Event):
-    term: Term
-    round_num: int
 
 
 @dataclass

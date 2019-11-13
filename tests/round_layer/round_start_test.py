@@ -19,15 +19,16 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.messages.data import Data, Vote
-from lft.consensus.events import BroadcastDataEvent, ReceivedDataEvent
+from lft.consensus.messages.data import Data
+from lft.consensus.messages.vote import Vote
+from lft.consensus.events import BroadcastDataEvent, ReceiveDataEvent
 from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, get_event, verify_no_events
 
 PEER_NUM = 7
 
 
 @pytest.mark.asyncio
-async def test_start_round():
+async def test_round_start():
     """GIVEN a sync layer with init, and add complete that round
     WHEN run on_round_start
     THEN new round will be started and broadcast new data
@@ -40,11 +41,11 @@ async def test_start_round():
 
     # WHEN
     term = RotateTerm(0, voters)
-    await round_layer.start_round(
+    await round_layer.round_start(
         term=term,
         round_num=2
     )
-    # pop done_round
+    # pop round_end
     await get_event(event_system)
 
     # THEN
@@ -84,7 +85,7 @@ async def test_prev_round_is_failed():
 
     # WHEN
     term = RotateTerm(0, voters)
-    await round_layer.start_round(
+    await round_layer.round_start(
         term=term,
         round_num=2
     )
@@ -140,11 +141,11 @@ async def verify_data_events(event_system, prev_id, round_num, proposer_id, term
     assert broadcast_data_event.data.term_num == term_num
     assert broadcast_data_event.data.number == number
 
-    received_data_event: ReceivedDataEvent = await get_event(event_system)
-    assert isinstance(received_data_event, ReceivedDataEvent)
-    assert received_data_event.data == broadcast_data_event.data
+    receive_data_event: ReceiveDataEvent = await get_event(event_system)
+    assert isinstance(receive_data_event, ReceiveDataEvent)
+    assert receive_data_event.data == broadcast_data_event.data
 
-    return received_data_event.data
+    return receive_data_event.data
 
 
 def verify_prev_votes(consensus_data: Data, prev_id, round_num, term_num, commit_id, voters):

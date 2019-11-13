@@ -2,7 +2,7 @@ import pytest
 
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
-from lft.consensus.events import ReceivedDataEvent, StartRoundEvent
+from lft.consensus.events import ReceiveDataEvent, RoundStartEvent
 from tests.order_layer.setup_order_layer import setup_order_layer
 
 
@@ -23,8 +23,8 @@ async def test_receive_now_round_data():
                        prev_votes=[])
 
     # WHEN
-    await order_layer._on_event_received_data(
-        ReceivedDataEvent(data)
+    await order_layer._on_event_receive_data(
+        ReceiveDataEvent(data)
     )
 
     # THEN
@@ -44,8 +44,8 @@ async def test_receive_past_round_data():
                        prev_votes=[])
 
     # WHEN
-    await order_layer._on_event_received_data(
-        ReceivedDataEvent(data)
+    await order_layer._on_event_receive_data(
+        ReceiveDataEvent(data)
     )
 
     # THEN
@@ -55,8 +55,8 @@ async def test_receive_past_round_data():
 @pytest.mark.asyncio
 async def test_receive_past_term_data():
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
-    await order_layer._on_event_start_round(
-        StartRoundEvent(
+    await order_layer._on_event_round_start(
+        RoundStartEvent(
             term=RotateTerm(1, voters),
             round_num=0
         )
@@ -69,8 +69,8 @@ async def test_receive_past_term_data():
                        round_num=1,
                        prev_votes=[])
     # WHEN
-    await order_layer._on_event_received_data(
-        ReceivedDataEvent(data)
+    await order_layer._on_event_receive_data(
+        ReceiveDataEvent(data)
     )
 
     # THEN
@@ -91,8 +91,8 @@ async def test_receive_future_data():
                        prev_votes=[])
 
     # WHEN
-    await order_layer._on_event_received_data(
-        ReceivedDataEvent(data)
+    await order_layer._on_event_receive_data(
+        ReceiveDataEvent(data)
     )
 
     # THEN
@@ -104,8 +104,8 @@ async def test_receive_future_data():
 @pytest.mark.asyncio
 async def test_receive_future_term_data():
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
-    await order_layer._on_event_start_round(
-        StartRoundEvent(
+    await order_layer._on_event_round_start(
+        RoundStartEvent(
             term=RotateTerm(1, voters),
             round_num=0
         )
@@ -118,8 +118,8 @@ async def test_receive_future_term_data():
                        round_num=11,
                        prev_votes=[])
     # WHEN
-    await order_layer._on_event_received_data(
-        ReceivedDataEvent(data)
+    await order_layer._on_event_receive_data(
+        ReceiveDataEvent(data)
     )
 
     # THEN
@@ -130,8 +130,8 @@ async def test_receive_future_term_data():
 @pytest.mark.asyncio
 async def test_receive_past_term_data():
     order_layer, sync_layer, voters, event_system = await setup_order_layer()
-    await order_layer._on_event_start_round(
-        StartRoundEvent(
+    await order_layer._on_event_round_start(
+        RoundStartEvent(
             term=RotateTerm(1, voters),
             round_num=0
         )
@@ -144,8 +144,8 @@ async def test_receive_past_term_data():
                        round_num=1,
                        prev_votes=[])
     # WHEN
-    await order_layer._on_event_received_data(
-        ReceivedDataEvent(data)
+    await order_layer._on_event_receive_data(
+        ReceiveDataEvent(data)
     )
 
     # THEN

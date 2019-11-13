@@ -1,16 +1,15 @@
 import logging
+from collections import defaultdict
 from typing import Optional, Sequence, OrderedDict, Dict
 
-from collections import defaultdict
-
-from lft.consensus.messages.data import DataFactory, Data
-from lft.consensus.events import InitializeEvent, StartRoundEvent, DoneRoundEvent, ReceivedDataEvent, ReceivedVoteEvent, \
-    SyncRequestEvent
-from lft.consensus.exceptions import InvalidTerm, InvalidProposer, InvalidRound, InvalidVoter, NeedSync, \
-    NotReachCandidate, AlreadyCandidate, AlreadySync
-from lft.consensus.layers import SyncLayer
 from lft.consensus.round import Candidate
+from lft.consensus.events import (InitializeEvent, RoundStartEvent, RoundEndEvent,
+                                  ReceiveDataEvent, ReceiveVoteEvent, SyncRequestEvent)
+from lft.consensus.exceptions import (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter,
+                                      AlreadySync, AlreadyCandidate, NotReachCandidate,NeedSync)
+from lft.consensus.layers import SyncLayer
 from lft.consensus.term import Term
+from lft.consensus.messages.data import DataFactory, Data
 from lft.consensus.messages.vote import VoteFactory, Vote
 from lft.event import EventRegister, EventSystem
 
@@ -45,25 +44,25 @@ class OrderLayer(EventRegister):
             votes=event.votes
         )
 
-    async def _on_event_start_round(self, event: StartRoundEvent):
+    async def _on_event_round_start(self, event: RoundStartEvent):
         await self._round_start(event.term, event.round_num)
 
-    async def _on_event_received_data(self, event: ReceivedDataEvent):
+    async def _on_event_receive_data(self, event: ReceiveDataEvent):
         try:
             await self._receive_data(event.data)
         except (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter, AlreadySync):
             pass
 
-    async def _on_event_received_vote(self, event: ReceivedVoteEvent):
+    async def _on_event_receive_vote(self, event: ReceiveVoteEvent):
         try:
             await self._receive_vote(event.vote)
         except (InvalidTerm, InvalidRound, InvalidVoter, AlreadySync):
             pass
 
-    async def _on_event_done_round(self, event: DoneRoundEvent):
+    async def _on_event_round_end(self, event: RoundEndEvent):
         if event.is_success:
             self._message_container.candidate = Candidate(event.candidate_data, event.candidate_votes)
-            await self._sync_layer.done_round(event.candidate_data)
+            await self._sync_layer.round_end(event.candidate_data)
 
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
@@ -74,11 +73,11 @@ class OrderLayer(EventRegister):
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
     async def _round_start(self, term: Term, round_num: int):
-        self._verify_acceptable_start_round(term, round_num)
+        self._verify_acceptable_round_start(term, round_num)
 
         self._term = term
         self._round_num = round_num
-        await self._sync_layer.start_round(term, round_num)
+        await self._sync_layer.round_start(term, round_num)
 
         for data in self._get_datums(self._round_num):
             await self._sync_layer.receive_data(data)
@@ -129,7 +128,7 @@ class OrderLayer(EventRegister):
     def _is_now_round_message(self, message):
         return message.round_num == self._round_num
 
-    def _verify_acceptable_start_round(self, term: Term, round_num: int):
+    def _verify_acceptable_round_start(self, term: Term, round_num: int):
         if term.num == self._term.num:
             if round_num != self._round_num + 1:
                 raise InvalidRound(round_num, self._round_num)
@@ -171,10 +170,10 @@ class OrderLayer(EventRegister):
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
-        StartRoundEvent: _on_event_start_round,
-        ReceivedDataEvent: _on_event_received_data,
-        ReceivedVoteEvent: _on_event_received_vote,
-        DoneRoundEvent: _on_event_done_round
+        RoundStartEvent: _on_event_round_start,
+        ReceiveDataEvent: _on_event_receive_data,
+        ReceiveVoteEvent: _on_event_receive_vote,
+        RoundEndEvent: _on_event_round_end
     }
 
 

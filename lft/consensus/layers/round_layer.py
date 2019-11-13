@@ -4,8 +4,8 @@ from typing import Sequence
 from lft.consensus.round import Round, Candidate
 from lft.consensus.messages.data import Data, DataVerifier, DataFactory
 from lft.consensus.messages.vote import Vote, VoteVerifier, VoteFactory
-from lft.consensus.events import (DoneRoundEvent, BroadcastDataEvent, BroadcastVoteEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent, ChangedCandidateEvent)
+from lft.consensus.events import (RoundEndEvent, BroadcastDataEvent, BroadcastVoteEvent,
+                                  ReceiveDataEvent, ReceiveVoteEvent, ChangedCandidateEvent)
 from lft.consensus.term import Term
 from lft.consensus.exceptions import InvalidProposer, AlreadyCompleted, AlreadyVoted, CannotComplete
 from lft.event import EventSystem
@@ -42,7 +42,7 @@ class RoundLayer:
             round_num=round_num
         )
 
-    async def start_round(self, term: Term, round_num: int):
+    async def round_start(self, term: Term, round_num: int):
         await self._start_new_round(
             term=term,
             round_num=round_num
@@ -91,7 +91,7 @@ class RoundLayer:
             pass
         else:
             candidate = self._round.result()
-            await self._raise_done_round(candidate)
+            await self._raise_round_end(candidate)
             if candidate.data:
                 self._candidate = candidate
 
@@ -102,7 +102,7 @@ class RoundLayer:
             )
         )
         self._event_system.simulator.raise_event(
-            ReceivedDataEvent(
+            ReceiveDataEvent(
                 data=data
             )
         )
@@ -113,14 +113,14 @@ class RoundLayer:
                 vote=vote)
         )
         self._event_system.simulator.raise_event(
-            ReceivedVoteEvent(
+            ReceiveVoteEvent(
                 vote=vote
             )
         )
 
-    async def _raise_done_round(self, candidate: Candidate):
+    async def _raise_round_end(self, candidate: Candidate):
         if candidate.data:
-            done_round = DoneRoundEvent(
+            round_end = RoundEndEvent(
                 is_success=True,
                 term_num=self._term.num,
                 round_num=self._round.num,
@@ -129,7 +129,7 @@ class RoundLayer:
                 commit_id=candidate.data.prev_id
             )
         else:
-            done_round = DoneRoundEvent(
+            round_end = RoundEndEvent(
                 is_success=False,
                 term_num=self._term.num,
                 round_num=self._round.num,
@@ -137,7 +137,7 @@ class RoundLayer:
                 candidate_data=None,
                 commit_id=None
             )
-        self._event_system.simulator.raise_event(done_round)
+        self._event_system.simulator.raise_event(round_end)
 
     async def _start_new_round(self, term: Term, round_num: int):
         self._term = term

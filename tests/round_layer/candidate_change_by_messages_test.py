@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from lft.consensus.events import DoneRoundEvent, BroadcastVoteEvent
+from lft.consensus.events import RoundEndEvent
 from tests.round_layer.setup_round_layer import *
 
 
@@ -21,7 +21,7 @@ from tests.round_layer.setup_round_layer import *
 async def test_candidate_change_by_vote():
     """ GIVEN SyncRound and setup candidate data
     WHEN Propose new data that has same number with candidate data
-    THEN SyncRound raises done_round with changed_candidate_data
+    THEN SyncRound raises round_end with changed_candidate_data
     """
     # GIVEN
     event_system, round_layer, voters, genesis_data = await setup_round_layer(peer_num=7)
@@ -35,11 +35,11 @@ async def test_candidate_change_by_vote():
                 round_num=1
             )
         )
-    # pop done_round_event
+    # pop round_end_event
     await get_event(event_system)
     # WHEN
     term = RotateTerm(0, voters)
-    await round_layer.start_round(
+    await round_layer.round_start(
         term=term,
         round_num=2
     )
@@ -75,8 +75,8 @@ async def test_candidate_change_by_vote():
         )
 
     # THEN
-    event: DoneRoundEvent = await get_event(event_system)
-    assert isinstance(event, DoneRoundEvent)
+    event: RoundEndEvent = await get_event(event_system)
+    assert isinstance(event, RoundEndEvent)
     assert event.candidate_data == second_candidate_data
     assert event.commit_id == genesis_data.id
     assert event.round_num == 2
