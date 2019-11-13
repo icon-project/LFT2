@@ -6,14 +6,18 @@ from tests.sync_layer.setup_items import setup_items
 
 @pytest.mark.asyncio
 async def test_sync_layer_invalid_term():
-    term_num = 0
     round_num = 0
     voter_num = 7
 
-    async with setup_items(voter_num, round_num) as items:
-        voters, event_system, sync_layer, round_layer, genesis_data = items
+    async with setup_items(voter_num, round_num) as (
+            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
 
-        data = await sync_layer._data_factory.create_data(0, b'', term_num + 1, 0, [])
+        invalid_term_num = term.num + 1
+        data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
+                                                          prev_id=candidate_data.id,
+                                                          term_num=invalid_term_num,
+                                                          round_num=round_num,
+                                                          prev_votes=candidate_votes)
         with pytest.raises(InvalidTerm):
             await sync_layer._receive_data(data)
 
@@ -23,10 +27,15 @@ async def test_sync_layer_invalid_round():
     round_num = 0
     voter_num = 7
 
-    async with setup_items(voter_num, round_num) as items:
-        voters, event_system, sync_layer, round_layer, genesis_data = items
+    async with setup_items(voter_num, round_num) as (
+            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
 
-        data = await sync_layer._data_factory.create_data(0, b'', 0, round_num + 1, [])
+        invalid_round_num = round_num + 1
+        data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
+                                                          prev_id=candidate_data.id,
+                                                          term_num=term.num,
+                                                          round_num=invalid_round_num,
+                                                          prev_votes=candidate_votes)
         with pytest.raises(InvalidRound):
             await sync_layer._receive_data(data)
 
@@ -36,12 +45,14 @@ async def test_sync_layer_already_propose():
     round_num = 0
     voter_num = 7
 
-    async with setup_items(voter_num, round_num) as items:
-        voters, event_system, sync_layer, round_layer, genesis_data = items
+    async with setup_items(voter_num, round_num) as (
+            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
 
-        data = await sync_layer._data_factory.create_data(
-            genesis_data.number + 1, genesis_data.id, genesis_data.term_num, round_num, []
-        )
+        data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
+                                                          prev_id=candidate_data.id,
+                                                          term_num=term.num,
+                                                          round_num=round_num,
+                                                          prev_votes=candidate_votes)
         await sync_layer._receive_data(data)
         with pytest.raises(AlreadyProposed):
             await sync_layer._receive_data(data)
@@ -52,16 +63,21 @@ async def test_sync_layer_data_received():
     round_num = 0
     voter_num = 7
 
-    async with setup_items(voter_num, round_num) as items:
-        voters, event_system, sync_layer, round_layer, genesis_data = items
+    async with setup_items(voter_num, round_num) as (
+            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
 
-        data = await sync_layer._data_factory.create_data(
-            genesis_data.number + 1, genesis_data.id, genesis_data.term_num, round_num, []
-        )
+        data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
+                                                          prev_id=candidate_data.id,
+                                                          term_num=term.num,
+                                                          round_num=round_num,
+                                                          prev_votes=candidate_votes)
         await sync_layer._receive_data(data)
-        not_data = await sync_layer._data_factory.create_not_data(
-            genesis_data.number, genesis_data.term_num, round_num, genesis_data.proposer_id
-        )
+
+        proposer_id = term.get_proposer_id(round_num)
+        not_data = await sync_layer._data_factory.create_not_data(data_number=candidate_data.number,
+                                                                  term_num=term.num,
+                                                                  round_num=round_num,
+                                                                  proposer_id=proposer_id)
         with pytest.raises(AlreadyDataReceived):
             await sync_layer._receive_data(not_data)
 
@@ -71,16 +87,18 @@ async def test_sync_layer_data_vote_sync():
     round_num = 0
     voter_num = 7
 
-    async with setup_items(voter_num, round_num) as items:
-        voters, event_system, sync_layer, round_layer, genesis_data = items
+    async with setup_items(voter_num, round_num) as (
+            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
 
-        data = await sync_layer._data_factory.create_data(
-            genesis_data.number + 1, genesis_data.id, genesis_data.term_num, round_num, []
-        )
+        data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
+                                                          prev_id=candidate_data.id,
+                                                          term_num=term.num,
+                                                          round_num=round_num,
+                                                          prev_votes=candidate_votes)
         vote_factories = [DefaultVoteFactory(voter) for voter in voters]
         votes = []
         for vote_factory in vote_factories:
-            vote = await vote_factory.create_vote(data.id, genesis_data.id, 0, round_num)
+            vote = await vote_factory.create_vote(data.id, candidate_data.id, term.num, round_num)
             votes.append(vote)
             await sync_layer.receive_vote(vote)
 
