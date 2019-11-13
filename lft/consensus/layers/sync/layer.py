@@ -37,7 +37,6 @@ class SyncLayer:
 
         self._term: Optional[Term] = None
         self._round_num = -1
-        self._candidate_num = -1
 
         self._messages: Optional[SyncMessages] = None
         self._vote_timeout_started = False
@@ -47,8 +46,6 @@ class SyncLayer:
                          round_num: int,
                          candidate_data: Data,
                          votes: Sequence[Vote]):
-        candidate_num = candidate_data.number if candidate_data else 0
-        self._candidate_num = candidate_num
         await self._new_round(term, round_num)
         await self._new_data()
         await self._round_layer.initialize(term, round_num, candidate_data, votes)
@@ -59,10 +56,6 @@ class SyncLayer:
         await self._new_round(term, round_num)
         await self._new_data()
         await self._round_layer.round_start(term, round_num)
-
-    async def round_end(self, candidate_data: Data):
-        if candidate_data:
-            self._candidate_num = candidate_data.number
 
     async def receive_data(self, data: Data):
         try:
@@ -109,7 +102,6 @@ class SyncLayer:
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
     async def change_candidate(self, candidate: Candidate):
-        self._candidate_num = candidate.data.number
         if self._term.num == candidate.data.term_num:
             if self._round_num < candidate.data.round_num:
                 await self._new_round(self._term, candidate.data.round_num)
@@ -141,8 +133,7 @@ class SyncLayer:
     async def _new_data(self):
         expected_proposer = self._term.get_proposer_id(self._round_num)
         if expected_proposer != self._node_id:
-            data = await self._data_factory.create_not_data(self._candidate_num,
-                                                            self._term.num,
+            data = await self._data_factory.create_not_data(self._term.num,
                                                             self._round_num,
                                                             expected_proposer)
             await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
@@ -152,8 +143,6 @@ class SyncLayer:
             raise InvalidTerm(data.term_num, self._term.num)
         if self._round_num != data.round_num:
             raise InvalidRound(data.round_num, self._round_num)
-        if self._candidate_num > data.number:  # This will be deleted
-            return False
         if data in self._messages:
             raise AlreadyProposed(data.id, data.proposer_id)
         if data.is_not() and self._messages.datums:

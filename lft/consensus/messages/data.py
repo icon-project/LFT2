@@ -3,7 +3,6 @@ from typing import Sequence
 
 from lft.consensus.messages.message import Message
 from lft.consensus.messages.vote import Vote
-from lft.serialization import Serializable
 
 
 class Data(Message):
@@ -65,7 +64,6 @@ class DataFactory(ABC):
 
     @abstractmethod
     async def create_not_data(self,
-                              data_number: int,
                               term_num: int,
                               round_num: int,
                               proposer_id: bytes) -> 'Data':

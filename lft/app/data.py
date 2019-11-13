@@ -116,11 +116,10 @@ class DefaultDataFactory(DataFactory):
         return DefaultData(data_id, prev_id, self._node_id, data_number, term_num, round_num, prev_votes=prev_votes)
 
     async def create_not_data(self,
-                              data_number: int,
                               term_num: int,
                               round_num: int,
                               proposer_id: bytes) -> DefaultData:
-        return DefaultData(proposer_id, proposer_id, proposer_id, data_number, term_num, round_num)
+        return DefaultData(proposer_id, proposer_id, proposer_id, -1, term_num, round_num)
 
     async def create_data_verifier(self) -> DefaultDataVerifier:
         return DefaultDataVerifier()

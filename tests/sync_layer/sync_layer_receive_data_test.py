@@ -74,8 +74,7 @@ async def test_sync_layer_data_received():
         await sync_layer._receive_data(data)
 
         proposer_id = term.get_proposer_id(round_num)
-        not_data = await sync_layer._data_factory.create_not_data(data_number=candidate_data.number,
-                                                                  term_num=term.num,
+        not_data = await sync_layer._data_factory.create_not_data(term_num=term.num,
                                                                   round_num=round_num,
                                                                   proposer_id=proposer_id)
         with pytest.raises(AlreadyDataReceived):
