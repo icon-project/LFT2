@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTerm
-from lft.consensus.layers.sync_layer import SyncLayer
+from lft.consensus.layers.sync import SyncLayer
 from lft.consensus.layers.round import RoundLayer
 from lft.event import EventSystem
 

@@ -14,7 +14,7 @@ from lft.event import EventRegister, EventSystem
 
 
 if TYPE_CHECKING:
-    from lft.consensus.layers import SyncLayer
+    from lft.consensus.layers.sync import SyncLayer
 
 
 class OrderLayer(EventRegister):

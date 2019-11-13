@@ -5,7 +5,8 @@ from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.events import InitializeEvent, RoundStartEvent
-from lft.consensus.layers import OrderLayer, SyncLayer
+from lft.consensus.layers import OrderLayer
+from lft.consensus.layers.sync import SyncLayer
 from lft.event import EventSystem
 
 
