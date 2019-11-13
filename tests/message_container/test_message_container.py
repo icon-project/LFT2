@@ -21,7 +21,7 @@ from lft.app.vote import DefaultVoteFactory
 from lft.consensus.messages.data import Data
 from lft.consensus.exceptions import NeedSync
 from lft.consensus.candidate import Candidate
-from lft.consensus.layers.order import MessageContainer
+from lft.consensus.layers.order import OrderMessages
 
 
 @pytest.mark.asyncio
@@ -123,5 +123,5 @@ def init_container():
         prev_votes=[]
     )
     term = RotateTerm(0, nodes)
-    message_container = MessageContainer(term, Candidate(genesis_data, []))
+    message_container = OrderMessages(term, Candidate(genesis_data, []))
     return message_container, nodes

@@ -1,1 +1,2 @@
-from .layer import OrderLayer, MessageContainer
+from .messages import OrderMessages
+from .layer import OrderLayer
