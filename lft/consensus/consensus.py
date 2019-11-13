@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from lft.consensus.layers import OrderLayer
+from lft.consensus.layers.order import OrderLayer
 from lft.consensus.layers.sync import SyncLayer
 from lft.consensus.layers.round import RoundLayer
 
