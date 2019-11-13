@@ -73,8 +73,6 @@ class SyncLayer:
     async def _receive_data(self, data: Data):
         self._verify_acceptable_data(data)
 
-        if not data.is_not():
-            self._term.verify_data(data)
         self._messages.add_data(data)
         await self._round_layer.propose_data(data)
 
@@ -94,7 +92,6 @@ class SyncLayer:
     async def _receive_vote(self, vote: Vote):
         self._verify_acceptable_vote(vote)
 
-        self._term.verify_vote(vote)
         self._messages.add_vote(vote)
         if vote.is_none() or self._messages.get_data(vote.data_id):
             await self._round_layer.vote_data(vote)
