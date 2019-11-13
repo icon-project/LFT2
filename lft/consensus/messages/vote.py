@@ -10,11 +10,6 @@ T = TypeVar("T")
 class Vote(Message):
     @property
     @abstractmethod
-    def id(self) -> bytes:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
     def data_id(self) -> bytes:
         raise NotImplementedError
 
@@ -26,16 +21,6 @@ class Vote(Message):
     @property
     @abstractmethod
     def voter_id(self) -> bytes:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def term_num(self) -> int:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def round_num(self) -> int:
         raise NotImplementedError
 
     @abstractmethod

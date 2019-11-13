@@ -9,11 +9,6 @@ from lft.serialization import Serializable
 class Data(Message):
     @property
     @abstractmethod
-    def id(self) -> bytes:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
     def number(self) -> int:
         raise NotImplementedError
 
@@ -25,16 +20,6 @@ class Data(Message):
     @property
     @abstractmethod
     def proposer_id(self) -> bytes:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def term_num(self) -> int:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def round_num(self) -> int:
         raise NotImplementedError
 
     @property
