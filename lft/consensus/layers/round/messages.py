@@ -53,12 +53,12 @@ class RoundMessages:
             raise CannotComplete(f"Majority({majority}) does not reach quorum({self._term.quorum_num} or "
                                  f"All voters have not voted. ({len(self._voters)}/{self._term.voters_num})")
 
-        vote = self._votes[max_data_id][0]
-        if not vote.is_not() and not vote.is_none():
-            if max_data_id not in self._datums:
-                raise DataIDNotFound(f"Upper layers did not send data. {max_data_id}")
-
-        self._is_completed = True
+        try:
+            self._datums[max_data_id]
+        except KeyError:
+            raise DataIDNotFound(f"Upper layers did not send data. {max_data_id}")
+        else:
+            self._is_completed = True
 
     def result(self):
         if not self.is_completed:
@@ -69,18 +69,18 @@ class RoundMessages:
         unordered_votes = self._votes[candidate_data_id]
         candidate_votes = self._order_votes(unordered_votes)
 
-        vote = unordered_votes[0]
-        if vote.is_none() or vote.is_not():
-            return Candidate(None, candidate_votes)
-
         if self._term.quorum_num > len(unordered_votes):
             return Candidate(None, candidate_votes)
+
         try:
             candidate_data = self._datums[candidate_data_id]
         except KeyError:
-            raise DataIDNotFound
+            raise DataIDNotFound(f"Upper layers did not send data. {candidate_data_id}")
         else:
-            return Candidate(candidate_data, candidate_votes)
+            if candidate_data.is_not() or candidate_data.is_none():
+                return Candidate(None, candidate_votes)
+            else:
+                return Candidate(candidate_data, candidate_votes)
 
     def _find_max_data_id(self):
         return max(self._votes, key=lambda key: len(self._votes.get(key)))

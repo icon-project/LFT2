@@ -30,6 +30,10 @@ async def test_data_id_not_found():
 async def test_no_data_but_complete_none_vote():
     term, round_num, round_messages, data, voters = await setup()
 
+    data_factory = DefaultDataFactory(voters[0])
+    none_data = await data_factory.create_none_data(term.num, round_num, term.get_proposer_id(round_num))
+    round_messages.add_data(none_data)
+
     for voter in voters:
         vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_num)
         round_messages.add_vote(vote)
@@ -45,6 +49,10 @@ async def test_no_data_but_complete_none_vote():
 async def test_no_data_but_complete_not_vote():
     term, round_num, round_messages, data, voters = await setup()
 
+    data_factory = DefaultDataFactory(voters[0])
+    not_data = await data_factory.create_not_data(term.num, round_num, term.get_proposer_id(round_num))
+    round_messages.add_data(not_data)
+
     for voter in voters:
         vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_num)
         round_messages.add_vote(vote)
@@ -59,6 +67,14 @@ async def test_no_data_but_complete_not_vote():
 @pytest.mark.asyncio
 async def test_no_data_but_complete_not_none_vote():
     term, round_num, round_messages, data, voters = await setup()
+
+    data_factory = DefaultDataFactory(voters[0])
+
+    none_data = await data_factory.create_none_data(term.num, round_num, term.get_proposer_id(round_num))
+    round_messages.add_data(none_data)
+
+    not_data = await data_factory.create_not_data(term.num, round_num, term.get_proposer_id(round_num))
+    round_messages.add_data(not_data)
 
     for voter in voters[:len(voters) // 2]:
         vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_num)

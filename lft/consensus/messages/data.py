@@ -30,6 +30,10 @@ class Data(Message):
     def is_not(self) -> bool:
         raise NotImplementedError
 
+    @abstractmethod
+    def is_none(self) -> bool:
+        raise NotImplementedError
+
     def __eq__(self, other):
         return self.id == other.id \
                and self.number == other.number \
@@ -67,6 +71,13 @@ class DataFactory(ABC):
                               term_num: int,
                               round_num: int,
                               proposer_id: bytes) -> 'Data':
+        raise NotImplementedError
+
+    @abstractmethod
+    async def create_none_data(self,
+                               term_num: int,
+                               round_num: int,
+                               proposer_id: bytes) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod

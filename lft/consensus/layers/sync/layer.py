@@ -69,9 +69,6 @@ class SyncLayer:
         self._messages.add_data(data)
         await self._round_layer.propose_data(data)
 
-        if data.is_not():
-            return
-
         votes_by_data_id = self._messages.get_votes(data_id=data.id)
         for vote in votes_by_data_id.values():
             await self._round_layer.vote_data(vote)
@@ -86,7 +83,7 @@ class SyncLayer:
         self._verify_acceptable_vote(vote)
 
         self._messages.add_vote(vote)
-        if vote.is_none() or self._messages.get_data(vote.data_id):
+        if self._messages.get_data(vote.data_id):
             await self._round_layer.vote_data(vote)
 
         if self._vote_timeout_started:
@@ -97,7 +94,7 @@ class SyncLayer:
             return
 
         self._vote_timeout_started = True
-        for voter in self._term.get_voters_id():
+        for voter in set(self._term.get_voters_id()) - self._messages.voters:
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
@@ -130,13 +127,17 @@ class SyncLayer:
         self._round_num = new_round_num
         self._messages = SyncMessages()
 
+        none_data = await self._data_factory.create_none_data(term_num=new_term.num,
+                                                              round_num=new_round_num,
+                                                              proposer_id=new_term.get_proposer_id(new_round_num))
+        self._messages.add_data(none_data)
+
     async def _new_data(self):
         expected_proposer = self._term.get_proposer_id(self._round_num)
-        if expected_proposer != self._node_id:
-            data = await self._data_factory.create_not_data(self._term.num,
-                                                            self._round_num,
-                                                            expected_proposer)
-            await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
+        data = await self._data_factory.create_not_data(self._term.num,
+                                                        self._round_num,
+                                                        expected_proposer)
+        await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
 
     def _verify_acceptable_data(self, data: Data):
         if self._term.num != data.term_num:

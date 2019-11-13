@@ -51,6 +51,9 @@ class MockData(Data):
     def is_not(self) -> bool:
         return False
 
+    def is_none(self) -> bool:
+        return False
+
     def __init__(self, leader, round_):
         self._leader = leader
         self._round = round_
