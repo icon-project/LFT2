@@ -4,73 +4,73 @@ import pytest
 from lft.app.data import DefaultDataFactory
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.round import Round
+from lft.consensus.layers.round import RoundMessages
 from lft.consensus.exceptions import DataIDNotFound
 
 
 @pytest.mark.asyncio
 async def test_data_id_not_found():
-    term, round_, data, voters = await setup()
+    term, round_messages, data, voters = await setup()
 
     for voter in voters:
-        vote = await DefaultVoteFactory(voter).create_vote(data.id, b'', term.num, round_.num)
-        round_.add_vote(vote)
+        vote = await DefaultVoteFactory(voter).create_vote(data.id, b'', term.num, round_messages.num)
+        round_messages.add_vote(vote)
 
     # This case cannot be handled.
     with pytest.raises(DataIDNotFound):
-        round_.complete()
-    round_._is_completed = True
+        round_messages.complete()
+    round_messages._is_completed = True
 
     # This case cannot be handled.
     with pytest.raises(DataIDNotFound):
-        round_.result()
+        round_messages.result()
 
 
 @pytest.mark.asyncio
 async def test_no_data_but_complete_none_vote():
-    term, round_, data, voters = await setup()
+    term, round_messages, data, voters = await setup()
 
     for voter in voters:
-        vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_.num)
-        round_.add_vote(vote)
+        vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_messages.num)
+        round_messages.add_vote(vote)
 
-    round_.complete()
+    round_messages.complete()
 
-    candidate = round_.result()
+    candidate = round_messages.result()
     assert candidate.data is None
     assert voters == [vote.voter_id for vote in candidate.votes]
 
 
 @pytest.mark.asyncio
 async def test_no_data_but_complete_not_vote():
-    term, round_, data, voters = await setup()
+    term, round_messages, data, voters = await setup()
 
     for voter in voters:
-        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_.num)
-        round_.add_vote(vote)
+        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_messages.num)
+        round_messages.add_vote(vote)
 
-    round_.complete()
+    round_messages.complete()
 
-    candidate = round_.result()
+    candidate = round_messages.result()
     assert candidate.data is None
     assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
 
 
 @pytest.mark.asyncio
 async def test_no_data_but_complete_not_none_vote():
-    term, round_, data, voters = await setup()
+    term, round_messages, data, voters = await setup()
 
     for voter in voters[:len(voters) // 2]:
-        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_.num)
-        round_.add_vote(vote)
+        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_messages.num)
+        round_messages.add_vote(vote)
 
     for voter in voters[len(voters) // 2:]:
-        vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_.num)
-        round_.add_vote(vote)
+        vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_messages.num)
+        round_messages.add_vote(vote)
 
-    round_.complete()
+    round_messages.complete()
 
-    candidate = round_.result()
+    candidate = round_messages.result()
     assert candidate.data is None
     assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
 
@@ -81,8 +81,8 @@ async def setup():
     voters = [os.urandom(16) for _ in range(7)]
 
     term = RotateTerm(term_num, voters)
-    round_ = Round(round_num, term)
+    round_messages = RoundMessages(round_num, term)
 
-    data = await DefaultDataFactory(voters[0]).create_data(0, b'', term.num, round_.num, [])
-    return term, round_, data, voters
+    data = await DefaultDataFactory(voters[0]).create_data(0, b'', term.num, round_messages.num, [])
+    return term, round_messages, data, voters
 

@@ -1,15 +1,18 @@
 import logging
-from typing import DefaultDict, OrderedDict, Optional, Sequence
+from typing import DefaultDict, OrderedDict, Optional, Sequence, TYPE_CHECKING
 from lft.consensus.messages.data import Data, DataFactory
 from lft.consensus.messages.vote import Vote, VoteFactory
-from lft.consensus.round import Candidate
+from lft.consensus.candidate import Candidate
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.term import Term
-from lft.consensus.layers.round import RoundLayer
 from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
                                       AlreadyDataReceived, AlreadyVoteReceived)
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
+
+
+if TYPE_CHECKING:
+    from lft.consensus.layers.round import RoundLayer
 
 __all__ = ("SyncLayer",)
 
@@ -19,7 +22,7 @@ TIMEOUT_VOTE = 2.0
 
 class SyncLayer:
     def __init__(self,
-                 round_layer: RoundLayer,
+                 round_layer: 'RoundLayer',
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,

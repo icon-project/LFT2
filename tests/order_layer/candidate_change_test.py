@@ -4,7 +4,7 @@ from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent, RoundStartEvent, SyncRequestEvent
-from lft.consensus.round import Candidate
+from lft.consensus.candidate import Candidate
 from tests.order_layer.setup_order_layer import setup_order_layer
 
 

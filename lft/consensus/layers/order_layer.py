@@ -1,22 +1,25 @@
 import logging
 from collections import defaultdict
-from typing import Optional, Sequence, OrderedDict, Dict
+from typing import Optional, Sequence, OrderedDict, Dict, TYPE_CHECKING
 
-from lft.consensus.round import Candidate
+from lft.consensus.candidate import Candidate
 from lft.consensus.events import (InitializeEvent, RoundStartEvent, RoundEndEvent,
                                   ReceiveDataEvent, ReceiveVoteEvent, SyncRequestEvent)
 from lft.consensus.exceptions import (InvalidTerm, InvalidRound, InvalidProposer, InvalidVoter,
                                       AlreadySync, AlreadyCandidate, NotReachCandidate,NeedSync)
-from lft.consensus.layers import SyncLayer
 from lft.consensus.term import Term
 from lft.consensus.messages.data import DataFactory, Data
 from lft.consensus.messages.vote import VoteFactory, Vote
 from lft.event import EventRegister, EventSystem
 
 
+if TYPE_CHECKING:
+    from lft.consensus.layers import SyncLayer
+
+
 class OrderLayer(EventRegister):
     def __init__(self,
-                 sync_layer: SyncLayer,
+                 sync_layer: 'SyncLayer',
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,

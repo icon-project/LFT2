@@ -20,8 +20,8 @@ from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.messages.data import Data
 from lft.consensus.exceptions import NeedSync
+from lft.consensus.candidate import Candidate
 from lft.consensus.layers.order_layer import MessageContainer
-from lft.consensus.round import Candidate
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,6 @@
-from typing import List, Dict, DefaultDict, Set, Sequence, Optional, NamedTuple
+from typing import List, Dict, DefaultDict, Set
+
+from lft.consensus.candidate import Candidate
 from lft.consensus.messages.data import Data, Vote
 from lft.consensus.term import Term
 from lft.consensus.exceptions import CannotComplete, AlreadyCompleted, AlreadyVoted, NotCompleted, DataIDNotFound
@@ -6,10 +8,8 @@ from lft.consensus.exceptions import CannotComplete, AlreadyCompleted, AlreadyVo
 Datums = Dict[bytes, Data]  # dict[data_id] = data
 Votes = DefaultDict[bytes, List[Vote]]  # dict[data_id][0] = vote
 
-Candidate = NamedTuple("Candidate", [("data", Optional[Data]), ("votes", Sequence[Vote])])
 
-
-class Round:
+class RoundMessages:
     def __init__(self, num: int, term: Term):
         self.num = num
         self.term = term

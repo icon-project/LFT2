@@ -4,8 +4,8 @@ import pytest
 from lft.app.data import DefaultDataFactory
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.round import Round
-from lft.consensus.exceptions import CannotComplete, AlreadyVoted
+from lft.consensus.layers.round import RoundMessages
+from lft.consensus.exceptions import CannotComplete
 
 
 @pytest.mark.asyncio
@@ -74,25 +74,25 @@ async def setup():
 
     voters = [os.urandom(16) for _ in range(7)]
     term = RotateTerm(term_num, voters)
-    round_ = Round(round_num, term)
+    round_messages = RoundMessages(round_num, term)
 
     # ValueError(Sequence empty)
     with pytest.raises(CannotComplete):
-        round_.complete()
+        round_messages.complete()
 
     proposer_id = term.get_proposer_id(round_num)
     data = await DefaultDataFactory(proposer_id).create_data(0, b'', term_num, round_num, [])
-    round_.add_data(data)
+    round_messages.add_data(data)
 
     # Majority does not reach
     with pytest.raises(CannotComplete):
-        round_.complete()
+        round_messages.complete()
 
     for voter in voters[:term.quorum_num - 1]:
         vote = await DefaultVoteFactory(voter).create_vote(data.id, b'', term_num, round_num)
-        round_.add_vote(vote)
+        round_messages.add_vote(vote)
 
     with pytest.raises(CannotComplete):
-        round_.complete()
+        round_messages.complete()
 
-    return term, round_, data, voters
+    return term, round_messages, data, voters
