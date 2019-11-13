@@ -5,7 +5,7 @@ from lft.consensus.messages.vote import Vote, VoteFactory
 from lft.consensus.round import Candidate
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.term import Term
-from lft.consensus.layers.round_layer import RoundLayer
+from lft.consensus.layers.round import RoundLayer
 from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
                                       AlreadyDataReceived, AlreadyVoteReceived)
 from lft.event import EventSystem
