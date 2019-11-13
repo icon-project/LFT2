@@ -1,14 +1,14 @@
 import logging
 from typing import DefaultDict, OrderedDict, Optional, Sequence
-from lft.consensus.events import (InitializeEvent, StartRoundEvent, DoneRoundEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent)
-from lft.consensus.data import Data, DataFactory
-from lft.consensus.vote import Vote, VoteFactory
+from lft.consensus.events import (ReceivedDataEvent, ReceivedVoteEvent)
+from lft.consensus.messages.data import Data, DataFactory
+from lft.consensus.round import Candidate
+from lft.consensus.messages.vote import Vote, VoteFactory
 from lft.consensus.term import Term
 from lft.consensus.layers.round_layer import RoundLayer
 from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
                                       AlreadyDataReceived, AlreadyVoteReceived)
-from lft.event import EventSystem, EventRegister
+from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 
 __all__ = ("SyncLayer",)
@@ -71,18 +71,17 @@ class SyncLayer:
     async def _receive_data(self, data: Data):
         self._verify_acceptable_data(data)
 
-        if self._candidate_num == data.number or self._candidate_num + 1 == data.number:
-            if not data.is_not():
-                self._term.verify_data(data)
-            self._datums[data.id] = data
-            await self._round_layer.propose_data(data)
+        if not data.is_not():
+            self._term.verify_data(data)
+        self._datums[data.id] = data
+        await self._round_layer.propose_data(data)
 
-            if data.is_not():
-                return
+        if data.is_not():
+            return
 
-            votes_by_vote_id = self._votes.get_votes(data_id=data.id)
-            for vote in votes_by_vote_id.values():
-                await self._round_layer.vote_data(vote)
+        votes_by_vote_id = self._votes.get_votes(data_id=data.id)
+        for vote in votes_by_vote_id.values():
+            await self._round_layer.vote_data(vote)
 
     async def receive_vote(self, vote: Vote):
         try:
@@ -109,6 +108,14 @@ class SyncLayer:
         for voter in self._term.get_voters_id():
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
+
+    async def change_candidate(self, candidate: Candidate):
+        self._candidate_num = candidate.data.number
+        if self._term.num == candidate.data.term_num:
+            if self._round_num < candidate.data.round_num:
+                await self._new_round(self._term, candidate.data.round_num)
+                await self._new_data()
+        await self._round_layer.change_candidate(candidate)
 
     async def _raise_received_consensus_data(self, delay: float, data: Data):
         event = ReceivedDataEvent(data)

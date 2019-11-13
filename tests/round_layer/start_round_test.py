@@ -13,15 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from asyncio import QueueEmpty
-from typing import Tuple
 
 import pytest
 
 from lft.app.data import DefaultData
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.data import Data, Vote
+from lft.consensus.messages.data import Data, Vote
 from lft.consensus.events import BroadcastDataEvent, ReceivedDataEvent
 from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, get_event, verify_no_events
 
@@ -103,34 +101,6 @@ async def test_prev_round_is_failed():
     )
 
     await verify_no_events(event_system)
-
-
-@pytest.mark.asyncio
-async def test_start_past_round():
-    round_layer, event_system, voters = await test_start_round()
-    term = RotateTerm(0, voters)
-    await round_layer.start_round(
-        term=term,
-        round_num=1
-    )
-    await verify_no_events(event_system)
-
-
-@pytest.mark.asyncio
-async def test_start_future_round():
-    event_system, round_layer, voters, genesis_data = await setup_round_layer(PEER_NUM)
-    await add_propose(event_system, round_layer, voters)
-    await do_success_vote(round_layer, voters)
-    event = await get_event(event_system)
-
-    term = RotateTerm(0, voters)
-    await round_layer.start_round(
-        term=term,
-        round_num=9
-    )
-    await verify_no_events(event_system)
-
-    assert round_layer._round.num == 1
 
 
 async def do_success_vote(round_layer, voters):

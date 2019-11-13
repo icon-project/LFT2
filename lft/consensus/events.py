@@ -3,7 +3,7 @@ from typing import Sequence, Optional
 
 from lft.consensus.term import Term
 from lft.event import Event
-from lft.consensus.data import Data, Vote
+from lft.consensus.messages.data import Data, Vote
 
 
 @dataclass
@@ -53,10 +53,22 @@ class DoneRoundEvent(Event):
     round_num: int
     candidate_data: Optional['Data']
     commit_id: Optional['bytes']
-    votes: Sequence['Vote']
+    candidate_votes: Sequence['Vote']
 
 
 @dataclass
 class StartRoundEvent(Event):
     term: Term
     round_num: int
+
+
+@dataclass
+class SyncRequestEvent(Event):
+    old_candidate_id: bytes
+    new_candidate_id: bytes
+
+
+@dataclass
+class ChangedCandidateEvent(Event):
+    candidate_data: Data
+    candidate_votes: Sequence[Vote]

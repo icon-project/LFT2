@@ -18,7 +18,7 @@ import pytest
 
 from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.data import Data
+from lft.consensus.messages.data import Data
 from lft.consensus.events import DoneRoundEvent, BroadcastVoteEvent, ReceivedVoteEvent
 from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, LEADER_ID, get_event, verify_no_events
 

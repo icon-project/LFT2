@@ -1,17 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Type, Sequence, List, TypeVar, Dict, Set
 
+from lft.consensus.messages.message import Message
 from lft.serialization import Serializable
 
 T = TypeVar("T")
 
 
-class Vote(Serializable):
-    @property
-    @abstractmethod
-    def id(self) -> bytes:
-        raise NotImplementedError
-
+class Vote(Message):
     @property
     @abstractmethod
     def data_id(self) -> bytes:
@@ -25,16 +21,6 @@ class Vote(Serializable):
     @property
     @abstractmethod
     def voter_id(self) -> bytes:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def term_num(self) -> int:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def round_num(self) -> int:
         raise NotImplementedError
 
     @abstractmethod

@@ -2,10 +2,10 @@ import logging
 from typing import Sequence
 
 from lft.consensus.round import Round, Candidate
-from lft.consensus.data import Data, DataVerifier, DataFactory
-from lft.consensus.vote import Vote, VoteVerifier, VoteFactory
+from lft.consensus.messages.data import Data, DataVerifier, DataFactory
+from lft.consensus.messages.vote import Vote, VoteVerifier, VoteFactory
 from lft.consensus.events import (DoneRoundEvent, BroadcastDataEvent, BroadcastVoteEvent,
-                                  ReceivedDataEvent, ReceivedVoteEvent)
+                                  ReceivedDataEvent, ReceivedVoteEvent, ChangedCandidateEvent)
 from lft.consensus.term import Term
 from lft.consensus.exceptions import InvalidProposer, AlreadyCompleted, AlreadyVoted, CannotComplete
 from lft.event import EventSystem
@@ -43,9 +43,6 @@ class RoundLayer:
         )
 
     async def start_round(self, term: Term, round_num: int):
-        if not self._is_next_round(term, round_num):
-            return
-
         await self._start_new_round(
             term=term,
             round_num=round_num
@@ -73,6 +70,17 @@ class RoundLayer:
             pass
         else:
             await self._update_round_if_complete()
+
+    async def change_candidate(self, candidate: Candidate):
+        self._candidate = candidate
+        self._event_system.simulator.raise_event(
+            ChangedCandidateEvent(
+                candidate.data, candidate.votes
+            )
+        )
+        if candidate.data.term_num == self._term.num:
+            if candidate.data.round_num > self._round.num:
+                await self._start_new_round(self._term, candidate.data.round_num)
 
     async def _update_round_if_complete(self):
         try:
@@ -116,7 +124,7 @@ class RoundLayer:
                 is_success=True,
                 term_num=self._term.num,
                 round_num=self._round.num,
-                votes=candidate.votes,
+                candidate_votes=candidate.votes,
                 candidate_data=candidate.data,
                 commit_id=candidate.data.prev_id
             )
@@ -125,7 +133,7 @@ class RoundLayer:
                 is_success=False,
                 term_num=self._term.num,
                 round_num=self._round.num,
-                votes=candidate.votes,
+                candidate_votes=candidate.votes,
                 candidate_data=None,
                 commit_id=None
             )
@@ -180,10 +188,3 @@ class RoundLayer:
 
     def _is_genesis_or_is_connected_genesis(self, data: Data) -> bool:
         return data.number == 0 or data.number == 1
-
-    def _is_next_round(self, term: Term, round_num: int) -> bool:
-        if term.num == self._term.num and round_num == self._round.num + 1:
-            return True
-        if term.num == self._term.num + 1 and round_num == 0:
-            return True
-        return False

@@ -1,16 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Sequence
 
-from lft.consensus.vote import Vote
+from lft.consensus.messages.message import Message
+from lft.consensus.messages.vote import Vote
 from lft.serialization import Serializable
 
 
-class Data(Serializable):
-    @property
-    @abstractmethod
-    def id(self) -> bytes:
-        raise NotImplementedError
-
+class Data(Message):
     @property
     @abstractmethod
     def number(self) -> int:
@@ -24,16 +20,6 @@ class Data(Serializable):
     @property
     @abstractmethod
     def proposer_id(self) -> bytes:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def term_num(self) -> int:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def round_num(self) -> int:
         raise NotImplementedError
 
     @property

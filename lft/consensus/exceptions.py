@@ -30,6 +30,15 @@ class AlreadyVoteReceived(Exception):
     pass
 
 
+class AlreadyCandidate(Exception):
+    pass
+
+
+class AlreadySync(Exception):
+    def __init__(self, data_id: bytes):
+        self.data_id = data_id
+
+
 class DataIDNotFound(Exception):
     pass
 
@@ -56,3 +65,20 @@ class InvalidVoter(Exception):
     def __init__(self, voter: bytes, expected: bytes):
         self.voter = voter
         self.expected = expected
+
+
+class ReachCandidate(Exception):
+    def __init__(self, candidate_data, candidate_votes):
+        self.candidate_data = candidate_data
+        self.candidate_votes = candidate_votes
+
+
+class NeedSync(Exception):
+    def __init__(self, old_candidate_id: bytes, new_candidate_id: bytes):
+        self.new_candidate_id = new_candidate_id
+        self.old_candidate_id = old_candidate_id
+
+
+class NotReachCandidate(Exception):
+    pass
+

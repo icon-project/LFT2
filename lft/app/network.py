@@ -9,8 +9,8 @@ from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
 
 
 if TYPE_CHECKING:
-    from lft.consensus.data import Data
-    from lft.consensus.vote import Vote
+    from lft.consensus.messages.data import Data
+    from lft.consensus.messages.vote import Vote
 
 Datums = DefaultDict[int, Set['Data']]
 Votes = DefaultDict[int, Set['Vote']]

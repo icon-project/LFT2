@@ -1,5 +1,5 @@
 from typing import List, Dict, DefaultDict, Set, Sequence, Optional, NamedTuple
-from lft.consensus.data import Data, Vote
+from lft.consensus.messages.data import Data, Vote
 from lft.consensus.term import Term
 from lft.consensus.exceptions import CannotComplete, AlreadyCompleted, AlreadyVoted, NotCompleted, DataIDNotFound
 
