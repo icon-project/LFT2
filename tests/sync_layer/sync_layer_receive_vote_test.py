@@ -3,7 +3,7 @@ import pytest
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.layers.sync.layer import TIMEOUT_PROPOSE, TIMEOUT_VOTE
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
-from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyVoted, AlreadyVoteReceived
+from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyVoted
 from lft.event.mediators import DelayedEventMediator
 from tests.sync_layer.setup_items import setup_items
 
@@ -61,22 +61,6 @@ async def test_sync_layer_already_vote():
             await sync_layer._receive_vote(same_none_vote)
         same_none_vote._id = b'3'
         await sync_layer._receive_vote(same_none_vote)
-
-
-@pytest.mark.asyncio
-async def test_sync_layer_already_vote_received():
-    round_num = 0
-    voter_num = 7
-
-    async with setup_items(voter_num, round_num) as (
-            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
-
-        vote = await sync_layer._vote_factory.create_vote(b'test', candidate_data.id, term.num, round_num)
-        await sync_layer._receive_vote(vote)
-
-        not_vote = await sync_layer._vote_factory.create_not_vote(voters[0], term.num, round_num)
-        with pytest.raises(AlreadyVoteReceived):
-            await sync_layer._receive_vote(not_vote)
 
 
 @pytest.mark.asyncio
