@@ -1,6 +1,6 @@
 import pytest
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyProposed, AlreadyDataReceived
+from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyProposed
 from tests.sync_layer.setup_items import setup_items
 
 
@@ -56,29 +56,6 @@ async def test_sync_layer_already_propose():
         await sync_layer._receive_data(data)
         with pytest.raises(AlreadyProposed):
             await sync_layer._receive_data(data)
-
-
-@pytest.mark.asyncio
-async def test_sync_layer_data_received():
-    round_num = 0
-    voter_num = 7
-
-    async with setup_items(voter_num, round_num) as (
-            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
-
-        data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
-                                                          prev_id=candidate_data.id,
-                                                          term_num=term.num,
-                                                          round_num=round_num,
-                                                          prev_votes=candidate_votes)
-        await sync_layer._receive_data(data)
-
-        proposer_id = term.get_proposer_id(round_num)
-        not_data = await sync_layer._data_factory.create_not_data(term_num=term.num,
-                                                                  round_num=round_num,
-                                                                  proposer_id=proposer_id)
-        with pytest.raises(AlreadyDataReceived):
-            await sync_layer._receive_data(not_data)
 
 
 @pytest.mark.asyncio

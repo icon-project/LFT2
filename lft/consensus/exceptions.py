@@ -22,14 +22,6 @@ class AlreadyVoted(Exception):
         self.voter_id = voter_id
 
 
-class AlreadyDataReceived(Exception):
-    pass
-
-
-class AlreadyVoteReceived(Exception):
-    pass
-
-
 class AlreadyCandidate(Exception):
     pass
 

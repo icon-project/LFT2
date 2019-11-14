@@ -6,8 +6,7 @@ from lft.consensus.candidate import Candidate
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.term import Term
 from lft.consensus.layers.sync import SyncMessages
-from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
-                                      AlreadyDataReceived, AlreadyVoteReceived)
+from lft.consensus.exceptions import InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
 
@@ -60,7 +59,7 @@ class SyncLayer:
     async def receive_data(self, data: Data):
         try:
             await self._receive_data(data)
-        except (InvalidTerm, InvalidRound, AlreadyProposed, AlreadyDataReceived):
+        except (InvalidTerm, InvalidRound, AlreadyProposed):
             pass
 
     async def _receive_data(self, data: Data):
@@ -76,7 +75,7 @@ class SyncLayer:
     async def receive_vote(self, vote: Vote):
         try:
             await self._receive_vote(vote)
-        except (InvalidTerm, InvalidRound, AlreadyVoted, AlreadyVoteReceived):
+        except (InvalidTerm, InvalidRound, AlreadyVoted):
             pass
 
     async def _receive_vote(self, vote: Vote):
@@ -146,8 +145,6 @@ class SyncLayer:
             raise InvalidRound(data.round_num, self._round_num)
         if data in self._messages:
             raise AlreadyProposed(data.id, data.proposer_id)
-        if data.is_not() and self._messages.datums:
-            raise AlreadyDataReceived
 
     def _verify_acceptable_vote(self, vote: Vote):
         if self._term.num != vote.term_num:
@@ -156,5 +153,3 @@ class SyncLayer:
             raise InvalidRound(vote.round_num, self._round_num)
         if vote in self._messages:
             raise AlreadyVoted(vote.id, vote.voter_id)
-        if vote.is_not() and self._messages.votes:
-            raise AlreadyVoteReceived
