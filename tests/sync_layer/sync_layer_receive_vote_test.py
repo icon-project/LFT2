@@ -1,7 +1,7 @@
 import random
 import pytest
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.layers.sync_layer import TIMEOUT_VOTE
+from lft.consensus.layers.sync.layer import TIMEOUT_VOTE
 from lft.consensus.events import ReceiveVoteEvent
 from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyVoted, AlreadyVoteReceived
 from lft.event.mediators import DelayedEventMediator

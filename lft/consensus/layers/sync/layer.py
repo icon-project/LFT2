@@ -1,15 +1,19 @@
 import logging
-from typing import DefaultDict, OrderedDict, Optional, Sequence
+from typing import OrderedDict, Optional, Sequence, TYPE_CHECKING
 from lft.consensus.messages.data import Data, DataFactory
 from lft.consensus.messages.vote import Vote, VoteFactory
-from lft.consensus.round import Candidate
+from lft.consensus.candidate import Candidate
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.term import Term
-from lft.consensus.layers.round_layer import RoundLayer
+from lft.consensus.layers.sync import SyncMessages
 from lft.consensus.exceptions import (InvalidRound, InvalidTerm, AlreadyProposed, AlreadyVoted,
                                       AlreadyDataReceived, AlreadyVoteReceived)
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator
+
+
+if TYPE_CHECKING:
+    from lft.consensus.layers.round import RoundLayer
 
 __all__ = ("SyncLayer",)
 
@@ -19,7 +23,7 @@ TIMEOUT_VOTE = 2.0
 
 class SyncLayer:
     def __init__(self,
-                 round_layer: RoundLayer,
+                 round_layer: 'RoundLayer',
                  node_id: bytes,
                  event_system: EventSystem,
                  data_factory: DataFactory,
@@ -31,13 +35,11 @@ class SyncLayer:
         self._vote_factory = vote_factory
         self._logger = logging.getLogger(node_id.hex())
 
-        self._datums: Datums = Datums()
-        self._votes: Votes = Votes()
-
         self._term: Optional[Term] = None
         self._round_num = -1
         self._candidate_num = -1
 
+        self._messages: Optional[SyncMessages] = None
         self._vote_timeout_started = False
 
     async def initialize(self,
@@ -71,16 +73,14 @@ class SyncLayer:
     async def _receive_data(self, data: Data):
         self._verify_acceptable_data(data)
 
-        if not data.is_not():
-            self._term.verify_data(data)
-        self._datums[data.id] = data
+        self._messages.add_data(data)
         await self._round_layer.propose_data(data)
 
         if data.is_not():
             return
 
-        votes_by_vote_id = self._votes.get_votes(data_id=data.id)
-        for vote in votes_by_vote_id.values():
+        votes_by_data_id = self._messages.get_votes(data_id=data.id)
+        for vote in votes_by_data_id.values():
             await self._round_layer.vote_data(vote)
 
     async def receive_vote(self, vote: Vote):
@@ -92,16 +92,15 @@ class SyncLayer:
     async def _receive_vote(self, vote: Vote):
         self._verify_acceptable_vote(vote)
 
-        self._term.verify_vote(vote)
-        self._votes.add_vote(vote)
-        if vote.is_none() or vote.data_id in self._datums:
+        self._messages.add_vote(vote)
+        if vote.is_none() or self._messages.get_data(vote.data_id):
             await self._round_layer.vote_data(vote)
 
         if self._vote_timeout_started:
             return
-        if not self._votes_reach_quorum():
+        if not self._messages.reach_quorum(self._term.quorum_num):
             return
-        if self._votes_reach_quorum_consensus():
+        if self._messages.reach_quorum_consensus(self._term.quorum_num):
             return
 
         self._vote_timeout_started = True
@@ -137,8 +136,7 @@ class SyncLayer:
         self._vote_timeout_started = False
         self._term = new_term
         self._round_num = new_round_num
-        self._datums.clear()
-        self._votes.clear()
+        self._messages = SyncMessages()
 
     async def _new_data(self):
         expected_proposer = self._term.get_proposer_id(self._round_num)
@@ -156,9 +154,9 @@ class SyncLayer:
             raise InvalidRound(data.round_num, self._round_num)
         if self._candidate_num > data.number:  # This will be deleted
             return False
-        if data.id in self._datums:
+        if data in self._messages:
             raise AlreadyProposed(data.id, data.proposer_id)
-        if data.is_not() and self._datums:
+        if data.is_not() and self._messages.datums:
             raise AlreadyDataReceived
 
     def _verify_acceptable_vote(self, vote: Vote):
@@ -166,46 +164,7 @@ class SyncLayer:
             raise InvalidTerm(vote.term_num, self._term.num)
         if self._round_num != vote.round_num:
             raise InvalidRound(vote.round_num, self._round_num)
-        if vote.id in self._votes.get_votes(data_id=vote.data_id):
+        if vote in self._messages:
             raise AlreadyVoted(vote.id, vote.voter_id)
-        if vote.is_not() and self._votes.get_votes(voter_id=vote.voter_id):
+        if vote.is_not() and self._messages.votes:
             raise AlreadyVoteReceived
-
-    def _votes_reach_quorum(self):
-        return sum(1 for vote in self._votes if not vote.is_not()) >= self._term.quorum_num
-
-    def _votes_reach_quorum_consensus(self):
-        def _first(values):
-            return next(iter(values))
-
-        return any(len(votes) >= self._term.quorum_num and not _first(votes.values()).is_not()
-                   for votes in self._votes.votes_by_data_id.values())
-
-
-Datums = OrderedDict[bytes, Data]
-
-
-class Votes:
-    def __init__(self):
-        self.votes_by_data_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
-        self.votes_by_voter_id: DefaultDict[bytes, OrderedDict[Vote]] = DefaultDict(OrderedDict)
-
-    def get_votes(self, *, data_id: Optional[bytes] = None, voter_id: Optional[bytes] = None):
-        if data_id is not None and voter_id is None:
-            return self.votes_by_data_id[data_id]
-        if voter_id is not None and data_id is None:
-            return self.votes_by_voter_id[voter_id]
-        raise RuntimeError
-
-    def add_vote(self, vote: Vote):
-        self.votes_by_data_id[vote.data_id][vote.id] = vote
-        self.votes_by_voter_id[vote.voter_id][vote.id] = vote
-
-    def __iter__(self):
-        for votes in self.votes_by_data_id.values():
-            yield from votes.values()
-
-    def clear(self):
-        self.votes_by_data_id.clear()
-        self.votes_by_voter_id.clear()
-

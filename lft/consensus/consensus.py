@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
-from lft.consensus.layers import OrderLayer
-from lft.consensus.layers.sync_layer import SyncLayer
-from lft.consensus.layers.round_layer import RoundLayer
+from lft.consensus.layers.order import OrderLayer
+from lft.consensus.layers.sync import SyncLayer
+from lft.consensus.layers.round import RoundLayer
 
 if TYPE_CHECKING:
     from lft.event import EventSystem
@@ -28,3 +28,6 @@ class Consensus:
 
     def close(self):
         self._order_layer.close()
+
+
+
