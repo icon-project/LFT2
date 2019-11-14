@@ -62,7 +62,6 @@ class OrderLayer(EventRegister):
     async def _on_event_round_end(self, event: RoundEndEvent):
         if event.is_success:
             self._message_container.candidate = Candidate(event.candidate_data, event.candidate_votes)
-            await self._sync_layer.round_end(event.candidate_data)
 
     async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
         self._term = term

@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Type, Sequence, List, TypeVar, Dict, Set
+from typing import TypeVar
 
 from lft.consensus.messages.message import Message
-from lft.serialization import Serializable
 
 T = TypeVar("T")
 

@@ -7,6 +7,9 @@ T = TypeVar("T")
 
 
 class DefaultData(Data):
+    NoneData = bytes(16)
+    NotData = bytes([255] * 16)
+
     def __init__(self,
                  id_: bytes,
                  prev_id: bytes,
@@ -52,7 +55,10 @@ class DefaultData(Data):
         return self._prev_votes
 
     def is_not(self) -> bool:
-        return self._id == self._proposer_id
+        return self._id == self.NotData
+
+    def is_none(self) -> bool:
+        return self._id == self.NoneData
 
     def _serialize(self) -> dict:
         return {
@@ -116,11 +122,16 @@ class DefaultDataFactory(DataFactory):
         return DefaultData(data_id, prev_id, self._node_id, data_number, term_num, round_num, prev_votes=prev_votes)
 
     async def create_not_data(self,
-                              data_number: int,
                               term_num: int,
                               round_num: int,
                               proposer_id: bytes) -> DefaultData:
-        return DefaultData(proposer_id, proposer_id, proposer_id, data_number, term_num, round_num)
+        return DefaultData(DefaultData.NotData, DefaultData.NotData, proposer_id, -1, term_num, round_num)
+
+    async def create_none_data(self,
+                               term_num: int,
+                               round_num: int,
+                               proposer_id: bytes) -> 'Data':
+        return DefaultData(DefaultData.NoneData, DefaultData.NoneData, proposer_id, -1, term_num, round_num)
 
     async def create_data_verifier(self) -> DefaultDataVerifier:
         return DefaultDataVerifier()

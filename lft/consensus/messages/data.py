@@ -3,7 +3,6 @@ from typing import Sequence
 
 from lft.consensus.messages.message import Message
 from lft.consensus.messages.vote import Vote
-from lft.serialization import Serializable
 
 
 class Data(Message):
@@ -29,6 +28,10 @@ class Data(Message):
 
     @abstractmethod
     def is_not(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_none(self) -> bool:
         raise NotImplementedError
 
     def __eq__(self, other):
@@ -65,10 +68,16 @@ class DataFactory(ABC):
 
     @abstractmethod
     async def create_not_data(self,
-                              data_number: int,
                               term_num: int,
                               round_num: int,
                               proposer_id: bytes) -> 'Data':
+        raise NotImplementedError
+
+    @abstractmethod
+    async def create_none_data(self,
+                               term_num: int,
+                               round_num: int,
+                               proposer_id: bytes) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod

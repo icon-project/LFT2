@@ -146,6 +146,12 @@ class RoundLayer:
         self._term = term
         self._round_num = round_num
         self._messages = RoundMessages(self._term)
+
+        none_data = await self._data_factory.create_none_data(term_num=term.num,
+                                                              round_num=round_num,
+                                                              proposer_id=term.get_proposer_id(round_num))
+        self._messages.add_data(none_data)
+
         await self._create_data_if_proposer()
 
     async def _create_data_if_proposer(self):
@@ -164,7 +170,7 @@ class RoundLayer:
             await self._raise_broadcast_data(new_data)
 
     async def _verify_and_broadcast_vote(self, data):
-        if not data.is_not() and self._verify_is_connect_to_candidate(data) and await self._verify_data(data):
+        if await self._verify_data(data):
             vote = await self._vote_factory.create_vote(data_id=data.id,
                                                         commit_id=self._candidate.data.id,
                                                         term_num=self._term.num,
@@ -174,18 +180,16 @@ class RoundLayer:
                                                              round_num=self._round_num)
         await self._raise_broadcast_vote(vote)
 
-    def _verify_is_connect_to_candidate(self, data: Data) -> bool:
-        return self._candidate.data.id == data.prev_id
-
     async def _verify_data(self, data):
         if data.proposer_id == self._node_id:
             return True
+        if self._candidate.data.id != data.prev_id:
+            return False
+        if data.is_not():
+            return False
         try:
             await self._data_verifier.verify(data)
         except Exception as e:
             return False
         else:
             return True
-
-    def _is_genesis_or_is_connected_genesis(self, data: Data) -> bool:
-        return data.number == 0 or data.number == 1

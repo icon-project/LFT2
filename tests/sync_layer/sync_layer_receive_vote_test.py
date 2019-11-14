@@ -1,8 +1,8 @@
 import random
 import pytest
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.layers.sync.layer import TIMEOUT_VOTE
-from lft.consensus.events import ReceiveVoteEvent
+from lft.consensus.layers.sync.layer import TIMEOUT_PROPOSE, TIMEOUT_VOTE
+from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyVoted, AlreadyVoteReceived
 from lft.event.mediators import DelayedEventMediator
 from tests.sync_layer.setup_items import setup_items
@@ -89,12 +89,12 @@ async def test_sync_layer_none_vote_received():
 
         random.shuffle(voters)
         none_votes = []
-        for voter in voters[:sync_layer._term.quorum_num]:
+        for voter in voters[:term.quorum_num]:
             none_vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_num)
             none_votes.append(none_vote)
             await sync_layer.receive_vote(none_vote)
 
-        assert len(round_layer.vote_data.call_args_list) == sync_layer._term.quorum_num
+        assert len(round_layer.vote_data.call_args_list) == term.quorum_num
         for none_vote, call_args in zip(none_votes, round_layer.vote_data.call_args_list):
             vote, = call_args[0]
             assert vote is none_vote
@@ -108,33 +108,47 @@ async def test_sync_layer_reach_quorum(voter_num: int):
     async with setup_items(voter_num, round_num) as (
             voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
 
-        vote_factories = [DefaultVoteFactory(voter) for voter in voters]
-        random.shuffle(vote_factories)
+        mediator = event_system.get_mediator(DelayedEventMediator)
+        mediator.execute.assert_called_once()
 
-        quorum_vote_factories = vote_factories[:sync_layer._term.quorum_num]
+        delay, event = mediator.execute.call_args_list[0][0]
+        assert delay == TIMEOUT_PROPOSE
+        assert isinstance(event, ReceiveDataEvent)
+        assert event.data.is_not()
+
+        mediator.execute.reset_mock()
+
+        random.shuffle(voters)
+        vote_factories = [DefaultVoteFactory(voter) for voter in voters]
+
+        quorum_vote_factories = vote_factories[:term.quorum_num]
         for vote_factory in quorum_vote_factories[:-1]:
             vote = await vote_factory.create_vote(b"test", candidate_data.id, term.num, round_num)
             await sync_layer._receive_vote(vote)
 
-        mediator = event_system.get_mediator(DelayedEventMediator)
         mediator.execute.assert_not_called()
 
-        none_vote = await vote_factories[-1].create_none_vote(term.num, round_num)
+        none_vote = await quorum_vote_factories[-1].create_none_vote(term.num, round_num)
         await sync_layer._receive_vote(none_vote)
 
-        assert len(voters) == len(mediator.execute.call_args_list)
+        assert len(mediator.execute.call_args_list) == len(voters) - term.quorum_num
+
+        not_voted_voters = voters[term.quorum_num:]
         for voter, call_args in zip(voters, mediator.execute.call_args_list):
             timeout, event = call_args[0]
             assert timeout == TIMEOUT_VOTE
             assert isinstance(event, ReceiveVoteEvent)
             assert event.vote.is_not()
-            assert event.vote.voter_id == voter
+            assert event.vote.voter_id in not_voted_voters
+            not_voted_voters.remove(event.vote.voter_id)
 
-        none_vote = await vote_factories[-2].create_none_vote(term.num, round_num)
+        assert len(not_voted_voters) == 0
+        mediator.execute.reset_mock()
+
+        none_vote = await vote_factories[-1].create_none_vote(term.num, round_num)
         await sync_layer._receive_vote(none_vote)
 
-        assert len(voters) == len(mediator.execute.call_args_list)
-
+        mediator.execute.assert_not_called()
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("voter_num", range(4, 20))
@@ -143,14 +157,22 @@ async def test_sync_layer_reach_quorum_consensus(voter_num: int):
 
     async with setup_items(voter_num, round_num) as (
             voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
+        mediator = event_system.get_mediator(DelayedEventMediator)
+        mediator.execute.assert_called_once()
+
+        delay, event = mediator.execute.call_args_list[0][0]
+        assert delay == TIMEOUT_PROPOSE
+        assert isinstance(event, ReceiveDataEvent)
+        assert event.data.is_not()
+
+        mediator.execute.reset_mock()
 
         vote_factories = [DefaultVoteFactory(voter) for voter in voters]
         random.shuffle(vote_factories)
 
-        quorum_vote_factories = vote_factories[:sync_layer._term.quorum_num]
+        quorum_vote_factories = vote_factories[:term.quorum_num]
         for vote_factory in quorum_vote_factories:
             vote = await vote_factory.create_vote(b'test', candidate_data.id, term.num, round_num)
             await sync_layer._receive_vote(vote)
 
-        mediator = event_system.get_mediator(DelayedEventMediator)
         mediator.execute.assert_not_called()

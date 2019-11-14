@@ -7,6 +7,7 @@ T = TypeVar("T")
 
 class DefaultVote(Vote):
     NoneVote = bytes(16)
+    NotVote = bytes([255] * 16)
 
     def __init__(self, id_: bytes, data_id: bytes, commit_id: bytes, voter_id: bytes, term_num: int, round_num: int):
         self._id = id_
@@ -41,7 +42,7 @@ class DefaultVote(Vote):
         return self._round_num
 
     def is_not(self) -> bool:
-        return self._data_id == self._voter_id
+        return self._data_id == self.NotVote
 
     def is_none(self) -> bool:
         return self._data_id == self.NoneVote
@@ -96,7 +97,7 @@ class DefaultVoteFactory(VoteFactory):
 
     async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> DefaultVote:
         vote_id = self._create_id(voter_id, voter_id, voter_id, term_num, round_num)
-        return DefaultVote(vote_id, voter_id, voter_id, voter_id, term_num, round_num)
+        return DefaultVote(vote_id, DefaultVote.NotVote, DefaultVote.NotVote, voter_id, term_num, round_num)
 
     async def create_none_vote(self, term_num: int, round_num: int) -> DefaultVote:
         vote_id = self._create_id(DefaultVote.NoneVote, DefaultVote.NoneVote, self._node_id, term_num, round_num)
