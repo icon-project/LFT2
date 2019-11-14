@@ -29,6 +29,7 @@ class Node:
 
         self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
         self.event_system.simulator.register_handler(RoundEndEvent, self._on_round_end_event)
+        self.event_system.simulator.register_handler(ChangedCandidateEvent, self._on_changed_candidate_event)
 
     async def _on_init_event(self, init_event: InitializeEvent):
         self._nodes = init_event.term.voters
