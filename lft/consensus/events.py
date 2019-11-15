@@ -8,6 +8,7 @@ from lft.consensus.messages.data import Data, Vote
 
 @dataclass
 class InitializeEvent(Event):
+    prev_term: Optional['Term']
     term: 'Term'
     round_num: int
     candidate_data: 'Data'

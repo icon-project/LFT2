@@ -62,3 +62,7 @@ class Term(Serializable):
     @abstractmethod
     def get_voters_id(self) -> Sequence[bytes]:
         raise NotImplementedError
+
+    @abstractmethod
+    def __eq__(self, other):
+        raise NotImplementedError

@@ -42,6 +42,7 @@ async def setup_order_layer() -> Tuple[OrderLayer, SyncLayer, Sequence[bytes], E
     term = RotateTerm(0, voters)
     await order_layer._on_event_initialize(
         InitializeEvent(
+            prev_term=None,
             term=term,
             round_num=0,
             candidate_data=genesis_data,
