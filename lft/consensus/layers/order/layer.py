@@ -67,6 +67,8 @@ class OrderLayer(EventRegister):
 
     async def _initialize(self, prev_term: Optional[Term], term: Term, round_num: int,
                           candidate_data: Data, votes: Sequence['Vote']):
+        if term.num != prev_term.num + 1:
+            InvalidTerm(term.num, prev_term.num + 1)
         self._term = term
         self._prev_term = prev_term
         self._round_num = round_num
