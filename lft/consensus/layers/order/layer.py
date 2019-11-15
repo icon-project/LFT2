@@ -47,7 +47,10 @@ class OrderLayer(EventRegister):
         )
 
     async def _on_event_round_start(self, event: RoundStartEvent):
-        await self._round_start(event.term, event.round_num)
+        try:
+            await self._round_start(event.term, event.round_num)
+        except (InvalidTerm, InvalidRound):
+            pass
 
     async def _on_event_receive_data(self, event: ReceiveDataEvent):
         try:
