@@ -108,6 +108,7 @@ class OrderLayer(EventRegister):
             if isinstance(vote, Vote):
                 if not sample_vote:
                     sample_vote = vote
+                self._verify_acceptable_vote(vote)
                 self._save_vote(vote)
         return sample_vote
 
@@ -157,7 +158,6 @@ class OrderLayer(EventRegister):
 
     def _verify_acceptable_vote(self, vote: Vote):
         verify_term = None
-
         if vote.term_num == self._term.num:
             verify_term = self._term
             if vote.round_num < self._messages.candidate.data.round_num:
