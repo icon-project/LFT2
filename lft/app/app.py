@@ -75,8 +75,9 @@ class App(ABC):
         )
 
         term = RotateTerm(1, tuple(node.node_id for node in nodes))
+        prev_term = RotateTerm(0, [])
         round_num = 0
-        event = InitializeEvent(term, round_num, genesis_data, ())
+        event = InitializeEvent(prev_term, term, round_num, genesis_data, ())
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 

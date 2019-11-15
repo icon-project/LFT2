@@ -33,11 +33,13 @@ class OrderLayer(EventRegister):
         self._logger = logging.getLogger(node_id.hex())
 
         self._term: Optional[Term] = None
+        self._prev_term: Optional[Term] = None
         self._round_num = -1
         self._message_container: OrderMessages = None
 
     async def _on_event_initialize(self, event: InitializeEvent):
         await self._initialize(
+            prev_term=event.term,
             term=event.term,
             round_num=event.round_num,
             candidate_data=event.candidate_data,
@@ -63,7 +65,9 @@ class OrderLayer(EventRegister):
         if event.is_success:
             self._message_container.candidate = Candidate(event.candidate_data, event.candidate_votes)
 
-    async def _initialize(self, term: Term, round_num: int, candidate_data: Data, votes: Sequence['Vote']):
+    async def _initialize(self, prev_term: Optional[Term], term: Term, round_num: int,
+                          candidate_data: Data, votes: Sequence['Vote']):
+        self._prev_term = prev_term
         self._term = term
         self._round_num = round_num
         candidate = Candidate(candidate_data, votes)
