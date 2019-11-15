@@ -75,15 +75,21 @@ class RoundLayer:
             await self._update_round_if_complete()
 
     async def change_candidate(self, candidate: Candidate):
-        self._candidate = candidate
-        self._event_system.simulator.raise_event(
-            ChangedCandidateEvent(
-                candidate.data, candidate.votes
+        if candidate.data.term_num == self._term.num and candidate.data.round_num > self._round_num:
+            self._candidate = candidate
+            self._event_system.simulator.raise_event(
+                ChangedCandidateEvent(
+                    candidate.data, candidate.votes
+                )
             )
-        )
-        if candidate.data.term_num == self._term.num:
-            if candidate.data.round_num > self._round_num:
-                await self._start_new_round(self._term, candidate.data.round_num)
+            await self._start_new_round(self._term, candidate.data.round_num)
+        elif not self._messages.is_completed:
+            self._candidate = candidate
+            self._event_system.simulator.raise_event(
+                ChangedCandidateEvent(
+                    candidate.data, candidate.votes
+                )
+            )
 
     async def _update_round_if_complete(self):
         try:
