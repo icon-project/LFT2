@@ -33,6 +33,7 @@ class OrderLayer(EventRegister):
         self._logger = logging.getLogger(node_id.hex())
 
         self._term: Optional[Term] = None
+        self._prev_term: Optional[Term] = None
         self._round_num = -1
         self._messages: OrderMessages = None
 
@@ -67,8 +68,10 @@ class OrderLayer(EventRegister):
     async def _initialize(self, prev_term: Optional[Term], term: Term, round_num: int,
                           candidate_data: Data, votes: Sequence['Vote']):
         self._term = term
+        self._prev_term = prev_term
         self._round_num = round_num
         candidate = Candidate(candidate_data, votes)
+
         self._messages = OrderMessages(prev_term, term, candidate)
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
@@ -77,6 +80,7 @@ class OrderLayer(EventRegister):
         self._verify_acceptable_round_start(term, round_num)
 
         if self._term != term:
+            self._prev_term = self._term
             self._term = term
             self._messages.update_term(term)
 
@@ -143,22 +147,27 @@ class OrderLayer(EventRegister):
             raise InvalidTerm(term=term.num, expected=self._term.num)
 
     def _verify_acceptable_data(self, data: Data):
-        self._verify_acceptable_round_message(data)
-        # TODO Term verify data
-        if self._term.verify_proposer(data.proposer_id, data.round_num):
-            raise InvalidProposer(data.proposer_id, self._term.get_proposer_id(data.round_num))
+        self._term.verify_data(data)
 
-    def _verify_acceptable_round_message(self, message):
-        if message.term_num != self._term.num:
-            raise InvalidTerm(message.term_num, self._term.num)
-        elif message.round_num < self._messages.candidate.data.round_num:
-            if message.term_num == self._messages.candidate.data.term_num:
-                raise InvalidRound(message.round_num, self._round_num)
+        if data.term_num != self._term.num:
+            raise InvalidTerm(data.term_num, self._term.num)
+        elif data.round_num < self._messages.candidate.data.round_num:
+            if data.term_num == self._messages.candidate.data.term_num:
+                raise InvalidRound(data.round_num, self._round_num)
 
     def _verify_acceptable_vote(self, vote: Vote):
-        self._verify_acceptable_round_message(vote)
-        if not (vote.voter_id in self._term.voters):
-            raise InvalidVoter(vote.voter_id, b'')
+        verify_term = None
+
+        if vote.term_num == self._term:
+            verify_term = self._term
+            if vote.round_num < self._round_num:
+                raise InvalidRound(vote.round_num, self._round_num)
+        elif self._prev_term and vote.term_num == self._prev_term:
+            verify_term = self._prev_term
+        else:
+            InvalidTerm(vote.term_num, self._term.num)
+
+        verify_term.verify_vote(vote)
 
     def _save_data(self, data: Data):
         self._messages.add_data(data)

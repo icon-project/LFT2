@@ -45,8 +45,6 @@ class RotateTerm(Term):
 
     def verify_data(self, data: Data):
         self.verify_proposer(data.proposer_id, data.round_num)
-        for i, vote in enumerate(data.prev_votes):
-            self.verify_vote(vote, i)
 
     def verify_vote(self, vote: Vote, vote_index: int = -1):
         if isinstance(vote, Vote):
