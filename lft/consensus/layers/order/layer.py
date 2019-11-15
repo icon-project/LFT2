@@ -33,9 +33,8 @@ class OrderLayer(EventRegister):
         self._logger = logging.getLogger(node_id.hex())
 
         self._term: Optional[Term] = None
-        self._prev_term: Optional[Term] = None
         self._round_num = -1
-        self._message_container: OrderMessages = None
+        self._messages: OrderMessages = None
 
     async def _on_event_initialize(self, event: InitializeEvent):
         await self._initialize(
@@ -63,29 +62,31 @@ class OrderLayer(EventRegister):
 
     async def _on_event_round_end(self, event: RoundEndEvent):
         if event.is_success:
-            self._message_container.candidate = Candidate(event.candidate_data, event.candidate_votes)
+            self._messages.candidate = Candidate(event.candidate_data, event.candidate_votes)
 
     async def _initialize(self, prev_term: Optional[Term], term: Term, round_num: int,
                           candidate_data: Data, votes: Sequence['Vote']):
-        self._prev_term = prev_term
         self._term = term
         self._round_num = round_num
         candidate = Candidate(candidate_data, votes)
-        self._message_container = OrderMessages(term, candidate)
+        self._messages = OrderMessages(prev_term, term, candidate)
 
         await self._sync_layer.initialize(term, round_num, candidate_data, votes)
 
     async def _round_start(self, term: Term, round_num: int):
         self._verify_acceptable_round_start(term, round_num)
 
-        self._term = term
+        if self._term != term:
+            self._term = term
+            self._messages.update_term(term)
+
         self._round_num = round_num
         await self._sync_layer.round_start(term, round_num)
 
-        for data in self._get_datums(self._round_num):
+        for data in self._get_datums(self._term.num, self._round_num):
             await self._sync_layer.receive_data(data)
 
-        for vote in self._get_votes(self._round_num):
+        for vote in self._get_votes(self._term.num, self._round_num):
             await self._sync_layer.receive_vote(vote)
 
     async def _receive_data(self, data: Data):
@@ -116,7 +117,7 @@ class OrderLayer(EventRegister):
 
     async def _change_candidate_if_reach(self, term_num: int, round_num: int, data_id: bytes):
         try:
-            candidate = self._message_container.get_reach_candidate(term_num, round_num, data_id)
+            candidate = self._messages.get_reach_candidate(term_num, round_num, data_id)
         except NeedSync as e:
             self._event_system.simulator.raise_event(
                 SyncRequestEvent(e.old_candidate_id, e.new_candidate_id)
@@ -150,8 +151,8 @@ class OrderLayer(EventRegister):
     def _verify_acceptable_round_message(self, message):
         if message.term_num != self._term.num:
             raise InvalidTerm(message.term_num, self._term.num)
-        elif message.round_num < self._message_container.candidate.data.round_num:
-            if message.term_num == self._message_container.candidate.data.term_num:
+        elif message.round_num < self._messages.candidate.data.round_num:
+            if message.term_num == self._messages.candidate.data.term_num:
                 raise InvalidRound(message.round_num, self._round_num)
 
     def _verify_acceptable_vote(self, vote: Vote):
@@ -160,16 +161,16 @@ class OrderLayer(EventRegister):
             raise InvalidVoter(vote.voter_id, b'')
 
     def _save_data(self, data: Data):
-        self._message_container.add_data(data)
+        self._messages.add_data(data)
 
     def _save_vote(self, vote: Vote):
-        self._message_container.add_vote(vote)
+        self._messages.add_vote(vote)
 
-    def _get_datums(self, round_num: int) -> Sequence:
-        return self._message_container.get_datums(round_num)
+    def _get_datums(self, term_num: int, round_num: int) -> Sequence:
+        return self._messages.get_datums(term_num, round_num)
 
-    def _get_votes(self, round_num: int) -> Sequence:
-        return self._message_container.get_votes(round_num)
+    def _get_votes(self, term_num: int, round_num: int) -> Sequence:
+        return self._messages.get_votes(term_num, round_num)
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,

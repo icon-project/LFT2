@@ -27,7 +27,7 @@ from lft.consensus.layers.order import OrderMessages
 @pytest.mark.asyncio
 async def test_candidate_change_by_vote():
     # GIVEN
-    message_container, nodes = init_container()
+    order_messages, nodes = init_container()
     candidate = DefaultData(
         id_=b'first',
         prev_id=b'',
@@ -37,13 +37,13 @@ async def test_candidate_change_by_vote():
         round_num=1,
         prev_votes=[]
     )
-    message_container.add_data(candidate)
+    order_messages.add_data(candidate)
 
     votes = await _create_votes(nodes, candidate)
     for vote in votes:
-        message_container.add_vote(vote)
+        order_messages.add_vote(vote)
     # WHEN
-    changed_candidate = message_container.get_reach_candidate(0, 1, b'first')
+    changed_candidate = order_messages.get_reach_candidate(0, 1, b'first')
     # THEN
     assert candidate == changed_candidate.data
     assert votes == list(changed_candidate.votes)
@@ -61,7 +61,7 @@ async def _create_votes(nodes, candidate: Data):
 @pytest.mark.asyncio
 async def test_candidate_change_by_candidate_connected_vote():
     # GIVEN
-    message_container, nodes = init_container()
+    order_messages, nodes = init_container()
     candidate = DefaultData(
         id_=b'first',
         prev_id=b'genesis',
@@ -72,13 +72,13 @@ async def test_candidate_change_by_candidate_connected_vote():
         prev_votes=[]
     )
 
-    message_container.add_data(candidate)
+    order_messages.add_data(candidate)
     votes = await _create_votes(nodes, candidate)
     for vote in votes:
-        message_container.add_vote(vote)
+        order_messages.add_vote(vote)
 
     # WHEN
-    changed_candidate = message_container.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
+    changed_candidate = order_messages.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
     # THEN
     assert candidate == changed_candidate.data
     assert votes == list(changed_candidate.votes)
@@ -87,7 +87,7 @@ async def test_candidate_change_by_candidate_connected_vote():
 @pytest.mark.asyncio
 async def test_raise_block_sync_by_vote():
 
-    message_container, nodes = init_container()
+    order_messages, nodes = init_container()
     candidate = DefaultData(
         id_=b'first',
         prev_id=b'',
@@ -99,16 +99,74 @@ async def test_raise_block_sync_by_vote():
     )
     votes = await _create_votes(nodes, candidate)
     for vote in votes:
-        message_container.add_vote(vote)
+        order_messages.add_vote(vote)
 
     # WHEN
     try:
-        changed_candidate = message_container.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
+        changed_candidate = order_messages.get_reach_candidate(candidate.term_num, candidate.round_num, candidate.id)
     except NeedSync as e:
         assert e.new_candidate_id == b'first'
         assert e.old_candidate_id == b'genesis'
     else:
         pytest.fail("Should raise NeedSync")
+
+
+@pytest.mark.asyncio
+async def test_candidate_change_prev_term_data():
+    order_messages, nodes = init_container()
+    new_nodes = [b'4', b'0', b'6', b'7', b'8', b'9', b'10', b'11']
+    candidate = DefaultData(
+        id_=b'first',
+        prev_id=b'',
+        proposer_id=nodes[1],
+        number=0,
+        term_num=0,
+        round_num=1,
+        prev_votes=[]
+    )
+    order_messages.add_data(candidate)
+
+    # WHEN
+    new_term = RotateTerm(1, new_nodes)
+    order_messages.update_term(new_term)
+
+    votes = await _create_votes(nodes, candidate)
+    for vote in votes:
+        order_messages.add_vote(vote)
+
+    changed_candidate = order_messages.get_reach_candidate(0, 1, b'first')
+    # THEN
+    assert candidate == changed_candidate.data
+    assert votes == list(changed_candidate.votes)
+
+
+@pytest.mark.asyncio
+async def test_candidate_change_connected_prev_term_data():
+    order_messages, nodes = init_container()
+    new_nodes = [b'4', b'0', b'6', b'7', b'8', b'9', b'10', b'11']
+    candidate = DefaultData(
+        id_=b'first',
+        prev_id=b'genesis',
+        proposer_id=nodes[2],
+        number=1,
+        term_num=0,
+        round_num=2,
+        prev_votes=[]
+    )
+    order_messages.add_data(candidate)
+
+    # WHEN
+    new_term = RotateTerm(1, new_nodes)
+    order_messages.update_term(new_term)
+
+    votes = await _create_votes(nodes, candidate)
+    for vote in votes:
+        order_messages.add_vote(vote)
+
+    changed_candidate = order_messages.get_reach_candidate(0, 2, b'first')
+    # THEN
+    assert candidate == changed_candidate.data
+    assert votes == list(changed_candidate.votes)
 
 
 def init_container():
@@ -123,5 +181,5 @@ def init_container():
         prev_votes=[]
     )
     term = RotateTerm(0, nodes)
-    message_container = OrderMessages(term, Candidate(genesis_data, []))
-    return message_container, nodes
+    order_messages = OrderMessages(None, term, Candidate(genesis_data, []))
+    return order_messages, nodes

@@ -55,7 +55,7 @@ async def test_change_by_data():
 
     # THEN
     candidate = Candidate(change_candidate_data, prev_votes)
-    assert order_layer._message_container.candidate == candidate
+    assert order_layer._messages.candidate == candidate
     sync_layer.change_candidate.assert_called_once_with(candidate)
 
 
@@ -95,7 +95,7 @@ async def test_change_by_vote():
         )
     # THEN
     candidate = Candidate(change_candidate_data, prev_votes[:3])
-    assert order_layer._message_container.candidate == candidate
+    assert order_layer._messages.candidate == candidate
     sync_layer.change_candidate.assert_called_once_with(candidate)
 
 
