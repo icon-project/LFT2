@@ -158,14 +158,14 @@ class OrderLayer(EventRegister):
     def _verify_acceptable_vote(self, vote: Vote):
         verify_term = None
 
-        if vote.term_num == self._term:
+        if vote.term_num == self._term.num:
             verify_term = self._term
-            if vote.round_num < self._round_num:
+            if vote.round_num < self._messages.candidate.data.round_num:
                 raise InvalidRound(vote.round_num, self._round_num)
         elif self._prev_term and vote.term_num == self._prev_term:
             verify_term = self._prev_term
         else:
-            InvalidTerm(vote.term_num, self._term.num)
+            raise InvalidTerm(vote.term_num, self._term.num)
 
         verify_term.verify_vote(vote)
 

@@ -70,7 +70,7 @@ class OrderMessages:
 
         if len(same_data_id_votes) >= verify_term.quorum_num:
             self._verify_missing_data(term_num, round_num, data_id)
-            self._candidate = Candidate(self._datums[term_num][round_num][data_id], list(same_data_id_votes.values()))
+            self.candidate = Candidate(self._datums[term_num][round_num][data_id], list(same_data_id_votes.values()))
             return self._candidate
 
         raise NotReachCandidate
