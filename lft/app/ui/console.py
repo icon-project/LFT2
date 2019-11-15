@@ -45,24 +45,13 @@ class Console:
 
 
 def debug_patch(node: 'Node'):
-    node.order_layer = node._consensus._order_layer
-    node.sync_layer = node._consensus._sync_layer
-    node.round_layer = node._consensus._round_layer
-    node.round = node._consensus._round_layer._round
-
     node.pause = lambda: node.event_system.stop()
     node.resume = lambda: node.event_system.start(False)
 
+    node.order_layer = node._consensus._order_layer
+    node.sync_layer = node._consensus._sync_layer
+    node.round_layer = node._consensus._round_layer
+
     node.order_layer.term = node.order_layer._term
-    node.order_layer.datums = node.order_layer._datums
-    node.order_layer.votes = node.order_layer._votes
-
     node.sync_layer.term = node.sync_layer._term
-    node.sync_layer.datums = node.sync_layer._datums
-    node.sync_layer.votes = node.sync_layer._votes
-
     node.round_layer.term = node.round_layer._term
-    node.round.datums = node.round._datums
-    node.round.votes = node.round._votes
-    node.round.voters = node.round._voters
-
