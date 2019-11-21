@@ -1,6 +1,6 @@
 import asyncio
+import IPython
 from typing import TYPE_CHECKING
-from IPython import embed
 from lft.event.mediators import DelayedEventMediator
 from lft.event.mediators.delayed_event_mediator import (DelayedEventInstantMediatorExecutor,
                                                         DelayedEventRecorderMediatorExecutor)
@@ -13,15 +13,16 @@ if TYPE_CHECKING:
 class Console:
     def run(self, app: 'App'):
         nodes = app.nodes
+        user_ns = {"nodes": nodes}
         for i, node in enumerate(nodes):
             debug_patch(node)
-            locals()[f"node{i}"] = node
+            user_ns[f"node{i}"] = node
 
         loop = asyncio.get_event_loop()
         start_time = loop.time()
 
         try:
-            embed(colors='Neutral')
+            IPython.start_ipython(argv=[], user_ns=user_ns)
         finally:
             for node in app.nodes:
                 mediator = node.event_system.get_mediator(DelayedEventMediator)
