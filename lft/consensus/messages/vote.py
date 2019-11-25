@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
-from lft.consensus.messages.message import Message
+from lft.consensus.messages.message import Message, MessagePool
 
 T = TypeVar("T")
 
@@ -60,3 +60,11 @@ class VoteFactory(ABC):
 
     async def create_vote_verifier(self) -> 'VoteVerifier':
         raise NotImplementedError
+
+
+class VotePool(MessagePool):
+    def add_vote(self, vote: Vote):
+        self.add_message(vote)
+
+    def get_vote(self, vote_id) -> Vote:
+        return self.get_messages(vote_id)

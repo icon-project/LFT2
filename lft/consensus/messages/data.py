@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Sequence
 
-from lft.consensus.messages.message import Message
+from lft.consensus.messages.message import Message, MessagePool
 from lft.consensus.messages.vote import Vote
 
 
@@ -83,3 +83,11 @@ class DataFactory(ABC):
     @abstractmethod
     async def create_data_verifier(self) -> 'DataVerifier':
         raise NotImplementedError
+
+
+class DataPool(MessagePool):
+    def add_data(self, data: Data):
+        self.add_message(data)
+
+    def get_data(self, data_id: bytes) -> Data:
+        return self.get_messages(data_id)
