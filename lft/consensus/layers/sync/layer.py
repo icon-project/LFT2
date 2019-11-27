@@ -1,8 +1,7 @@
 import logging
-from typing import OrderedDict, Optional, Sequence, TYPE_CHECKING
+from typing import OrderedDict, Optional, TYPE_CHECKING
 from lft.consensus.messages.data import Data, DataFactory
 from lft.consensus.messages.vote import Vote, VoteFactory
-from lft.consensus.candidate import Candidate
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.term import Term
 from lft.consensus.layers.sync import SyncMessages
@@ -39,15 +38,6 @@ class SyncLayer:
 
         self._messages: Optional[SyncMessages] = None
         self._vote_timeout_started = False
-
-    async def initialize(self,
-                         term: Term,
-                         round_num: int,
-                         candidate_data: Data,
-                         votes: Sequence[Vote]):
-        await self._new_round(term, round_num)
-        await self._new_data()
-        await self._round_layer.initialize(term, round_num, candidate_data, votes)
 
     async def round_start(self,
                           term: Term,
@@ -97,7 +87,7 @@ class SyncLayer:
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
-    async def change_candidate(self, candidate: Candidate):
+    async def change_candidate(self, candidate):
         if self._term.num == candidate.data.term_num:
             if self._round_num < candidate.data.round_num:
                 await self._new_round(self._term, candidate.data.round_num)

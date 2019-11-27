@@ -90,7 +90,7 @@ class DataPool(MessagePool):
         self.add_message(data)
 
     def get_data(self, data_id: bytes) -> Data:
-        return self.get_messages(data_id)
+        return self.get_message(data_id)
 
     def get_datums(self, term_num: int, round_num: int) -> Iterable[Data]:
         return self.get_messages(term_num, round_num)

@@ -1,6 +1,5 @@
 from typing import List, Dict, DefaultDict, Set
 
-from lft.consensus.candidate import Candidate
 from lft.consensus.messages.data import Data, Vote
 from lft.consensus.term import Term
 from lft.consensus.exceptions import CannotComplete, AlreadyCompleted, AlreadyVoted, NotCompleted, DataIDNotFound
@@ -65,12 +64,10 @@ class RoundMessages:
             raise NotCompleted
 
         candidate_data_id = self._find_max_data_id()
+        candidate_votes = self._votes[candidate_data_id]
 
-        unordered_votes = self._votes[candidate_data_id]
-        candidate_votes = self._order_votes(unordered_votes)
-
-        if self._term.quorum_num > len(unordered_votes):
-            return Candidate(None, candidate_votes)
+        if self._term.quorum_num > len(candidate_votes):
+            return None
 
         try:
             candidate_data = self._datums[candidate_data_id]
@@ -78,18 +75,9 @@ class RoundMessages:
             raise DataIDNotFound(f"Upper layers did not send data. {candidate_data_id}")
         else:
             if candidate_data.is_not() or candidate_data.is_none():
-                return Candidate(None, candidate_votes)
+                return None
             else:
-                return Candidate(candidate_data, candidate_votes)
+                return candidate_data
 
     def _find_max_data_id(self):
         return max(self._votes, key=lambda key: len(self._votes.get(key)))
-
-    def _order_votes(self, votes: List[Vote]):
-        ordered_votes = []
-        for voter in self._term.voters:
-            ordered_vote = next((vote for vote in votes if vote.voter_id == voter), None)
-            ordered_votes.append(ordered_vote)
-        return ordered_votes
-
-

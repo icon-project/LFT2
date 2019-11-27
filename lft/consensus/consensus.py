@@ -29,7 +29,7 @@ class Consensus(EventRegister):
         self._rounds: List[Round] = []
 
     async def _on_event_initialize(self, event: InitializeEvent):
-        await self.initialize(event.term, event.round_num, event.candidate_data, event.votes)
+        await self.initialize(event.term, event.round_num, event.candidate_data, event.candidate_votes)
 
     async def _on_event_round_start(self, event: RoundStartEvent):
         await self.round_start(event.term, event.round_num)
@@ -43,12 +43,22 @@ class Consensus(EventRegister):
     async def _on_event_receive_vote(self, event: ReceiveVoteEvent):
         await self.receive_vote(event.vote)
 
-    async def initialize(self, new_term: 'Term', new_round_num: int, candidate_data: 'Data', votes: Sequence['Vote']):
+    async def initialize(self, new_term: 'Term', new_round_num: int,
+                         candidate_data: 'Data', candidate_votes: Sequence['Vote']):
         assert not self._rounds
 
-        new_round = Round(self._event_system, self._node_id, self._data_factory, self._vote_factory)
-        await new_round.initialize(new_term, new_round_num, candidate_data, votes)
+        self._data_pool.add_data(candidate_data)
+        for candidate_vote in candidate_votes:
+            self._vote_pool.add_vote(candidate_vote)
+
+        new_round = Round(self._event_system, self._node_id,
+                          self._data_factory, self._vote_factory, self._data_pool, self._vote_pool)
+        new_round.candidate_id = candidate_data.id
+
+        await new_round.round_start(new_term, new_round_num)
         self._rounds.append(new_round)
+
+        await self._receive_round_messages(new_term.num, new_round_num)
 
     async def round_start(self, new_term: 'Term', new_round_num: int):
         assert self._rounds
@@ -59,9 +69,10 @@ class Consensus(EventRegister):
 
         candidate_round = self._rounds[0]
 
-        new_round = Round(self._event_system, self._node_id, self._data_factory, self._vote_factory)
-        await new_round.initialize(new_term, new_round_num,
-                                   candidate_round.candidate.data, candidate_round.candidate.votes)
+        new_round = Round(self._event_system, self._node_id,
+                          self._data_factory, self._vote_factory, self._data_pool, self._vote_pool)
+        new_round.candidate_id = candidate_round.result_id
+
         await new_round.round_start(new_term, new_round_num)
         self._rounds.append(new_round)
 
@@ -85,6 +96,7 @@ class Consensus(EventRegister):
         except InvalidRound:
             self._data_pool.add_data(data)
         else:
+            self._data_pool.add_data(data)
             await round_.receive_data(data)
 
     async def receive_vote(self, vote: 'Vote'):
@@ -97,6 +109,7 @@ class Consensus(EventRegister):
         except InvalidRound:
             self._vote_pool.add_vote(vote)
         else:
+            self._vote_pool.add_vote(vote)
             await round_.receive_vote(vote)
 
     def _verify_acceptable_message(self, message: 'Message'):
