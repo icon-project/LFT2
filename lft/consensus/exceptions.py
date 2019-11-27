@@ -42,9 +42,11 @@ class InvalidTerm(Exception):
 
 
 class InvalidRound(Exception):
-    def __init__(self, round_: int, expected: int):
+    def __init__(self, term: int, round_: int, expected_term: int, expected_round: int):
+        self.term = term
         self.round = round_
-        self.expected = expected
+        self.expected_term = expected_term
+        self.expected_round = expected_round
 
 
 class InvalidProposer(Exception):

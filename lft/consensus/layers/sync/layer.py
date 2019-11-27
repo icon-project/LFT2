@@ -142,7 +142,7 @@ class SyncLayer:
         if self._term.num != data.term_num:
             raise InvalidTerm(data.term_num, self._term.num)
         if self._round_num != data.round_num:
-            raise InvalidRound(data.round_num, self._round_num)
+            raise InvalidRound(data.term_num, data.round_num, self._term.num, self._round_num)
         if data in self._messages:
             raise AlreadyProposed(data.id, data.proposer_id)
 
@@ -150,6 +150,6 @@ class SyncLayer:
         if self._term.num != vote.term_num:
             raise InvalidTerm(vote.term_num, self._term.num)
         if self._round_num != vote.round_num:
-            raise InvalidRound(vote.round_num, self._round_num)
+            raise InvalidRound(vote.term_num, vote.round_num, self._term.num, self._round_num)
         if vote in self._messages:
             raise AlreadyVoted(vote.id, vote.voter_id)

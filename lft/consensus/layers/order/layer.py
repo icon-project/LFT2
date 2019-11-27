@@ -10,14 +10,14 @@ from lft.consensus.layers.order import OrderMessages
 from lft.consensus.term import Term
 from lft.consensus.messages.data import DataFactory, Data
 from lft.consensus.messages.vote import VoteFactory, Vote
-from lft.event import EventRegister, EventSystem
+from lft.event import EventSystem
 
 
 if TYPE_CHECKING:
     from lft.consensus.layers.sync import SyncLayer
 
 
-class OrderLayer(EventRegister):
+class OrderLayer:
     def __init__(self,
                  sync_layer: 'SyncLayer',
                  node_id: bytes,
@@ -147,10 +147,10 @@ class OrderLayer(EventRegister):
     def _verify_acceptable_round_start(self, term: Term, round_num: int):
         if term.num == self._term.num:
             if round_num != self._round_num + 1:
-                raise InvalidRound(round_num, self._round_num)
+                raise InvalidRound(term.num, round_num, self._term.num, self._round_num)
         elif term.num == self._term.num + 1:
             if round_num != 0:
-                raise InvalidRound(round_num, 0)
+                raise InvalidRound(term.num, round_num, self._term.num, 0)
         else:
             raise InvalidTerm(term=term.num, expected=self._term.num)
 
@@ -161,14 +161,14 @@ class OrderLayer(EventRegister):
             raise InvalidTerm(data.term_num, self._term.num)
         elif data.round_num < self._messages.candidate.data.round_num:
             if data.term_num == self._messages.candidate.data.term_num:
-                raise InvalidRound(data.round_num, self._round_num)
+                raise InvalidRound(data.term_num, data.round_num, self._term.num, self._round_num)
 
     def _verify_acceptable_vote(self, vote: Vote):
         verify_term = None
         if vote.term_num == self._term.num:
             verify_term = self._term
             if vote.round_num < self._messages.candidate.data.round_num:
-                raise InvalidRound(vote.round_num, self._round_num)
+                raise InvalidRound(vote.term_num, vote.round_num, self._term.num, self._round_num)
         elif self._prev_term and vote.term_num == self._prev_term:
             verify_term = self._prev_term
         else:
@@ -187,11 +187,3 @@ class OrderLayer(EventRegister):
 
     def _get_votes(self, term_num: int, round_num: int) -> Sequence:
         return self._messages.get_votes(term_num, round_num)
-
-    _handler_prototypes = {
-        InitializeEvent: _on_event_initialize,
-        RoundStartEvent: _on_event_round_start,
-        ReceiveDataEvent: _on_event_receive_data,
-        ReceiveVoteEvent: _on_event_receive_vote,
-        RoundEndEvent: _on_event_round_end
-    }

@@ -48,11 +48,3 @@ class Console:
 def debug_patch(node: 'Node'):
     node.pause = lambda: node.event_system.stop()
     node.resume = lambda: node.event_system.start(False)
-
-    node.order_layer = node._consensus._order_layer
-    node.sync_layer = node._consensus._sync_layer
-    node.round_layer = node._consensus._round_layer
-
-    node.order_layer.term = node.order_layer._term
-    node.sync_layer.term = node.sync_layer._term
-    node.round_layer.term = node.round_layer._term
