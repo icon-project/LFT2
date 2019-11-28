@@ -88,13 +88,6 @@ class SyncLayer:
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 
-    async def change_candidate(self, candidate):
-        if self._term.num == candidate.data.term_num:
-            if self._round_num < candidate.data.round_num:
-                await self._new_round(self._term, candidate.data.round_num)
-                await self._new_data()
-        await self._round_layer.change_candidate(candidate)
-
     async def _raise_received_consensus_data(self, delay: float, data: Data):
         event = ReceiveDataEvent(data)
         event.deterministic = False

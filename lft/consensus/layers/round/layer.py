@@ -75,23 +75,6 @@ class RoundLayer:
         self._messages.add_vote(vote)
         await self._update_round_if_complete()
 
-    async def change_candidate(self, candidate):
-        if candidate.data.term_num == self._term.num and candidate.data.round_num > self._round_num:
-            self._candidate_id = candidate
-            self._event_system.simulator.raise_event(
-                ChangedCandidateEvent(
-                    candidate.data, candidate.votes
-                )
-            )
-            await self._new_data(self._term, candidate.data.round_num)
-        elif not self._messages.is_completed:
-            self._candidate_id = candidate
-            self._event_system.simulator.raise_event(
-                ChangedCandidateEvent(
-                    candidate.data, candidate.votes
-                )
-            )
-
     async def _update_round_if_complete(self):
         self._messages.update()
         if self._messages.result:
