@@ -73,9 +73,12 @@ class Consensus(EventRegister):
         self._data_pool.add_data(data)
 
         round_ = self._new_or_get_round(data.term_num, data.round_num)
-        if round_.candidate_id == data.prev_id:
-            async with self._try_change_candidate(round_):
-                await round_.receive_data(data)
+        if data.is_not():
+            await round_.receive_data(data)
+        else:
+            if round_.candidate_id == data.prev_id:
+                async with self._try_change_candidate(round_):
+                    await round_.receive_data(data)
 
     async def receive_vote(self, vote: 'Vote'):
         try:
