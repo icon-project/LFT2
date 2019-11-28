@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Sequence, Iterable
+from typing import Sequence, Iterable, DefaultDict, Dict
 
 from lft.consensus.messages.message import Message, MessagePool
 from lft.consensus.messages.vote import Vote
@@ -100,3 +100,8 @@ class DataPool(MessagePool):
 
     def get_datums(self, term_num: int, round_num: int) -> Iterable[Data]:
         return self.get_messages(term_num, round_num)
+
+    def get_datums_connected(self, prev_id: bytes) -> Iterable[Data]:
+        for data in self._messages.values():
+            if data.prev_id == prev_id:
+                yield data

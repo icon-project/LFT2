@@ -1,9 +1,9 @@
-from typing import Dict, DefaultDict, Set, Optional
+from typing import Dict, DefaultDict, OrderedDict, Set, Optional
 
 from lft.consensus.messages.data import Data, Vote
 from lft.consensus.term import Term
 
-Datums = Dict[bytes, Data]  # dict[data_id] = data
+Datums = OrderedDict[bytes, Data]  # dict[data_id] = data
 Votes = DefaultDict[bytes, Dict[bytes, Vote]]  # dict[data_id][voter_id] = vote
 
 
@@ -11,7 +11,7 @@ class RoundMessages:
     def __init__(self, term: Term):
         self._term = term
 
-        self._datums: Datums = {}
+        self._datums: Datums = OrderedDict()
         self._votes: Votes = DefaultDict(dict)
         self._voters: Set[bytes] = set()
         self._result: Optional[Data] = None
@@ -19,6 +19,10 @@ class RoundMessages:
     @property
     def result(self):
         return self._result
+
+    @property
+    def first_data(self):
+        return next((data for data in self._datums.values() if data.is_real()), None)
 
     def add_data(self, data: Data):
         self._datums[data.id] = data
