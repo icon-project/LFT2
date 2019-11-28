@@ -134,7 +134,6 @@ class Consensus(EventRegister):
             else:
                 candidate_round = self._round_pool.first_round()
                 round_ = self._new_round(term, round_num, candidate_round.result_id)
-                self._round_pool.add_round(round_)
                 return round_
 
     def _trim_round(self, latest_term_num: int, latest_round_num: int):
