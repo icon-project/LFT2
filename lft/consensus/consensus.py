@@ -148,8 +148,6 @@ class Consensus(EventRegister):
         finally:
             if old_result_id == target_round.result_id:
                 return
-            if old_result_id is None:
-                return
             if target_round.result_id is None:
                 return
 

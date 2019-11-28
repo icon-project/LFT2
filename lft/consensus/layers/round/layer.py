@@ -168,6 +168,9 @@ class RoundLayer:
             return True
         if self._candidate_id != data.prev_id:
             return False
+        candidate_data = self._data_pool.get_data(self._candidate_id)
+        if candidate_data.number + 1 != data.number:
+            return False
         if data.is_not():
             return False
         try:
