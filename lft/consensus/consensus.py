@@ -61,6 +61,9 @@ class Consensus(EventRegister):
         new_round = self._new_or_get_round(new_term.num, new_round_num)
         await new_round.round_start()
 
+        candidate_data = self._data_pool.get_data(new_round.candidate_id)
+        self._trim_messages(candidate_data.term_num, candidate_data.round_num)
+
     async def receive_data(self, data: 'Data'):
         for prev_vote in data.prev_votes:
             if prev_vote:
@@ -84,7 +87,7 @@ class Consensus(EventRegister):
         try:
             self._verify_acceptable_vote(vote)
         except (InvalidTerm, InvalidRound, InvalidVoter):
-            pass
+            return
         self._vote_pool.add_vote(vote)
 
         round_ = self._new_or_get_round(vote.term_num, vote.round_num)
@@ -139,6 +142,8 @@ class Consensus(EventRegister):
     def _trim_round(self, latest_term_num: int, latest_round_num: int):
         self._term_pool.trim_term(latest_term_num - 1)  # Need prev term
         self._round_pool.trim_round(latest_term_num, latest_round_num)
+
+    def _trim_messages(self, latest_term_num: int, latest_round_num: int):
         self._data_pool.trim(latest_term_num, latest_round_num)
         self._vote_pool.trim(latest_term_num, latest_round_num)
 
