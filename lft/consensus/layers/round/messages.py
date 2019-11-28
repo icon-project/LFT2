@@ -1,11 +1,10 @@
-from typing import List, Dict, DefaultDict, Set
+from typing import Dict, DefaultDict, Set, Optional
 
 from lft.consensus.messages.data import Data, Vote
 from lft.consensus.term import Term
-from lft.consensus.exceptions import CannotComplete, AlreadyCompleted, AlreadyVoted, NotCompleted, DataIDNotFound
 
 Datums = Dict[bytes, Data]  # dict[data_id] = data
-Votes = DefaultDict[bytes, List[Vote]]  # dict[data_id][0] = vote
+Votes = DefaultDict[bytes, Dict[bytes, Vote]]  # dict[data_id][voter_id] = vote
 
 
 class RoundMessages:
@@ -13,71 +12,56 @@ class RoundMessages:
         self._term = term
 
         self._datums: Datums = {}
-        self._votes: Votes = DefaultDict(list)
+        self._votes: Votes = DefaultDict(dict)
         self._voters: Set[bytes] = set()
-
-        self._is_completed = False
+        self._result: Optional[Data] = None
 
     @property
-    def is_completed(self):
-        return self._is_completed
+    def result(self):
+        return self._result
 
     def add_data(self, data: Data):
-        if self.is_completed:
-            raise AlreadyCompleted
-
         self._datums[data.id] = data
 
     def add_vote(self, vote: Vote):
-        if self.is_completed:
-            raise AlreadyCompleted
-
-        if vote.voter_id in self._voters:
-            raise AlreadyVoted(vote.id, vote.voter_id)
-
         self._voters.add(vote.voter_id)
-        self._votes[vote.data_id].append(vote)
+        self._votes[vote.data_id][vote.voter_id] = vote
 
-    def complete(self):
-        if self.is_completed:
-            raise AlreadyCompleted
+    def update(self):
+        complete_datums = []
+        pending_datums = []
+        for quorum_data_id in self._find_quorum_data_ids():
+            assert quorum_data_id in self._datums
 
-        try:
-            max_data_id = self._find_max_data_id()
-        except ValueError:
-            raise CannotComplete(f"Datums is empty. {self._datums}")
-
-        majority = len(self._votes[max_data_id])
-        if self._term.quorum_num > majority and self._term.voters_num != len(self._voters):
-            raise CannotComplete(f"Majority({majority}) does not reach quorum({self._term.quorum_num} or "
-                                 f"All voters have not voted. ({len(self._voters)}/{self._term.voters_num})")
-
-        try:
-            self._datums[max_data_id]
-        except KeyError:
-            raise DataIDNotFound(f"Upper layers did not send data. {max_data_id}")
-        else:
-            self._is_completed = True
-
-    def result(self):
-        if not self.is_completed:
-            raise NotCompleted
-
-        candidate_data_id = self._find_max_data_id()
-        candidate_votes = self._votes[candidate_data_id]
-
-        if self._term.quorum_num > len(candidate_votes):
-            return None
-
-        try:
-            candidate_data = self._datums[candidate_data_id]
-        except KeyError:
-            raise DataIDNotFound(f"Upper layers did not send data. {candidate_data_id}")
-        else:
-            if candidate_data.is_not() or candidate_data.is_none():
-                return None
+            quorum_data = self._datums[quorum_data_id]
+            if quorum_data.is_complete():
+                complete_datums.append(quorum_data)
             else:
-                return candidate_data
+                pending_datums.append(quorum_data)
 
-    def _find_max_data_id(self):
-        return max(self._votes, key=lambda key: len(self._votes.get(key)))
+        assert len(complete_datums) <= 1
+        if complete_datums:
+            self._result = complete_datums[0]
+            return
+
+        assert len(pending_datums) <= 1
+        if pending_datums:
+            self._result = pending_datums[0]
+            return
+
+        assert len(self._voters) <= self._term.quorum_num
+        if len(self._voters) == self._term.quorum_num:
+            pending_data = self._find_pending_data()
+            assert pending_data
+            self._result = pending_data
+            return
+
+        self._result = None
+
+    def _find_quorum_data_ids(self):
+        return [data_id for data_id, votes_by_data_id in self._votes.items()
+                if len(votes_by_data_id) >= self._term.quorum_num]
+
+    def _find_pending_data(self):
+        return next((data for data in self._datums.values() if data.is_not()), None)
+

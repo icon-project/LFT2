@@ -34,6 +34,12 @@ class Data(Message):
     def is_none(self) -> bool:
         raise NotImplementedError
 
+    def is_real(self) -> bool:
+        return not self.is_none() and not self.is_not()
+
+    def is_complete(self) -> bool:
+        return not self.is_not()
+
     def __eq__(self, other):
         return self.id == other.id \
                and self.number == other.number \

@@ -5,7 +5,7 @@ from lft.consensus.messages.vote import Vote, VoteFactory, VotePool
 from lft.consensus.events import (RoundEndEvent, BroadcastDataEvent, BroadcastVoteEvent,
                                   ReceiveDataEvent, ReceiveVoteEvent, ChangedCandidateEvent)
 from lft.consensus.term import Term
-from lft.consensus.exceptions import InvalidProposer, AlreadyCompleted, AlreadyVoted, CannotComplete, NotCompleted
+from lft.consensus.exceptions import InvalidProposer
 from lft.event import EventSystem
 
 
@@ -30,15 +30,13 @@ class RoundLayer:
         self._round_num = -1
 
         self._node_id: bytes = node_id
+
         self._is_voted = False
+        self._is_ended = False
 
     @property
     def result_id(self):
-        try:
-            result = self._messages.result()
-        except NotCompleted:
-            return None
-
+        result = self._messages.result
         if result:
             return result.id
         else:
@@ -53,26 +51,16 @@ class RoundLayer:
         )
 
     async def propose_data(self, data: Data):
-        try:
-            self._messages.add_data(data)
-        except AlreadyCompleted:
-            pass
-        else:
-            if not self._is_voted:
-                await self._verify_and_broadcast_vote(data)
-                self._is_voted = True
+        self._messages.add_data(data)
+        if not self._is_voted:
+            await self._verify_and_broadcast_vote(data)
+            self._is_voted = True
 
-            await self._update_round_if_complete()
+        await self._update_round_if_complete()
 
     async def vote_data(self, vote: Vote):
-        try:
-            self._messages.add_vote(vote)
-        except AlreadyCompleted:
-            pass
-        except AlreadyVoted:
-            pass
-        else:
-            await self._update_round_if_complete()
+        self._messages.add_vote(vote)
+        await self._update_round_if_complete()
 
     async def change_candidate(self, candidate):
         if candidate.data.term_num == self._term.num and candidate.data.round_num > self._round_num:
@@ -92,15 +80,11 @@ class RoundLayer:
             )
 
     async def _update_round_if_complete(self):
-        try:
-            self._messages.complete()
-        except AlreadyCompleted:
-            pass
-        except CannotComplete:
-            pass
-        else:
-            new_candidate_data = self._messages.result()
-            await self._raise_round_end(new_candidate_data)
+        self._messages.update()
+        if self._messages.result:
+            if not self._is_ended:
+                await self._raise_round_end(self._messages.result)
+                self._is_ended = True
 
     async def _raise_broadcast_data(self, data):
         self._event_system.simulator.raise_event(
@@ -125,8 +109,9 @@ class RoundLayer:
             )
         )
 
-    async def _raise_round_end(self, new_candidate: Data):
-        if new_candidate:
+    async def _raise_round_end(self, result: Data):
+        if result.is_real():
+            new_candidate = result
             round_end = RoundEndEvent(
                 is_success=True,
                 term_num=self._term.num,

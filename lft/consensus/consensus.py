@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Sequence, List
 
 from lft.event import EventRegister
@@ -97,7 +98,9 @@ class Consensus(EventRegister):
             self._data_pool.add_data(data)
         else:
             self._data_pool.add_data(data)
-            await round_.receive_data(data)
+
+            async with self._try_change_candidate(round_):
+                await round_.receive_data(data)
 
     async def receive_vote(self, vote: 'Vote'):
         try:
@@ -110,7 +113,9 @@ class Consensus(EventRegister):
             self._vote_pool.add_vote(vote)
         else:
             self._vote_pool.add_vote(vote)
-            await round_.receive_vote(vote)
+
+            async with self._try_change_candidate(round_):
+                await round_.receive_vote(vote)
 
     def _verify_acceptable_message(self, message: 'Message'):
         # To avoid MMO attack, app must prevent to receive newer messages than current round's.
@@ -139,6 +144,17 @@ class Consensus(EventRegister):
             await self.receive_data(data)
         for vote in self._vote_pool.get_votes(term_num, round_num):
             await self.receive_vote(vote)
+
+    @asynccontextmanager
+    async def _try_change_candidate(self, target_round: Round):
+        old_result_id = target_round.result_id
+        try:
+            yield
+        finally:
+            if old_result_id != target_round.result_id:
+                self._trim_round(target_round.term_num, target_round.num)
+                for round_ in self._rounds:
+                    round_.candidate_id = target_round.result_id
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,

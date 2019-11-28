@@ -1,15 +1,3 @@
-class CannotComplete(Exception):
-    pass
-
-
-class NotCompleted(Exception):
-    pass
-
-
-class AlreadyCompleted(Exception):
-    pass
-
-
 class AlreadyProposed(Exception):
     def __init__(self, data_id: bytes, proposer_id: bytes):
         self.data_id = data_id
@@ -29,10 +17,6 @@ class AlreadyCandidate(Exception):
 class AlreadySync(Exception):
     def __init__(self, data_id: bytes):
         self.data_id = data_id
-
-
-class DataIDNotFound(Exception):
-    pass
 
 
 class InvalidTerm(Exception):
