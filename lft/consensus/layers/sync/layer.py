@@ -83,7 +83,7 @@ class SyncLayer:
             return
 
         self._vote_timeout_started = True
-        for voter in set(self._term.get_voters_id()) - self._messages.voters:
+        for voter in self._term.get_voters_id():
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
 

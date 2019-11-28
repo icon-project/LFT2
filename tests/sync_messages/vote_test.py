@@ -25,19 +25,6 @@ def test_vote():
         assert vote is vote
 
 
-def test_voter():
-    sync_messages = SyncMessages()
-    assert not sync_messages.voters
-
-    for i in range(10):
-        vote = _random_vote()
-        sync_messages.add_vote(vote)
-
-        assert sync_messages.voters
-        assert vote.voter_id in sync_messages.voters
-        assert os.urandom(16) not in sync_messages.voters
-
-
 def _random_vote():
     return DefaultVote(id_=os.urandom(16),
                        data_id=os.urandom(16),
