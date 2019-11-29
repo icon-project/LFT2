@@ -56,6 +56,10 @@ class Consensus(EventRegister):
         await new_round.round_start()
 
     async def round_start(self, new_term: 'Term', new_round_num: int):
+        if self._round_pool.first_round().is_newer_than(new_term.num, new_round_num):
+            # Maybe sync
+            return
+
         self._term_pool.add_term(new_term)
 
         new_round = self._new_or_get_round(new_term.num, new_round_num)
