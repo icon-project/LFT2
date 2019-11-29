@@ -70,6 +70,8 @@ async def test_sync_layer_none_vote_received():
 
     async with setup_items(voter_num, round_num) as (
             voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
+        #  Propose NoneData
+        await sync_layer.round_start()
 
         random.shuffle(voters)
         none_votes = []
@@ -91,6 +93,8 @@ async def test_sync_layer_reach_quorum(voter_num: int):
 
     async with setup_items(voter_num, round_num) as (
             voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
+        # Propose NotData
+        await sync_layer.round_start()
 
         mediator = event_system.get_mediator(DelayedEventMediator)
         mediator.execute.assert_called_once()
@@ -108,31 +112,27 @@ async def test_sync_layer_reach_quorum(voter_num: int):
         quorum_vote_factories = vote_factories[:term.quorum_num]
         for vote_factory in quorum_vote_factories[:-1]:
             vote = await vote_factory.create_vote(b"test", candidate_data.id, term.num, round_num)
-            await sync_layer._receive_vote(vote)
+            await sync_layer.receive_vote(vote)
 
         mediator.execute.assert_not_called()
 
         none_vote = await quorum_vote_factories[-1].create_none_vote(term.num, round_num)
-        await sync_layer._receive_vote(none_vote)
+        await sync_layer.receive_vote(none_vote)
 
-        assert len(mediator.execute.call_args_list) == len(voters) - term.quorum_num
+        assert len(mediator.execute.call_args_list) == len(voters)
 
-        not_voted_voters = voters[term.quorum_num:]
         for voter, call_args in zip(voters, mediator.execute.call_args_list):
             timeout, event = call_args[0]
             assert timeout == TIMEOUT_VOTE
             assert isinstance(event, ReceiveVoteEvent)
             assert event.vote.is_not()
-            assert event.vote.voter_id in not_voted_voters
-            not_voted_voters.remove(event.vote.voter_id)
-
-        assert len(not_voted_voters) == 0
         mediator.execute.reset_mock()
 
         none_vote = await vote_factories[-1].create_none_vote(term.num, round_num)
-        await sync_layer._receive_vote(none_vote)
+        await sync_layer.receive_vote(none_vote)
 
         mediator.execute.assert_not_called()
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("voter_num", range(4, 20))
@@ -141,6 +141,9 @@ async def test_sync_layer_reach_quorum_consensus(voter_num: int):
 
     async with setup_items(voter_num, round_num) as (
             voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
+        # Propose NotData
+        await sync_layer.round_start()
+
         mediator = event_system.get_mediator(DelayedEventMediator)
         mediator.execute.assert_called_once()
 
@@ -157,6 +160,6 @@ async def test_sync_layer_reach_quorum_consensus(voter_num: int):
         quorum_vote_factories = vote_factories[:term.quorum_num]
         for vote_factory in quorum_vote_factories:
             vote = await vote_factory.create_vote(b'test', candidate_data.id, term.num, round_num)
-            await sync_layer._receive_vote(vote)
+            await sync_layer.receive_vote(vote)
 
         mediator.execute.assert_not_called()

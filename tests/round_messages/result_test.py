@@ -5,7 +5,6 @@ from lft.app.data import DefaultDataFactory
 from lft.app.term import RotateTerm
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.layers.round import RoundMessages
-from lft.consensus.exceptions import CannotComplete
 
 
 @pytest.mark.asyncio
@@ -14,46 +13,56 @@ async def test_complete_round_success():
 
     last_vote = await DefaultVoteFactory(voters[-1]).create_vote(data.id, b'', term.num, round_num)
     round_messages.add_vote(last_vote)
-    round_messages.complete()
-    candidate = round_messages.result()
+    round_messages.update()
+    candidate = round_messages.result
 
-    assert candidate.data.proposer_id == voters[0]
-    assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
+    assert candidate.proposer_id == voters[0]
 
 
 @pytest.mark.asyncio
 async def test_complete_round_failure_none():
     term, round_num, round_messages, data, voters = await setup()
 
-    for voter in voters[term.quorum_num - 1:]:
+    # Round must add NoneData on RoundStart
+    none_data = await DefaultDataFactory(voters[0]).create_none_data(term.num, round_num, term.get_proposer_id(round_num))
+    round_messages.add_data(none_data)
+
+    for voter in voters[:term.quorum_num]:
         vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_num)
         round_messages.add_vote(vote)
-    round_messages.complete()
-    candidate = round_messages.result()
 
-    assert candidate.data is None
-    assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
+    round_messages.update()
+    candidate = round_messages.result
+
+    assert candidate.is_none()
 
 
 @pytest.mark.asyncio
 async def test_complete_round_failure_not():
     term, round_num, round_messages, data, voters = await setup()
 
-    for voter in voters[term.quorum_num - 1:]:
+    # Round must add NotData on RoundStart
+    not_data = await DefaultDataFactory(voters[0]).create_not_data(term.num, round_num, term.get_proposer_id(round_num))
+    round_messages.add_data(not_data)
+
+    for voter in voters[:term.quorum_num]:
         vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_num)
         round_messages.add_vote(vote)
-    round_messages.complete()
-    candidate = round_messages.result()
+    round_messages.update()
+    candidate = round_messages.result
 
-    assert candidate.data is None
-    assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
+    assert candidate.is_not()
 
 
 @pytest.mark.asyncio
 async def test_complete_round_failure_none_not():
     term, round_num, round_messages, data, voters = await setup()
 
-    for voter in voters[term.quorum_num - 1:-1]:
+    # Round must add NotData on RoundStart
+    not_data = await DefaultDataFactory(voters[0]).create_not_data(term.num, round_num, term.get_proposer_id(round_num))
+    round_messages.add_data(not_data)
+
+    for voter in voters[:term.quorum_num]:
         vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_num)
         round_messages.add_vote(vote)
 
@@ -61,11 +70,10 @@ async def test_complete_round_failure_none_not():
     vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_num)
     round_messages.add_vote(vote)
 
-    round_messages.complete()
-    candidate = round_messages.result()
+    round_messages.update()
+    candidate = round_messages.result
 
-    assert candidate.data is None
-    assert all(voter == vote.voter_id for voter, vote in zip(voters, candidate.votes) if vote is not None)
+    assert candidate.is_not()
 
 
 async def setup():
@@ -76,23 +84,21 @@ async def setup():
     term = RotateTerm(term_num, voters)
     round_messages = RoundMessages(term)
 
-    # ValueError(Sequence empty)
-    with pytest.raises(CannotComplete):
-        round_messages.complete()
+    round_messages.update()
+    assert round_messages.result is None
 
     proposer_id = term.get_proposer_id(round_num)
     data = await DefaultDataFactory(proposer_id).create_data(0, b'', term_num, round_num, [])
     round_messages.add_data(data)
 
-    # Majority does not reach
-    with pytest.raises(CannotComplete):
-        round_messages.complete()
+    round_messages.update()
+    assert round_messages.result is None
 
     for voter in voters[:term.quorum_num - 1]:
         vote = await DefaultVoteFactory(voter).create_vote(data.id, b'', term_num, round_num)
         round_messages.add_vote(vote)
 
-    with pytest.raises(CannotComplete):
-        round_messages.complete()
+    round_messages.update()
+    assert round_messages.result is None
 
     return term, round_num, round_messages, data, voters
