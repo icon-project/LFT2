@@ -44,7 +44,7 @@ class SyncLayer:
         self._vote_timeout_started = False
 
     async def round_start(self):
-        await self._new_data()
+        await self._new_unreal_datums()
         await self._round_layer.round_start()
 
     async def receive_data(self, data: Data):
@@ -102,7 +102,7 @@ class SyncLayer:
         mediator = self._event_system.get_mediator(DelayedEventMediator)
         mediator.execute(delay, event)
 
-    async def _new_data(self):
+    async def _new_unreal_datums(self):
         none_data = await self._data_factory.create_none_data(term_num=self._term.num,
                                                               round_num=self._round_num,
                                                               proposer_id=self._term.get_proposer_id(self._round_num))
