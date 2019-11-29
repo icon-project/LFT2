@@ -1,8 +1,7 @@
 import logging
-from typing import OrderedDict, Optional, Sequence, TYPE_CHECKING
+from typing import OrderedDict, Optional, TYPE_CHECKING
 from lft.consensus.messages.data import Data, DataFactory
 from lft.consensus.messages.vote import Vote, VoteFactory
-from lft.consensus.candidate import Candidate
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.term import Term
 from lft.consensus.layers.sync import SyncMessages
@@ -24,37 +23,29 @@ class SyncLayer:
     def __init__(self,
                  round_layer: 'RoundLayer',
                  node_id: bytes,
+                 term: Term,
+                 round_num: int,
                  event_system: EventSystem,
                  data_factory: DataFactory,
                  vote_factory: VoteFactory):
         self._round_layer = round_layer
         self._node_id = node_id
+
+        self._term = term
+        self._round_num = round_num
+
         self._event_system = event_system
         self._data_factory = data_factory
         self._vote_factory = vote_factory
         self._logger = logging.getLogger(node_id.hex())
 
-        self._term: Optional[Term] = None
-        self._round_num = -1
+        self._messages = SyncMessages()
 
-        self._messages: Optional[SyncMessages] = None
         self._vote_timeout_started = False
 
-    async def initialize(self,
-                         term: Term,
-                         round_num: int,
-                         candidate_data: Data,
-                         votes: Sequence[Vote]):
-        await self._new_round(term, round_num)
+    async def round_start(self):
         await self._new_data()
-        await self._round_layer.initialize(term, round_num, candidate_data, votes)
-
-    async def round_start(self,
-                          term: Term,
-                          round_num: int):
-        await self._new_round(term, round_num)
-        await self._new_data()
-        await self._round_layer.round_start(term, round_num)
+        await self._round_layer.round_start()
 
     async def receive_data(self, data: Data):
         try:
@@ -93,16 +84,9 @@ class SyncLayer:
             return
 
         self._vote_timeout_started = True
-        for voter in set(self._term.get_voters_id()) - self._messages.voters:
+        for voter in self._term.get_voters_id():
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
             await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
-
-    async def change_candidate(self, candidate: Candidate):
-        if self._term.num == candidate.data.term_num:
-            if self._round_num < candidate.data.round_num:
-                await self._new_round(self._term, candidate.data.round_num)
-                await self._new_data()
-        await self._round_layer.change_candidate(candidate)
 
     async def _raise_received_consensus_data(self, delay: float, data: Data):
         event = ReceiveDataEvent(data)
@@ -118,31 +102,23 @@ class SyncLayer:
         mediator = self._event_system.get_mediator(DelayedEventMediator)
         mediator.execute(delay, event)
 
-    async def _new_round(self,
-                         new_term: Term,
-                         new_round_num: int):
-        self._vote_timeout_started = False
-        self._term = new_term
-        self._round_num = new_round_num
-        self._messages = SyncMessages()
-
-        none_data = await self._data_factory.create_none_data(term_num=new_term.num,
-                                                              round_num=new_round_num,
-                                                              proposer_id=new_term.get_proposer_id(new_round_num))
+    async def _new_data(self):
+        none_data = await self._data_factory.create_none_data(term_num=self._term.num,
+                                                              round_num=self._round_num,
+                                                              proposer_id=self._term.get_proposer_id(self._round_num))
         self._messages.add_data(none_data)
 
-    async def _new_data(self):
         expected_proposer = self._term.get_proposer_id(self._round_num)
-        data = await self._data_factory.create_not_data(self._term.num,
-                                                        self._round_num,
-                                                        expected_proposer)
-        await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=data)
+        not_data = await self._data_factory.create_not_data(self._term.num,
+                                                            self._round_num,
+                                                            expected_proposer)
+        await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=not_data)
 
     def _verify_acceptable_data(self, data: Data):
         if self._term.num != data.term_num:
             raise InvalidTerm(data.term_num, self._term.num)
         if self._round_num != data.round_num:
-            raise InvalidRound(data.round_num, self._round_num)
+            raise InvalidRound(data.term_num, data.round_num, self._term.num, self._round_num)
         if data in self._messages:
             raise AlreadyProposed(data.id, data.proposer_id)
 
@@ -150,6 +126,6 @@ class SyncLayer:
         if self._term.num != vote.term_num:
             raise InvalidTerm(vote.term_num, self._term.num)
         if self._round_num != vote.round_num:
-            raise InvalidRound(vote.round_num, self._round_num)
+            raise InvalidRound(vote.term_num, vote.round_num, self._term.num, self._round_num)
         if vote in self._messages:
             raise AlreadyVoted(vote.id, vote.voter_id)

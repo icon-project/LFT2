@@ -29,10 +29,6 @@ class SyncMessages:
     def votes(self):
         return self._votes.items()
 
-    @property
-    def voters(self):
-        return self._voters
-
     def add_data(self, data: Data):
         self._datums[data.id] = data
 

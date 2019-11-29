@@ -12,7 +12,7 @@ class InitializeEvent(Event):
     term: 'Term'
     round_num: int
     candidate_data: 'Data'
-    votes: Sequence['Vote']
+    candidate_votes: Sequence['Vote']
 
 
 @dataclass
@@ -46,9 +46,8 @@ class RoundEndEvent(Event):
     is_success: bool
     term_num: int
     round_num: int
-    candidate_data: Optional['Data']
-    commit_id: Optional['bytes']
-    candidate_votes: Sequence['Vote']
+    candidate_id: Optional[bytes]
+    commit_id: Optional[bytes]
 
 
 @dataclass

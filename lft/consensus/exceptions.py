@@ -1,15 +1,3 @@
-class CannotComplete(Exception):
-    pass
-
-
-class NotCompleted(Exception):
-    pass
-
-
-class AlreadyCompleted(Exception):
-    pass
-
-
 class AlreadyProposed(Exception):
     def __init__(self, data_id: bytes, proposer_id: bytes):
         self.data_id = data_id
@@ -31,10 +19,6 @@ class AlreadySync(Exception):
         self.data_id = data_id
 
 
-class DataIDNotFound(Exception):
-    pass
-
-
 class InvalidTerm(Exception):
     def __init__(self, term: int, expected: int):
         self.term = term
@@ -42,9 +26,11 @@ class InvalidTerm(Exception):
 
 
 class InvalidRound(Exception):
-    def __init__(self, round_: int, expected: int):
+    def __init__(self, term: int, round_: int, expected_term: int, expected_round: int):
+        self.term = term
         self.round = round_
-        self.expected = expected
+        self.expected_term = expected_term
+        self.expected_round = expected_round
 
 
 class InvalidProposer(Exception):

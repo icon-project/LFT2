@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Sequence, Iterable, DefaultDict, Dict
 
-from lft.consensus.messages.message import Message
+from lft.consensus.messages.message import Message, MessagePool
 from lft.consensus.messages.vote import Vote
 
 
@@ -33,6 +33,12 @@ class Data(Message):
     @abstractmethod
     def is_none(self) -> bool:
         raise NotImplementedError
+
+    def is_real(self) -> bool:
+        return not self.is_none() and not self.is_not()
+
+    def is_complete(self) -> bool:
+        return not self.is_not()
 
     def __eq__(self, other):
         return self.id == other.id \
@@ -83,3 +89,19 @@ class DataFactory(ABC):
     @abstractmethod
     async def create_data_verifier(self) -> 'DataVerifier':
         raise NotImplementedError
+
+
+class DataPool(MessagePool):
+    def add_data(self, data: Data):
+        self.add_message(data)
+
+    def get_data(self, data_id: bytes) -> Data:
+        return self.get_message(data_id)
+
+    def get_datums(self, term_num: int, round_num: int) -> Iterable[Data]:
+        return self.get_messages(term_num, round_num)
+
+    def get_datums_connected(self, prev_id: bytes) -> Iterable[Data]:
+        for data in self._messages.values():
+            if data.prev_id == prev_id:
+                yield data
