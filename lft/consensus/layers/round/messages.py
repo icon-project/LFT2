@@ -53,8 +53,8 @@ class RoundMessages:
             self._result = pending_datums[0]
             return
 
-        assert len(self._voters) <= self._term.quorum_num
-        if len(self._voters) == self._term.quorum_num:
+        assert len(self._voters) <= len(self._term.voters)
+        if len(self._voters) == len(self._term.voters):
             pending_data = self._find_pending_data()
             assert pending_data
             self._result = pending_data
