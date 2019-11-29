@@ -46,5 +46,5 @@ class Console:
 
 
 def debug_patch(node: 'Node'):
-    node.pause = lambda: node.event_system.stop()
-    node.resume = lambda: node.event_system.start(False)
+    node.pause = lambda: node.event_system.simulator.stop()
+    node.resume = lambda: node.event_system.simulator.start(False)
