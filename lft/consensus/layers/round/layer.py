@@ -141,11 +141,15 @@ class RoundLayer:
             await self._raise_broadcast_data(new_data)
 
     async def _update_result(self):
-        self._messages.update()
-        if self._messages.result:
-            if not self._is_ended:
-                await self._raise_round_end(self._messages.result)
-                self._is_ended = True
+        if not self._messages.result or not self._messages.result.is_complete():
+            self._messages.update()
+        if not self._messages.result:
+            return
+
+        if self._is_ended:
+            return
+        await self._raise_round_end(self._messages.result)
+        self._is_ended = True
 
     async def _vote_if_real_data_exist(self):
         first_real_data = self._messages.first_real_data
