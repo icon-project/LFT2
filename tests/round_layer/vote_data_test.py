@@ -55,12 +55,12 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
         prev_votes=[]
     )
 
-    await round_layer.propose_data(data=consensus_data)
+    await round_layer.receive_data(data=consensus_data)
     event_system.simulator.raise_event.reset_mock()
 
     # WHEN
     async def do_vote(vote):
-        await round_layer.vote_data(vote)
+        await round_layer.receive_vote(vote)
 
     validator_vote_factories = [DefaultVoteFactory(x) for x in voters]
     for i in range(success_vote_num):

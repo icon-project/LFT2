@@ -48,15 +48,3 @@ class RoundEndEvent(Event):
     round_num: int
     candidate_id: Optional[bytes]
     commit_id: Optional[bytes]
-
-
-@dataclass
-class SyncRequestEvent(Event):
-    old_candidate_id: bytes
-    new_candidate_id: bytes
-
-
-@dataclass
-class ChangedCandidateEvent(Event):
-    candidate_data: Data
-    candidate_votes: Sequence[Vote]

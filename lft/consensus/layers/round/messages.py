@@ -21,7 +21,7 @@ class RoundMessages:
         return self._result
 
     @property
-    def first_data(self):
+    def first_real_data(self):
         return next((data for data in self._datums.values() if data.is_real()), None)
 
     def add_data(self, data: Data):

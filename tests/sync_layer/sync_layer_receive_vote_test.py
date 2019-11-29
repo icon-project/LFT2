@@ -80,8 +80,8 @@ async def test_sync_layer_none_vote_received():
             none_votes.append(none_vote)
             await sync_layer.receive_vote(none_vote)
 
-        assert len(round_layer.vote_data.call_args_list) == term.quorum_num
-        for none_vote, call_args in zip(none_votes, round_layer.vote_data.call_args_list):
+        assert len(round_layer.receive_vote.call_args_list) == term.quorum_num
+        for none_vote, call_args in zip(none_votes, round_layer.receive_vote.call_args_list):
             vote, = call_args[0]
             assert vote is none_vote
 

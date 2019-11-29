@@ -53,29 +53,41 @@ class SyncLayer:
         except (InvalidTerm, InvalidRound, AlreadyProposed):
             pass
 
-    async def _receive_data(self, data: Data):
-        self._verify_acceptable_data(data)
-
-        self._messages.add_data(data)
-        await self._round_layer.propose_data(data)
-
-        votes_by_data_id = self._messages.get_votes(data_id=data.id)
-        for vote in votes_by_data_id.values():
-            await self._round_layer.vote_data(vote)
-
     async def receive_vote(self, vote: Vote):
         try:
             await self._receive_vote(vote)
         except (InvalidTerm, InvalidRound, AlreadyVoted):
             pass
 
+    async def _receive_data(self, data: Data):
+        self._verify_acceptable_data(data)
+
+        self._messages.add_data(data)
+        await self._round_layer.receive_data(data)
+        await self._receive_votes_if_exist(data)
+
     async def _receive_vote(self, vote: Vote):
         self._verify_acceptable_vote(vote)
 
         self._messages.add_vote(vote)
-        if self._messages.get_data(vote.data_id):
-            await self._round_layer.vote_data(vote)
+        await self._receive_vote_if_data_exist(vote)
+        await self._raise_not_votes_if_available()
 
+    async def _raise_receive_data(self, delay: float, data: Data):
+        event = ReceiveDataEvent(data)
+        event.deterministic = False
+
+        mediator = self._event_system.get_mediator(DelayedEventMediator)
+        mediator.execute(delay, event)
+
+    async def _raise_receive_vote(self, delay: float, vote: Vote):
+        event = ReceiveVoteEvent(vote)
+        event.deterministic = False
+
+        mediator = self._event_system.get_mediator(DelayedEventMediator)
+        mediator.execute(delay, event)
+
+    async def _raise_not_votes_if_available(self):
         if self._vote_timeout_started:
             return
         if not self._messages.reach_quorum(self._term.quorum_num):
@@ -86,21 +98,7 @@ class SyncLayer:
         self._vote_timeout_started = True
         for voter in self._term.get_voters_id():
             vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
-            await self._raise_received_consensus_vote(delay=TIMEOUT_VOTE, vote=vote)
-
-    async def _raise_received_consensus_data(self, delay: float, data: Data):
-        event = ReceiveDataEvent(data)
-        event.deterministic = False
-
-        mediator = self._event_system.get_mediator(DelayedEventMediator)
-        mediator.execute(delay, event)
-
-    async def _raise_received_consensus_vote(self, delay: float, vote: Vote):
-        event = ReceiveVoteEvent(vote)
-        event.deterministic = False
-
-        mediator = self._event_system.get_mediator(DelayedEventMediator)
-        mediator.execute(delay, event)
+            await self._raise_receive_vote(delay=TIMEOUT_VOTE, vote=vote)
 
     async def _new_unreal_datums(self):
         none_data = await self._data_factory.create_none_data(term_num=self._term.num,
@@ -112,7 +110,16 @@ class SyncLayer:
         not_data = await self._data_factory.create_not_data(self._term.num,
                                                             self._round_num,
                                                             expected_proposer)
-        await self._raise_received_consensus_data(delay=TIMEOUT_PROPOSE, data=not_data)
+        await self._raise_receive_data(delay=TIMEOUT_PROPOSE, data=not_data)
+
+    async def _receive_votes_if_exist(self, data: Data):
+        votes_by_data_id = self._messages.get_votes(data_id=data.id)
+        for vote in votes_by_data_id.values():
+            await self._round_layer.receive_vote(vote)
+
+    async def _receive_vote_if_data_exist(self, vote: Vote):
+        if self._messages.get_data(vote.data_id):
+            await self._round_layer.receive_vote(vote)
 
     def _verify_acceptable_data(self, data: Data):
         if self._term.num != data.term_num:
