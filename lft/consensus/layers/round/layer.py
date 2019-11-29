@@ -140,8 +140,9 @@ class RoundLayer:
         else:
             candidate_data = self._data_pool.get_data(self._candidate_id)
             candidate_votes = self._vote_pool.get_votes(candidate_data.term_num, candidate_data.round_num)
-            candidate_votes = tuple(vote for vote in candidate_votes
-                                    if vote.data_id == self._candidate_id)
+            candidate_votes = {vote.voter_id: vote for vote in candidate_votes if vote.data_id == self._candidate_id}
+            candidate_votes = tuple(candidate_votes[voter] if voter in candidate_votes else None
+                                    for voter in self._term.voters)
 
             new_data = await self._data_factory.create_data(
                 data_number=candidate_data.number + 1,
