@@ -65,9 +65,6 @@ class Consensus(EventRegister):
         new_round = self._new_or_get_round(new_term.num, new_round_num)
         await new_round.round_start()
 
-        candidate_data = self._data_pool.get_data(new_round.candidate_id)
-        self._prune_messages(candidate_data.term_num, candidate_data.round_num)
-
     async def receive_data(self, data: 'Data'):
         await self._receive_prev_votes(data)
 
@@ -172,6 +169,10 @@ class Consensus(EventRegister):
 
             self._prune_round(target_round.term_num, target_round.num)
             self._round_pool.change_candidate()
+
+            new_candidate_data = self._data_pool.get_data(target_round.result_id)
+            new_commit_data = self._data_pool.get_data(new_candidate_data.prev_id)
+            self._prune_messages(new_commit_data.term_num, new_commit_data.round_num)
 
             datums = self._data_pool.get_datums_connected(target_round.result_id)
             for data in datums:
