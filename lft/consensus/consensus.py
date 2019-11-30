@@ -66,7 +66,7 @@ class Consensus(EventRegister):
         await new_round.round_start()
 
         candidate_data = self._data_pool.get_data(new_round.candidate_id)
-        self._trim_messages(candidate_data.term_num, candidate_data.round_num)
+        self._prune_messages(candidate_data.term_num, candidate_data.round_num)
 
     async def receive_data(self, data: 'Data'):
         await self._receive_prev_votes(data)
@@ -151,13 +151,13 @@ class Consensus(EventRegister):
                 round_ = self._new_round(term, round_num, candidate_round.result_id)
                 return round_
 
-    def _trim_round(self, latest_term_num: int, latest_round_num: int):
-        self._term_pool.trim_term(latest_term_num - 1)  # Need prev term
-        self._round_pool.trim_round(latest_term_num, latest_round_num)
+    def _prune_round(self, latest_term_num: int, latest_round_num: int):
+        self._term_pool.prune_term(latest_term_num - 1)  # Need prev term
+        self._round_pool.prune_round(latest_term_num, latest_round_num)
 
-    def _trim_messages(self, latest_term_num: int, latest_round_num: int):
-        self._data_pool.trim(latest_term_num, latest_round_num)
-        self._vote_pool.trim(latest_term_num, latest_round_num)
+    def _prune_messages(self, latest_term_num: int, latest_round_num: int):
+        self._data_pool.prune_data(latest_term_num, latest_round_num)
+        self._vote_pool.prune_vote(latest_term_num, latest_round_num)
 
     @asynccontextmanager
     async def _try_change_candidate(self, target_round: Round):
@@ -170,7 +170,7 @@ class Consensus(EventRegister):
             if target_round.result_id is None:
                 return
 
-            self._trim_round(target_round.term_num, target_round.num)
+            self._prune_round(target_round.term_num, target_round.num)
             self._round_pool.change_candidate()
 
             datums = self._data_pool.get_datums_connected(target_round.result_id)

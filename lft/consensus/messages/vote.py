@@ -71,3 +71,6 @@ class VotePool(MessagePool):
 
     def get_votes(self, term_num: int, round_num: int) -> Iterable[Vote]:
         return self.get_messages(term_num, round_num)
+
+    def prune_vote(self, latest_term_num: int, latest_round_num: int):
+        super().prune_message(latest_term_num, latest_round_num)
