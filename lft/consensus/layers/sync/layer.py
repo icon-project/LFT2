@@ -104,7 +104,8 @@ class SyncLayer:
         none_data = await self._data_factory.create_none_data(term_num=self._term.num,
                                                               round_num=self._round_num,
                                                               proposer_id=self._term.get_proposer_id(self._round_num))
-        self._messages.add_data(none_data)
+        # NoneData must be received before RoundStart
+        await self._receive_data(none_data)
 
         expected_proposer = self._term.get_proposer_id(self._round_num)
         not_data = await self._data_factory.create_not_data(self._term.num,
