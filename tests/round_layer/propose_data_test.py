@@ -45,8 +45,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                           round_num=0,
                           prev_votes=[])
     # WHEN
-    await round_layer.propose_data(propose)
-
+    await round_layer.receive_data(propose)
     # THEN
     assert len(event_system.simulator.raise_event.call_args_list) == 2
 
@@ -71,6 +70,6 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                                  prev_votes=[])
 
     # WHEN
-    await round_layer.propose_data(data=second_propose)
+    await round_layer.receive_data(data=second_propose)
     # THEN
     event_system.simulator.raise_event.assert_not_called()

@@ -69,16 +69,30 @@ class Consensus(EventRegister):
         self._trim_messages(candidate_data.term_num, candidate_data.round_num)
 
     async def receive_data(self, data: 'Data'):
-        for prev_vote in data.prev_votes:
-            if prev_vote:
-                await self.receive_vote(prev_vote)
+        await self._receive_prev_votes(data)
 
         try:
             self._verify_acceptable_data(data)
         except (InvalidTerm, InvalidRound, InvalidProposer):
             return
-        self._data_pool.add_data(data)
 
+        self._data_pool.add_data(data)
+        await self._receive_data_and_change_candidate_if_available(data)
+
+    async def receive_vote(self, vote: 'Vote'):
+        try:
+            self._verify_acceptable_vote(vote)
+        except (InvalidTerm, InvalidRound, InvalidVoter):
+            return
+        self._vote_pool.add_vote(vote)
+        await self._receive_vote_and_change_candidate_if_available(vote)
+
+    async def _receive_prev_votes(self, data: 'Data'):
+        for prev_vote in data.prev_votes:
+            if prev_vote:
+                await self.receive_vote(prev_vote)
+
+    async def _receive_data_and_change_candidate_if_available(self, data: 'Data'):
         round_ = self._new_or_get_round(data.term_num, data.round_num)
         if data.is_not():
             await round_.receive_data(data)
@@ -87,13 +101,7 @@ class Consensus(EventRegister):
                 async with self._try_change_candidate(round_):
                     await round_.receive_data(data)
 
-    async def receive_vote(self, vote: 'Vote'):
-        try:
-            self._verify_acceptable_vote(vote)
-        except (InvalidTerm, InvalidRound, InvalidVoter):
-            return
-        self._vote_pool.add_vote(vote)
-
+    async def _receive_vote_and_change_candidate_if_available(self, vote: 'Vote'):
         round_ = self._new_or_get_round(vote.term_num, vote.round_num)
         async with self._try_change_candidate(round_):
             await round_.receive_vote(vote)

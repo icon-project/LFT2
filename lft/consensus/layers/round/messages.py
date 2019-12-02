@@ -21,7 +21,7 @@ class RoundMessages:
         return self._result
 
     @property
-    def first_data(self):
+    def first_real_data(self):
         return next((data for data in self._datums.values() if data.is_real()), None)
 
     def add_data(self, data: Data):
@@ -32,40 +32,53 @@ class RoundMessages:
         self._votes[vote.data_id][vote.voter_id] = vote
 
     def update(self):
-        complete_datums = []
-        pending_datums = []
-        for quorum_data_id in self._find_quorum_data_ids():
-            assert quorum_data_id in self._datums
+        # RealData : Determine round success and round end
+        # NoneData : Determine round failure and round end
+        # NotData : Cannot determine but round end
+        # None : Nothing changes
 
-            quorum_data = self._datums[quorum_data_id]
-            if quorum_data.is_complete():
-                complete_datums.append(quorum_data)
+        complete_datums = []
+        possible_datums = []
+
+        unvoters = self._get_unvoters()
+        for data in self._datums.values():
+            votes = self._votes[data.id]
+            if len(votes) >= self._term.quorum_num:
+                if data.is_complete():
+                    complete_datums.append(data)
             else:
-                pending_datums.append(quorum_data)
+                if len(votes) + len(unvoters) >= self._term.quorum_num:
+                    possible_datums.append(data)
 
         assert len(complete_datums) <= 1
         if complete_datums:
-            self._result = complete_datums[0]
+            self._result = complete_datums[0]  # RealData, NoneData
             return
 
-        assert len(pending_datums) <= 1
-        if pending_datums:
-            self._result = pending_datums[0]
+        if not possible_datums:
+            self._result = self._find_none_data()
             return
 
         assert len(self._voters) <= len(self._term.voters)
         if len(self._voters) == len(self._term.voters):
-            pending_data = self._find_pending_data()
-            assert pending_data
-            self._result = pending_data
+            self._result = self._find_not_data()
             return
 
         self._result = None
 
-    def _find_quorum_data_ids(self):
-        return [data_id for data_id, votes_by_data_id in self._votes.items()
-                if len(votes_by_data_id) >= self._term.quorum_num]
+    def _find_not_data(self):
+        try:
+            return next(data for data in self._datums.values() if data.is_not())
+        except StopIteration:
+            assert "NotData does not exist"
 
-    def _find_pending_data(self):
-        return next((data for data in self._datums.values() if data.is_not()), None)
+    def _find_none_data(self):
+        try:
+            return next(data for data in self._datums.values() if data.is_none())
+        except StopIteration:
+            assert "NoneData does not exist"
+
+    def _get_unvoters(self):
+        return set(self._term.voters) - self._voters
+
 

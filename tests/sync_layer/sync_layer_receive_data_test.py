@@ -78,11 +78,11 @@ async def test_sync_layer_data_vote_sync():
             votes.append(vote)
             await sync_layer.receive_vote(vote)
 
-        round_layer.vote_data.assert_not_called()
+        round_layer.receive_vote.assert_not_called()
 
         await sync_layer.receive_data(data)
 
-        assert len(votes) == len(round_layer.vote_data.call_args_list)
-        for vote, call_args in zip(votes, round_layer.vote_data.call_args_list):
+        assert len(votes) == len(round_layer.receive_vote.call_args_list)
+        for vote, call_args in zip(votes, round_layer.receive_vote.call_args_list):
             arg_vote, = call_args[0]
             assert arg_vote is vote
