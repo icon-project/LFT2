@@ -51,7 +51,7 @@ class MessagePool:
             if message.term_num == term_num and message.round_num == round_num:
                 yield message
 
-    def trim(self, latest_term_num: int, latest_round_num: int):
+    def prune_message(self, latest_term_num: int, latest_round_num: int):
         self._messages = {
             mid: message for mid, message in self._messages.items()
             if ((message.term_num > latest_term_num) or

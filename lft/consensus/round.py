@@ -93,7 +93,7 @@ class RoundPool:
         except StopIteration:
             raise KeyError(term_num, round_num)
 
-    def trim_round(self, latest_term_num: int, latest_round_num: int):
+    def prune_round(self, latest_term_num: int, latest_round_num: int):
         self._rounds = [round_ for round_ in self._rounds
                         if (round_.is_newer_than(latest_term_num, latest_round_num) or
                             round_.is_equal_to(latest_term_num, latest_round_num))]

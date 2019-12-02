@@ -105,3 +105,6 @@ class DataPool(MessagePool):
         for data in self._messages.values():
             if data.prev_id == prev_id:
                 yield data
+
+    def prune_data(self, latest_term_num: int, latest_round_num: int):
+        super().prune_message(latest_term_num, latest_round_num)

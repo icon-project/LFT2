@@ -82,6 +82,6 @@ class TermPool:
     def get_term(self, term_num: int):
         return self._terms[term_num]
 
-    def trim_term(self, latest_term_num: int):
+    def prune_term(self, latest_term_num: int):
         self._terms = {term_num: term for term_num, term in self._terms.items()
                        if term.num >= latest_term_num}
