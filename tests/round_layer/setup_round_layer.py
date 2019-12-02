@@ -13,15 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from asyncio.queues import QueueEmpty
+from unittest.mock import MagicMock
 from typing import Tuple, List
-
-import pytest
-
 from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.app.term import RotateTerm
-from lft.consensus.messages.data import Data
+from lft.consensus.messages.data import DataPool
+from lft.consensus.messages.vote import VotePool
 from lft.consensus.layers.round import RoundLayer
 from lft.event import EventSystem
 
@@ -30,11 +28,14 @@ TEST_NODE_ID = bytes([2])
 LEADER_ID = bytes([1])
 
 
-async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, List[bytes], Data]:
-    event_system = EventSystem()
+async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, List[bytes]]:
+    event_system = MagicMock(EventSystem())
     voters = [bytes([x]) for x in range(peer_num)]
-    vote_factory = DefaultVoteFactory(TEST_NODE_ID)
     data_factory = DefaultDataFactory(TEST_NODE_ID)
+    vote_factory = DefaultVoteFactory(TEST_NODE_ID)
+    data_pool = DataPool()
+    vote_pool = VotePool()
+
     genesis_data = DefaultData(
         id_=CANDIDATE_ID,
         prev_id=b'',
@@ -42,21 +43,11 @@ async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, Lis
         number=0,
         term_num=0,
         round_num=0,
-        prev_votes=[]
+        prev_votes=()
     )
+    data_pool.add_data(genesis_data)
 
-    round_layer = RoundLayer(TEST_NODE_ID, event_system, data_factory, vote_factory)
-    await round_layer.initialize(term=RotateTerm(0, voters), round_num=1, candidate_data=genesis_data, votes=[])
-
-    return event_system, round_layer, voters, genesis_data
-
-
-async def get_event(event_system):
-    non_deterministic, mono_ns, event = event_system.simulator._event_tasks.get_nowait()
-    return event
-
-
-async def verify_no_events(event_system):
-    with pytest.raises(QueueEmpty):
-        event = await get_event(event_system)
-        print("remain event: " + event)
+    round_layer = RoundLayer(TEST_NODE_ID, RotateTerm(0, voters), genesis_data.round_num + 1,
+                             event_system, data_factory, vote_factory, data_pool, vote_pool)
+    round_layer._candidate_id = CANDIDATE_ID
+    return event_system, round_layer, voters
