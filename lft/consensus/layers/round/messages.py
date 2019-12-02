@@ -37,22 +37,24 @@ class RoundMessages:
         # NotData : Cannot determine but round end
         # None : Nothing changes
 
-        complete_datums = []
+        quorum_datums = []
         possible_datums = []
 
         unvoters = self._get_unvoters()
         for data in self._datums.values():
             votes = self._votes[data.id]
             if len(votes) >= self._term.quorum_num:
-                if data.is_complete():
-                    complete_datums.append(data)
+                quorum_datums.append(data)
             else:
                 if len(votes) + len(unvoters) >= self._term.quorum_num:
                     possible_datums.append(data)
 
-        assert len(complete_datums) <= 1
-        if complete_datums:
-            self._result = complete_datums[0]  # RealData, NoneData
+        assert len(quorum_datums) <= 2  # complete data + not data
+        if quorum_datums:
+            if len(quorum_datums) == 1:
+                self._result = quorum_datums[0]
+            else:
+                self._result = quorum_datums[0] if quorum_datums[0].is_complete() else quorum_datums[1]
             return
 
         if not possible_datums:
