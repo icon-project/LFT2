@@ -19,7 +19,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.events import RoundEndEvent
-from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, LEADER_ID
+from tests.election.setup_election import setup_election, CANDIDATE_ID, LEADER_ID
 
 PEER_NUM = 7
 PROPOSE_ID = b'propose'
@@ -42,8 +42,8 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, 
     """
 
     # GIVEN
-    event_system, round_layer, voters = await setup_round_layer(PEER_NUM)
-    await round_layer.round_start()
+    event_system, election, voters = await setup_election(PEER_NUM)
+    await election.round_start()
 
     consensus_data = DefaultData(
         id_=PROPOSE_ID,
@@ -55,12 +55,12 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, 
         prev_votes=[]
     )
 
-    await round_layer.receive_data(data=consensus_data)
+    await election.receive_data(data=consensus_data)
     event_system.simulator.raise_event.reset_mock()
 
     # WHEN
     async def do_vote(vote):
-        await round_layer.receive_vote(vote)
+        await election.receive_vote(vote)
 
     validator_vote_factories = [DefaultVoteFactory(x) for x in voters]
     for i in range(success_vote_num):

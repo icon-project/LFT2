@@ -17,7 +17,7 @@ import pytest
 
 from lft.app.data import DefaultVote, DefaultData
 from lft.consensus.events import BroadcastVoteEvent, ReceiveVoteEvent
-from tests.round_layer.setup_round_layer import setup_round_layer, CANDIDATE_ID, LEADER_ID
+from tests.election.setup_election import setup_election, CANDIDATE_ID, LEADER_ID
 
 PROPOSE_ID = b"b"
 
@@ -34,8 +34,8 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
     THEN Receive VoteEvent about ProposeSequence
     """
     # GIVEN
-    event_system, round_layer, voters = await setup_round_layer(peer_num=7)
-    await round_layer.round_start()
+    event_system, election, voters = await setup_election(peer_num=7)
+    await election.round_start()
 
     propose = DefaultData(id_=PROPOSE_ID,
                           prev_id=propose_prev_id,
@@ -45,7 +45,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                           round_num=0,
                           prev_votes=[])
     # WHEN
-    await round_layer.receive_data(propose)
+    await election.receive_data(propose)
     # THEN
     assert len(event_system.simulator.raise_event.call_args_list) == 2
 
@@ -70,6 +70,6 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                                  prev_votes=[])
 
     # WHEN
-    await round_layer.receive_data(data=second_propose)
+    await election.receive_data(data=second_propose)
     # THEN
     event_system.simulator.raise_event.assert_not_called()

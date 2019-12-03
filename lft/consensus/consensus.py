@@ -6,6 +6,7 @@ from lft.consensus.epoch import EpochPool
 from lft.consensus.messages.data import DataPool
 from lft.consensus.messages.vote import VotePool
 from lft.consensus.round import Round, RoundPool
+from lft.consensus.election import Election
 from lft.consensus.events import InitializeEvent, RoundStartEvent, ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.exceptions import InvalidRound, InvalidEpoch, InvalidProposer, InvalidVoter
 
@@ -129,8 +130,10 @@ class Consensus(EventRegister):
         epoch.verify_voter(vote.voter_id)
 
     def _new_round(self, epoch: 'Epoch', round_num: int, candidate_id: bytes):
-        new_round = Round(self._event_system, self._node_id, epoch, round_num,
-                          self._data_factory, self._vote_factory, self._data_pool, self._vote_pool)
+        round_layer = Election(self._node_id, epoch, round_num, self._event_system,
+                               self._data_factory, self._vote_factory, self._data_pool, self._vote_pool)
+        new_round = Round(round_layer, self._node_id, epoch, round_num,
+                          self._event_system, self._data_factory, self._vote_factory)
         new_round.candidate_id = candidate_id
         self._round_pool.add_round(new_round)
         return new_round

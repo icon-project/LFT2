@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.app.epoch import RotateEpoch
-from lft.consensus.layers.sync import SyncLayer
-from lft.consensus.layers.round import RoundLayer
+from lft.consensus.election import Election
+from lft.consensus.round import Round
 from lft.consensus.messages.data import DataPool
 from lft.consensus.messages.vote import VotePool
 from lft.event import EventSystem
@@ -22,21 +22,21 @@ async def setup_items(voter_num: int, round_num: int):
     data_factory = DefaultDataFactory(voter)
     vote_factory = DefaultVoteFactory(voter)
 
-    round_layer = MagicMock(RoundLayer(voter,
-                                       epoch,
-                                       round_num,
-                                       event_system,
-                                       data_factory,
-                                       vote_factory,
-                                       DataPool(),
-                                       VotePool()))
-    sync_layer = SyncLayer(round_layer,
-                           voter,
-                           epoch,
-                           round_num,
-                           event_system,
-                           data_factory,
-                           vote_factory)
+    election = MagicMock(Election(voter,
+                                  epoch,
+                                  round_num,
+                                  event_system,
+                                  data_factory,
+                                  vote_factory,
+                                  DataPool(),
+                                  VotePool()))
+    round_ = Round(election,
+                   voter,
+                   epoch,
+                   round_num,
+                   event_system,
+                   data_factory,
+                   vote_factory)
 
     try:
         genesis_epoch_num = 0
@@ -46,6 +46,6 @@ async def setup_items(voter_num: int, round_num: int):
 
         candidate_data = genesis_data
         candidate_votes = genesis_votes
-        yield voters, event_system, sync_layer, round_layer, epoch, candidate_data, candidate_votes
+        yield voters, event_system, round_, election, epoch, candidate_data, candidate_votes
     finally:
         pass

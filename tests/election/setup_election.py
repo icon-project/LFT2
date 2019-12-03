@@ -20,7 +20,7 @@ from lft.app.vote import DefaultVoteFactory
 from lft.app.epoch import RotateEpoch
 from lft.consensus.messages.data import DataPool
 from lft.consensus.messages.vote import VotePool
-from lft.consensus.layers.round import RoundLayer
+from lft.consensus.election import Election
 from lft.event import EventSystem
 
 CANDIDATE_ID = b'a'
@@ -28,7 +28,7 @@ TEST_NODE_ID = bytes([2])
 LEADER_ID = bytes([1])
 
 
-async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, List[bytes]]:
+async def setup_election(peer_num: int) -> Tuple[EventSystem, Election, List[bytes]]:
     event_system = MagicMock(EventSystem())
     voters = [bytes([x]) for x in range(peer_num)]
     data_factory = DefaultDataFactory(TEST_NODE_ID)
@@ -47,7 +47,7 @@ async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, Lis
     )
     data_pool.add_data(genesis_data)
 
-    round_layer = RoundLayer(TEST_NODE_ID, RotateEpoch(0, voters), genesis_data.round_num + 1,
-                             event_system, data_factory, vote_factory, data_pool, vote_pool)
-    round_layer._candidate_id = CANDIDATE_ID
-    return event_system, round_layer, voters
+    election = Election(TEST_NODE_ID, RotateEpoch(0, voters), genesis_data.round_num + 1,
+                        event_system, data_factory, vote_factory, data_pool, vote_pool)
+    election._candidate_id = CANDIDATE_ID
+    return event_system, election, voters
