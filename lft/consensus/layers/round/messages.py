@@ -37,34 +37,51 @@ class RoundMessages:
         # NotData : Cannot determine but round end
         # None : Nothing changes
 
-        complete_datums = []
-        possible_datums = []
-
-        unvoters = self._get_unvoters()
-        for data in self._datums.values():
-            votes = self._votes[data.id]
-            if len(votes) >= self._term.quorum_num:
-                if data.is_complete():
-                    complete_datums.append(data)
-            else:
-                if len(votes) + len(unvoters) >= self._term.quorum_num:
-                    possible_datums.append(data)
-
-        assert len(complete_datums) <= 1
-        if complete_datums:
-            self._result = complete_datums[0]  # RealData, NoneData
+        if self._update_quorum_data():
             return
 
-        if not possible_datums:
-            self._result = self._find_none_data()
+        if self._update_possible_data():
             return
 
-        assert len(self._voters) <= len(self._term.voters)
-        if len(self._voters) == len(self._term.voters):
-            self._result = self._find_not_data()
+        if self._update_not_data():
             return
 
         self._result = None
+
+    def _update_quorum_data(self):
+        quorum_datums = [data for data in self._datums.values()
+                         if len(self._votes[data.id]) >= self._term.quorum_num]
+        quorum_datums.sort(key=lambda data: not data.is_complete())
+        assert ((len(quorum_datums) <= 1) or
+                (len(quorum_datums) == 2 and quorum_datums[0].is_complete() and quorum_datums[1].is_not()))
+
+        if quorum_datums and quorum_datums[0].is_complete():
+            self._result = quorum_datums[0]
+            return True
+        return False
+
+    def _update_possible_data(self):
+        unvoter = self._get_unvoters()
+        if len(unvoter) >= self._term.quorum_num:
+            return False
+
+        possible_datums = [data for data in self._datums.values()
+                           if data.is_real()
+                           if len(self._votes[data.id]) < self._term.quorum_num
+                           if len(self._votes[data.id]) + len(unvoter) >= self._term.quorum_num]
+
+        if not possible_datums:
+            self._result = self._find_none_data()
+            return True
+
+        return False
+
+    def _update_not_data(self):
+        assert len(self._voters) <= len(self._term.voters)
+        if len(self._voters) == len(self._term.voters):
+            self._result = self._find_not_data()
+            return True
+        return False
 
     def _find_not_data(self):
         try:
