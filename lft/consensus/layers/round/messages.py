@@ -51,15 +51,13 @@ class RoundMessages:
     def _update_quorum_data(self):
         quorum_datums = [data for data in self._datums.values()
                          if len(self._votes[data.id]) >= self._term.quorum_num]
+        quorum_datums.sort(key=lambda data: not data.is_complete())
+        assert ((len(quorum_datums) <= 1) or
+                (len(quorum_datums) == 2 and quorum_datums[0].is_complete() and quorum_datums[1].is_not()))
 
-        assert len(quorum_datums) <= 2  # complete data + not data
-        if quorum_datums:
-            if len(quorum_datums) == 1:
-                self._result = quorum_datums[0]
-                return True
-            else:
-                self._result = quorum_datums[0] if quorum_datums[0].is_complete() else quorum_datums[1]
-                return True
+        if quorum_datums and quorum_datums[0].is_complete():
+            self._result = quorum_datums[0]
+            return True
         return False
 
     def _update_possible_data(self):
@@ -72,11 +70,11 @@ class RoundMessages:
                            if len(self._votes[data.id]) < self._term.quorum_num
                            if len(self._votes[data.id]) + len(unvoter) >= self._term.quorum_num]
 
-        if possible_datums:
-            return False
+        if not possible_datums:
+            self._result = self._find_none_data()
+            return True
 
-        self._result = self._find_none_data()
-        return True
+        return False
 
     def _update_not_data(self):
         assert len(self._voters) <= len(self._term.voters)
