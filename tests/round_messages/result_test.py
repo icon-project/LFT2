@@ -51,29 +51,7 @@ async def test_complete_round_failure_not():
     round_messages.update()
     candidate = round_messages.result
 
-    assert candidate.is_not()
-
-
-@pytest.mark.asyncio
-async def test_complete_round_failure_none_not():
-    term, round_num, round_messages, data, voters = await setup()
-
-    # Round must add NotData on RoundStart
-    not_data = await DefaultDataFactory(voters[0]).create_not_data(term.num, round_num, term.get_proposer_id(round_num))
-    round_messages.add_data(not_data)
-
-    for voter in voters[:term.quorum_num]:
-        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_num)
-        round_messages.add_vote(vote)
-
-    voter = voters[-1]
-    vote = await DefaultVoteFactory(voter).create_none_vote(term.num, round_num)
-    round_messages.add_vote(vote)
-
-    round_messages.update()
-    candidate = round_messages.result
-
-    assert candidate.is_not()
+    assert candidate is None
 
 
 async def setup():
