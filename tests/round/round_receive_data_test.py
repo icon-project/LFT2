@@ -14,10 +14,10 @@ async def test_round_invalid_epoch():
 
         invalid_epoch_num = epoch.num + 1
         data = await round_._data_factory.create_data(data_number=candidate_data.number + 1,
-                                                          prev_id=candidate_data.id,
-                                                          epoch_num=invalid_epoch_num,
-                                                          round_num=round_num,
-                                                          prev_votes=candidate_votes)
+                                                      prev_id=candidate_data.id,
+                                                      epoch_num=invalid_epoch_num,
+                                                      round_num=round_num,
+                                                      prev_votes=candidate_votes)
         with pytest.raises(InvalidEpoch):
             await round_._receive_data(data)
 
@@ -32,10 +32,10 @@ async def test_round_invalid_round():
 
         invalid_round_num = round_num + 1
         data = await round_._data_factory.create_data(data_number=candidate_data.number + 1,
-                                                          prev_id=candidate_data.id,
-                                                          epoch_num=epoch.num,
-                                                          round_num=invalid_round_num,
-                                                          prev_votes=candidate_votes)
+                                                      prev_id=candidate_data.id,
+                                                      epoch_num=epoch.num,
+                                                      round_num=invalid_round_num,
+                                                      prev_votes=candidate_votes)
         with pytest.raises(InvalidRound):
             await round_._receive_data(data)
 
@@ -49,10 +49,10 @@ async def test_round_already_propose():
             voters, event_system, round_, election, epoch, candidate_data, candidate_votes):
 
         data = await round_._data_factory.create_data(data_number=candidate_data.number + 1,
-                                                          prev_id=candidate_data.id,
-                                                          epoch_num=epoch.num,
-                                                          round_num=round_num,
-                                                          prev_votes=candidate_votes)
+                                                      prev_id=candidate_data.id,
+                                                      epoch_num=epoch.num,
+                                                      round_num=round_num,
+                                                      prev_votes=candidate_votes)
         await round_._receive_data(data)
         with pytest.raises(AlreadyProposed):
             await round_._receive_data(data)
@@ -67,10 +67,10 @@ async def test_round_data_vote_sync():
             voters, event_system, round_, election, epoch, candidate_data, candidate_votes):
 
         data = await round_._data_factory.create_data(data_number=candidate_data.number + 1,
-                                                          prev_id=candidate_data.id,
-                                                          epoch_num=epoch.num,
-                                                          round_num=round_num,
-                                                          prev_votes=candidate_votes)
+                                                      prev_id=candidate_data.id,
+                                                      epoch_num=epoch.num,
+                                                      round_num=round_num,
+                                                      prev_votes=candidate_votes)
         vote_factories = [DefaultVoteFactory(voter) for voter in voters]
         votes = []
         for vote_factory in vote_factories:

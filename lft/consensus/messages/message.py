@@ -18,6 +18,8 @@ from typing import Dict, Iterable
 
 from lft.serialization import Serializable
 
+__all__ = ("Message", "MessagePool")
+
 
 class Message(Serializable):
     @property

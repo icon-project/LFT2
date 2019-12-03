@@ -1,16 +1,16 @@
 import random
 
-from collections import defaultdict
 from typing import TYPE_CHECKING, DefaultDict, Set
 from lft.event import EventRegister, EventSystem
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.events import (BroadcastDataEvent, BroadcastVoteEvent,
-                                  ReceiveDataEvent, ReceiveVoteEvent, RoundStartEvent)
-
+                                  ReceiveDataEvent, ReceiveVoteEvent)
 
 if TYPE_CHECKING:
     from lft.consensus.messages.data import Data
     from lft.consensus.messages.vote import Vote
+
+__all__ = ("Network", )
 
 Datums = DefaultDict[int, Set['Data']]
 Votes = DefaultDict[int, Set['Vote']]

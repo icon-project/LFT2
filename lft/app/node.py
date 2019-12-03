@@ -9,6 +9,8 @@ from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
 from lft.consensus.events import RoundStartEvent, RoundEndEvent, InitializeEvent
 
+__all__ = ("Node", )
+
 
 class Node:
     def __init__(self, node_id: bytes):

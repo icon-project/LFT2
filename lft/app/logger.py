@@ -6,6 +6,8 @@ from typing import Union
 from lft.event import Event
 from lft.serialization import Serializable
 
+__all__ = ("Logger", )
+
 
 class Logger:
     def __init__(self, node_id: bytes):

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
-from typing import Type, TypeVar
+from typing import TypeVar
 from lft.serialization import Serializable
+
+__all__ = ("Event", "AnyEvent")
 
 T = TypeVar("T")
 

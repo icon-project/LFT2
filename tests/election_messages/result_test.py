@@ -2,8 +2,8 @@ import os
 import pytest
 
 from lft.app.data import DefaultDataFactory
-from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVoteFactory
+from lft.app.epoch import RotateEpoch
 from lft.consensus.election import ElectionMessages
 
 

@@ -1,6 +1,8 @@
 from abc import ABCMeta
 from typing import Type, TypeVar
 
+__all__ = ("SerializableMeta", "Serializable")
+
 T = TypeVar("T")
 
 

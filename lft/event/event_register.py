@@ -18,6 +18,8 @@ from typing import Type, Dict
 from lft.event import EventSimulator
 from lft.event.event_simulator import TEvent, HandlerCallable, HandlerAwaitable
 
+__all__ = ("EventRegister", )
+
 
 class EventRegister:
     _handler_prototypes: Dict[Type[TEvent], HandlerCallable] = {}

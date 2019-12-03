@@ -3,6 +3,8 @@ import logging
 from typing import Dict, Type, IO, Optional
 from lft.event import EventSimulator, EventRecorder, EventReplayer, EventMediator
 
+__all__ = ("EventSystem", )
+
 
 class EventSystem:
     def __init__(self, logger: Optional[logging.Logger] = None, use_priority=True):

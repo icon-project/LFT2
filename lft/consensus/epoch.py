@@ -17,6 +17,8 @@ from typing import Sequence, Dict
 from lft.consensus.messages.data import Data, Vote
 from lft.serialization import Serializable
 
+__all__ = ("Epoch", "EpochPool")
+
 
 class Epoch(Serializable):
     @property

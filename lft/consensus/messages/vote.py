@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Iterable
+from typing import Iterable
 
 from lft.consensus.messages.message import Message, MessagePool
 
-T = TypeVar("T")
+__all__ = ("Vote", "VoteFactory", "VotePool", "VoteVerifier")
 
 
 class Vote(Message):

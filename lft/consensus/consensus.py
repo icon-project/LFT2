@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from lft.consensus.messages.vote import Vote, VoteFactory
     from lft.consensus.messages.message import Message
 
+__all__ = ("Consensus", )
+
 
 class Consensus(EventRegister):
     def __init__(self, event_system: 'EventSystem', node_id: bytes,
