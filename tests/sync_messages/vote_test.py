@@ -30,6 +30,6 @@ def _random_vote():
                        data_id=os.urandom(16),
                        commit_id=os.urandom(16),
                        voter_id=os.urandom(16),
-                       term_num=random.randint(0, 100),
+                       epoch_num=random.randint(0, 100),
                        round_num=random.randint(0, 100))
 

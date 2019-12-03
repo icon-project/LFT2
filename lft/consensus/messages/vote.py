@@ -35,7 +35,7 @@ class Vote(Message):
                and self.data_id == other.data_id \
                and self.commit_id == other.commit_id \
                and self.voter_id == other.voter_id \
-               and self.term_num == other.term_num \
+               and self.epoch_num == other.epoch_num \
                and self.round_num == other.round_num
 
     def __hash__(self):
@@ -49,13 +49,13 @@ class VoteVerifier(ABC):
 
 
 class VoteFactory(ABC):
-    async def create_vote(self, data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> 'Vote':
+    async def create_vote(self, data_id: bytes, commit_id: bytes, epoch_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
-    async def create_none_vote(self, term_num: int, round_num: int) -> 'Vote':
+    async def create_none_vote(self, epoch_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
-    async def create_lazy_vote(self, voter_id: bytes, term_num: int, round_num: int) -> 'Vote':
+    async def create_lazy_vote(self, voter_id: bytes, epoch_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
     async def create_vote_verifier(self) -> 'VoteVerifier':
@@ -69,8 +69,8 @@ class VotePool(MessagePool):
     def get_vote(self, vote_id) -> Vote:
         return self.get_messages(vote_id)
 
-    def get_votes(self, term_num: int, round_num: int) -> Iterable[Vote]:
-        return self.get_messages(term_num, round_num)
+    def get_votes(self, epoch_num: int, round_num: int) -> Iterable[Vote]:
+        return self.get_messages(epoch_num, round_num)
 
-    def prune_vote(self, latest_term_num: int, latest_round_num: int):
-        super().prune_message(latest_term_num, latest_round_num)
+    def prune_vote(self, latest_epoch_num: int, latest_round_num: int):
+        super().prune_message(latest_epoch_num, latest_round_num)

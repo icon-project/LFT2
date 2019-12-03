@@ -31,5 +31,5 @@ def _random_data():
                        prev_id=os.urandom(16),
                        proposer_id=os.urandom(16),
                        number=random.randint(0, 100),
-                       term_num=random.randint(0, 100),
+                       epoch_num=random.randint(0, 100),
                        round_num=random.randint(0, 100))

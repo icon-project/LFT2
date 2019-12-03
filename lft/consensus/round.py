@@ -5,20 +5,20 @@ from lft.consensus.layers.round import RoundLayer
 
 
 if TYPE_CHECKING:
-    from lft.consensus.term import Term
+    from lft.consensus.epoch import Epoch
     from lft.event import EventSystem
     from lft.consensus.messages.data import Data, DataFactory, DataPool
     from lft.consensus.messages.vote import Vote, VoteFactory, VotePool
 
 
 class Round:
-    def __init__(self, event_system: 'EventSystem', node_id: bytes, term: 'Term', round_num: int,
+    def __init__(self, event_system: 'EventSystem', node_id: bytes, epoch: 'Epoch', round_num: int,
                  data_factory: 'DataFactory', vote_factory: 'VoteFactory', data_pool: 'DataPool', vote_pool: 'VotePool'):
         self._round_layer = RoundLayer(
-            node_id, term, round_num, event_system, data_factory, vote_factory, data_pool, vote_pool
+            node_id, epoch, round_num, event_system, data_factory, vote_factory, data_pool, vote_pool
         )
         self._sync_layer = SyncLayer(
-            self._round_layer, node_id, term, round_num, event_system, data_factory, vote_factory
+            self._round_layer, node_id, epoch, round_num, event_system, data_factory, vote_factory
         )
 
     @property
@@ -26,8 +26,8 @@ class Round:
         return self._sync_layer._round_num
 
     @property
-    def term_num(self):
-        return self._sync_layer._term.num
+    def epoch_num(self):
+        return self._sync_layer._epoch.num
 
     @property
     def result_id(self):
@@ -50,30 +50,30 @@ class Round:
     async def receive_vote(self, vote: 'Vote'):
         await self._sync_layer.receive_vote(vote)
 
-    def is_newer_than(self, term_num: int, round_num: int):
-        if self.term_num == term_num:
+    def is_newer_than(self, epoch_num: int, round_num: int):
+        if self.epoch_num == epoch_num:
             return self.num > round_num
         else:
-            return self.term_num > term_num
+            return self.epoch_num > epoch_num
 
-    def is_older_than(self, term_num: int, round_num: int):
-        if self.term_num == term_num:
+    def is_older_than(self, epoch_num: int, round_num: int):
+        if self.epoch_num == epoch_num:
             return self.num < round_num
         else:
-            return self.term_num < term_num
+            return self.epoch_num < epoch_num
 
-    def is_equal_to(self, term_num: int, round_num: int):
-        return self.term_num == term_num and self.num == round_num
+    def is_equal_to(self, epoch_num: int, round_num: int):
+        return self.epoch_num == epoch_num and self.num == round_num
 
     def __gt__(self, other: 'Round'):
         if not isinstance(other, Round):
             return False
-        return self.is_newer_than(other.term_num, other.num)
+        return self.is_newer_than(other.epoch_num, other.num)
 
     def __lt__(self, other: 'Round'):
         if not isinstance(other, Round):
             return False
-        return self.is_older_than(other.term_num, other.num)
+        return self.is_older_than(other.epoch_num, other.num)
 
 
 class RoundPool:
@@ -86,17 +86,17 @@ class RoundPool:
     def add_round(self, round_: Round):
         insort(self._rounds, round_)
 
-    def get_round(self, term_num: int, round_num: int):
+    def get_round(self, epoch_num: int, round_num: int):
         try:
             return next(round_ for round_ in self._rounds
-                        if round_.term_num == term_num and round_.num == round_num)
+                        if round_.epoch_num == epoch_num and round_.num == round_num)
         except StopIteration:
-            raise KeyError(term_num, round_num)
+            raise KeyError(epoch_num, round_num)
 
-    def prune_round(self, latest_term_num: int, latest_round_num: int):
+    def prune_round(self, latest_epoch_num: int, latest_round_num: int):
         self._rounds = [round_ for round_ in self._rounds
-                        if (round_.is_newer_than(latest_term_num, latest_round_num) or
-                            round_.is_equal_to(latest_term_num, latest_round_num))]
+                        if (round_.is_newer_than(latest_epoch_num, latest_round_num) or
+                            round_.is_equal_to(latest_epoch_num, latest_round_num))]
 
     def change_candidate(self):
         candidate_round = self.first_round()

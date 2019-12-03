@@ -1,6 +1,6 @@
 from typing import IO, Dict, Type
 from lft.app.data import DefaultDataFactory
-from lft.app.term import RotateTerm
+from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVoteFactory
 from lft.app.network import Network
 from lft.app.logger import Logger
@@ -31,7 +31,7 @@ class Node:
         self.event_system.simulator.register_handler(RoundEndEvent, self._on_round_end_event)
 
     async def _on_init_event(self, init_event: InitializeEvent):
-        self._nodes = init_event.term.voters
+        self._nodes = init_event.epoch.voters
 
     async def _on_round_end_event(self, round_end_event: RoundEndEvent):
         self._round_num = round_end_event.round_num + 1
@@ -39,7 +39,7 @@ class Node:
 
     async def _start_new_round(self):
         round_start_event = RoundStartEvent(
-            term=RotateTerm(1, self._nodes),
+            epoch=RotateEpoch(1, self._nodes),
             round_num=self._round_num
         )
         round_start_event.deterministic = False

@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from typing import Sequence, Optional
 
-from lft.consensus.term import Term
+from lft.consensus.epoch import Epoch
 from lft.event import Event
 from lft.consensus.messages.data import Data, Vote
 
 
 @dataclass
 class InitializeEvent(Event):
-    prev_term: Optional['Term']
-    term: 'Term'
+    prev_epoch: Optional['Epoch']
+    epoch: 'Epoch'
     round_num: int
     candidate_data: 'Data'
     candidate_votes: Sequence['Vote']
@@ -37,14 +37,14 @@ class BroadcastVoteEvent(Event):
 
 @dataclass
 class RoundStartEvent(Event):
-    term: Term
+    epoch: Epoch
     round_num: int
 
 
 @dataclass
 class RoundEndEvent(Event):
     is_success: bool
-    term_num: int
+    epoch_num: int
     round_num: int
     candidate_id: Optional[bytes]
     commit_id: Optional[bytes]

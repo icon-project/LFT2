@@ -1,24 +1,24 @@
 import pytest
 from lft.app.vote import DefaultVoteFactory
-from lft.consensus.exceptions import InvalidTerm, InvalidRound, AlreadyProposed
+from lft.consensus.exceptions import InvalidEpoch, InvalidRound, AlreadyProposed
 from tests.sync_layer.setup_items import setup_items
 
 
 @pytest.mark.asyncio
-async def test_sync_layer_invalid_term():
+async def test_sync_layer_invalid_epoch():
     round_num = 0
     voter_num = 7
 
     async with setup_items(voter_num, round_num) as (
-            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
+            voters, event_system, sync_layer, round_layer, epoch, candidate_data, candidate_votes):
 
-        invalid_term_num = term.num + 1
+        invalid_epoch_num = epoch.num + 1
         data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
                                                           prev_id=candidate_data.id,
-                                                          term_num=invalid_term_num,
+                                                          epoch_num=invalid_epoch_num,
                                                           round_num=round_num,
                                                           prev_votes=candidate_votes)
-        with pytest.raises(InvalidTerm):
+        with pytest.raises(InvalidEpoch):
             await sync_layer._receive_data(data)
 
 
@@ -28,12 +28,12 @@ async def test_sync_layer_invalid_round():
     voter_num = 7
 
     async with setup_items(voter_num, round_num) as (
-            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
+            voters, event_system, sync_layer, round_layer, epoch, candidate_data, candidate_votes):
 
         invalid_round_num = round_num + 1
         data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
                                                           prev_id=candidate_data.id,
-                                                          term_num=term.num,
+                                                          epoch_num=epoch.num,
                                                           round_num=invalid_round_num,
                                                           prev_votes=candidate_votes)
         with pytest.raises(InvalidRound):
@@ -46,11 +46,11 @@ async def test_sync_layer_already_propose():
     voter_num = 7
 
     async with setup_items(voter_num, round_num) as (
-            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
+            voters, event_system, sync_layer, round_layer, epoch, candidate_data, candidate_votes):
 
         data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
                                                           prev_id=candidate_data.id,
-                                                          term_num=term.num,
+                                                          epoch_num=epoch.num,
                                                           round_num=round_num,
                                                           prev_votes=candidate_votes)
         await sync_layer._receive_data(data)
@@ -64,17 +64,17 @@ async def test_sync_layer_data_vote_sync():
     voter_num = 7
 
     async with setup_items(voter_num, round_num) as (
-            voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
+            voters, event_system, sync_layer, round_layer, epoch, candidate_data, candidate_votes):
 
         data = await sync_layer._data_factory.create_data(data_number=candidate_data.number + 1,
                                                           prev_id=candidate_data.id,
-                                                          term_num=term.num,
+                                                          epoch_num=epoch.num,
                                                           round_num=round_num,
                                                           prev_votes=candidate_votes)
         vote_factories = [DefaultVoteFactory(voter) for voter in voters]
         votes = []
         for vote_factory in vote_factories:
-            vote = await vote_factory.create_vote(data.id, candidate_data.id, term.num, round_num)
+            vote = await vote_factory.create_vote(data.id, candidate_data.id, epoch.num, round_num)
             votes.append(vote)
             await sync_layer.receive_vote(vote)
 

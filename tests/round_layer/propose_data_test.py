@@ -41,7 +41,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                           prev_id=propose_prev_id,
                           proposer_id=LEADER_ID,
                           number=1,
-                          term_num=0,
+                          epoch_num=0,
                           round_num=0,
                           prev_votes=[])
     # WHEN
@@ -65,7 +65,7 @@ async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
                                  prev_id=propose_prev_id,
                                  proposer_id=LEADER_ID,
                                  number=1,
-                                 term_num=0,
+                                 epoch_num=0,
                                  round_num=0,
                                  prev_votes=[])
 

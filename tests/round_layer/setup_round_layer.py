@@ -17,7 +17,7 @@ from unittest.mock import MagicMock
 from typing import Tuple, List
 from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.vote import DefaultVoteFactory
-from lft.app.term import RotateTerm
+from lft.app.epoch import RotateEpoch
 from lft.consensus.messages.data import DataPool
 from lft.consensus.messages.vote import VotePool
 from lft.consensus.layers.round import RoundLayer
@@ -41,13 +41,13 @@ async def setup_round_layer(peer_num: int) -> Tuple[EventSystem, RoundLayer, Lis
         prev_id=b'',
         proposer_id=TEST_NODE_ID,
         number=0,
-        term_num=0,
+        epoch_num=0,
         round_num=0,
         prev_votes=()
     )
     data_pool.add_data(genesis_data)
 
-    round_layer = RoundLayer(TEST_NODE_ID, RotateTerm(0, voters), genesis_data.round_num + 1,
+    round_layer = RoundLayer(TEST_NODE_ID, RotateEpoch(0, voters), genesis_data.round_num + 1,
                              event_system, data_factory, vote_factory, data_pool, vote_pool)
     round_layer._candidate_id = CANDIDATE_ID
     return event_system, round_layer, voters

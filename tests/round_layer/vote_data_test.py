@@ -50,7 +50,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, 
         prev_id=CANDIDATE_ID,
         proposer_id=LEADER_ID,
         number=1,
-        term_num=0,
+        epoch_num=0,
         round_num=1,
         prev_votes=[]
     )
@@ -68,14 +68,14 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, 
             await validator_vote_factories[i].create_vote(
                 data_id=PROPOSE_ID,
                 commit_id=CANDIDATE_ID,
-                term_num=0,
+                epoch_num=0,
                 round_num=1
             )
         )
     for i in range(none_vote_num):
         await do_vote(
             await validator_vote_factories[success_vote_num + i].create_none_vote(
-                term_num=0,
+                epoch_num=0,
                 round_num=1
             )
         )
@@ -84,7 +84,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, 
         await do_vote(
             await validator_vote_factories[success_vote_num + none_vote_num + i].create_lazy_vote(
                 voter_id=voters[success_vote_num + none_vote_num + i],
-                term_num=0,
+                epoch_num=0,
                 round_num=1
             )
         )
@@ -120,4 +120,4 @@ def verify_success_round_end(round_end: RoundEndEvent,
 
 def verify_round_num_is_correct(round_end):
     assert round_end.round_num == 1
-    assert round_end.term_num == 0
+    assert round_end.epoch_num == 0

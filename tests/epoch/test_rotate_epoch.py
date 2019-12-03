@@ -15,7 +15,7 @@
 # limitations under the License.
 import pytest
 from typing import Sequence
-from lft.app.term import RotateTerm
+from lft.app.epoch import RotateEpoch
 from lft.consensus.messages.data import Data, Vote
 
 
@@ -33,7 +33,7 @@ class MockData(Data):
         return self._leader
 
     @property
-    def term_num(self) -> int:
+    def epoch_num(self) -> int:
         return
 
     @property
@@ -59,10 +59,10 @@ class MockData(Data):
         self._round = round_
 
 
-@pytest.mark.parametrize("round_num,rotate_term,leader_num", [(0, 1, 0), (10, 1, 0), (13, 1, 3),
+@pytest.mark.parametrize("round_num,rotate_epoch,leader_num", [(0, 1, 0), (10, 1, 0), (13, 1, 3),
                                                               (2, 3, 0), (29, 3, 9), (70, 5, 4)])
-def test_rotate_term(round_num, rotate_term, leader_num):
+def test_rotate_epoch(round_num, rotate_epoch, leader_num):
     validators = [b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9']
-    term = RotateTerm(0, rotate_bound=rotate_term, voters=validators)
+    epoch = RotateEpoch(0, rotate_bound=rotate_epoch, voters=validators)
     consensus_data_mock = MockData(leader=validators[leader_num], round_=round_num)
-    term.verify_data(consensus_data_mock)
+    epoch.verify_data(consensus_data_mock)

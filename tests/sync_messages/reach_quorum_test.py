@@ -27,7 +27,7 @@ async def test_reach_quorum(setup: Setup, voter_num: int):
     for vote_factory in vote_factories[:quorum - 1]:
         vote = await vote_factory.create_vote(data_id=os.urandom(16),
                                               commit_id=os.urandom(16),
-                                              term_num=random.randint(0, 10),
+                                              epoch_num=random.randint(0, 10),
                                               round_num=random.randint(0, 10))
         sync_messages.add_vote(vote)
 
@@ -36,7 +36,7 @@ async def test_reach_quorum(setup: Setup, voter_num: int):
     vote_factory = vote_factories[-1]
     vote = await vote_factory.create_vote(data_id=os.urandom(16),
                                           commit_id=os.urandom(16),
-                                          term_num=random.randint(0, 10),
+                                          epoch_num=random.randint(0, 10),
                                           round_num=random.randint(0, 10))
     sync_messages.add_vote(vote)
 
@@ -57,7 +57,7 @@ async def test_reach_quorum_duplicate(setup: Setup, voter_num: int):
                                data_id=os.urandom(16),
                                commit_id=os.urandom(16),
                                voter_id=vote_factory._node_id,
-                               term_num=random.randint(0, 10),
+                               epoch_num=random.randint(0, 10),
                                round_num=random.randint(0, 10))
             sync_messages.add_vote(vote)
 
@@ -66,7 +66,7 @@ async def test_reach_quorum_duplicate(setup: Setup, voter_num: int):
     vote_factory = vote_factories[-1]
     vote = await vote_factory.create_vote(data_id=os.urandom(16),
                                           commit_id=os.urandom(16),
-                                          term_num=random.randint(0, 10),
+                                          epoch_num=random.randint(0, 10),
                                           round_num=random.randint(0, 10))
     sync_messages.add_vote(vote)
 
@@ -80,13 +80,13 @@ async def test_reach_quorum_none_vote(setup: Setup, voter_num: int):
     voters, vote_factories, quorum, sync_messages = setup
 
     for vote_factory in vote_factories[:quorum - 1]:
-        vote = await vote_factory.create_none_vote(term_num=random.randint(0, 10), round_num=random.randint(0, 10))
+        vote = await vote_factory.create_none_vote(epoch_num=random.randint(0, 10), round_num=random.randint(0, 10))
         sync_messages.add_vote(vote)
 
     assert not sync_messages.reach_quorum(quorum)
 
     vote_factory = vote_factories[-1]
-    vote = await vote_factory.create_none_vote(term_num=random.randint(0, 10), round_num=random.randint(0, 10))
+    vote = await vote_factory.create_none_vote(epoch_num=random.randint(0, 10), round_num=random.randint(0, 10))
     sync_messages.add_vote(vote)
 
     assert sync_messages.reach_quorum(quorum)
@@ -118,12 +118,12 @@ async def _random_vote(vote_factory: DefaultVoteFactory):
                            data_id=os.urandom(16),
                            commit_id=os.urandom(16),
                            voter_id=vote_factory._node_id,
-                           term_num=random.randint(0, 10),
+                           epoch_num=random.randint(0, 10),
                            round_num=random.randint(0, 10))
     elif r < 10:
         return await vote_factory.create_lazy_vote(voter_id=vote_factory._node_id,
-                                                   term_num=random.randint(0, 10),
+                                                   epoch_num=random.randint(0, 10),
                                                    round_num=random.randint(0, 10))
     else:
-        return await vote_factory.create_none_vote(term_num=random.randint(0, 10),
+        return await vote_factory.create_none_vote(epoch_num=random.randint(0, 10),
                                                    round_num=random.randint(0, 10))

@@ -18,7 +18,7 @@ from lft.consensus.messages.data import Data, Vote
 from lft.serialization import Serializable
 
 
-class Term(Serializable):
+class Epoch(Serializable):
     @property
     @abstractmethod
     def num(self) -> int:
@@ -72,16 +72,16 @@ class Term(Serializable):
         raise NotImplementedError
 
 
-class TermPool:
+class EpochPool:
     def __init__(self):
-        self._terms: Dict[int, Term] = {}
+        self._epochs: Dict[int, Epoch] = {}
 
-    def add_term(self, term: Term):
-        self._terms[term.num] = term
+    def add_epoch(self, epoch: Epoch):
+        self._epochs[epoch.num] = epoch
 
-    def get_term(self, term_num: int):
-        return self._terms[term_num]
+    def get_epoch(self, epoch_num: int):
+        return self._epochs[epoch_num]
 
-    def prune_term(self, latest_term_num: int):
-        self._terms = {term_num: term for term_num, term in self._terms.items()
-                       if term.num >= latest_term_num}
+    def prune_epoch(self, latest_epoch_num: int):
+        self._epochs = {epoch_num: epoch for epoch_num, epoch in self._epochs.items()
+                       if epoch.num >= latest_epoch_num}

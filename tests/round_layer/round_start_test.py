@@ -36,7 +36,7 @@ async def test_round_start():
     assert broadcast_data_event.data.prev_id == CANDIDATE_ID
     assert broadcast_data_event.data.round_num == round_layer._round_num
     assert broadcast_data_event.data.proposer_id == round_layer._node_id
-    assert broadcast_data_event.data.term_num == round_layer._term.num
+    assert broadcast_data_event.data.epoch_num == round_layer._epoch.num
     assert broadcast_data_event.data.number == 1
 
     receive_data_event = event_system.simulator.raise_event.call_args_list[1][0][0]

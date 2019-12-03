@@ -15,14 +15,14 @@ class DefaultData(Data):
                  prev_id: bytes,
                  proposer_id: bytes,
                  number: int,
-                 term_num: int,
+                 epoch_num: int,
                  round_num: int,
                  prev_votes: Sequence['DefaultVote'] = ()):
         self._id = id_
         self._prev_id = prev_id
         self._proposer_id = proposer_id
         self._number = number
-        self._term_num = term_num
+        self._epoch_num = epoch_num
         self._round_num = round_num
         self._prev_votes: Sequence['DefaultVote'] = prev_votes
 
@@ -39,8 +39,8 @@ class DefaultData(Data):
         return self._proposer_id
 
     @property
-    def term_num(self) -> int:
-        return self._term_num
+    def epoch_num(self) -> int:
+        return self._epoch_num
 
     @property
     def number(self) -> int:
@@ -66,7 +66,7 @@ class DefaultData(Data):
             "prev_id": self.prev_id,
             "proposer_id": self.proposer_id,
             "number": self.number,
-            "term": self.term_num,
+            "epoch": self.epoch_num,
             "round": self.round_num,
             "prev_votes": tuple(self.prev_votes)
         }
@@ -78,7 +78,7 @@ class DefaultData(Data):
             prev_id=kwargs["prev_id"],
             proposer_id=kwargs["proposer_id"],
             number=kwargs["number"],
-            term_num=kwargs["term"],
+            epoch_num=kwargs["epoch"],
             round_num=kwargs["round"],
             prev_votes=tuple(kwargs["prev_votes"])
         )
@@ -104,34 +104,34 @@ class DefaultDataFactory(DataFactory):
                    prev_id: bytes,
                    propose_id: bytes,
                    data_number: int,
-                   term_num: int,
+                   epoch_num: int,
                    round_num: int,
                    prev_votes: Sequence['DefaultVote']) -> bytes:
         source = (prev_id + propose_id + data_number.to_bytes(64, 'big') +
-                  term_num.to_bytes(64, 'big') + round_num.to_bytes(64, 'big') +
+                  epoch_num.to_bytes(64, 'big') + round_num.to_bytes(64, 'big') +
                   b"".join(prev_vote.id if prev_vote else bytes(16) for prev_vote in prev_votes))
         return sha3_256(source).digest()[:16]
 
     async def create_data(self,
                           data_number: int,
                           prev_id: bytes,
-                          term_num: int,
+                          epoch_num: int,
                           round_num: int,
                           prev_votes: Sequence['DefaultVote']) -> DefaultData:
-        data_id = self._create_id(prev_id, self._node_id, data_number, term_num, round_num, prev_votes)
-        return DefaultData(data_id, prev_id, self._node_id, data_number, term_num, round_num, prev_votes=prev_votes)
+        data_id = self._create_id(prev_id, self._node_id, data_number, epoch_num, round_num, prev_votes)
+        return DefaultData(data_id, prev_id, self._node_id, data_number, epoch_num, round_num, prev_votes=prev_votes)
 
     async def create_none_data(self,
-                               term_num: int,
+                               epoch_num: int,
                                round_num: int,
                                proposer_id: bytes) -> 'Data':
-        return DefaultData(DefaultData.NoneData, DefaultData.NoneData, proposer_id, -1, term_num, round_num)
+        return DefaultData(DefaultData.NoneData, DefaultData.NoneData, proposer_id, -1, epoch_num, round_num)
 
     async def create_lazy_data(self,
-                               term_num: int,
+                               epoch_num: int,
                                round_num: int,
                                proposer_id: bytes) -> DefaultData:
-        return DefaultData(DefaultData.LazyData, DefaultData.LazyData, proposer_id, -1, term_num, round_num)
+        return DefaultData(DefaultData.LazyData, DefaultData.LazyData, proposer_id, -1, epoch_num, round_num)
 
     async def create_data_verifier(self) -> DefaultDataVerifier:
         return DefaultDataVerifier()

@@ -15,12 +15,12 @@ import math
 from typing import Sequence, Type
 
 from lft.consensus.messages.data import Data
-from lft.consensus.term import Term
+from lft.consensus.epoch import Epoch
 from lft.consensus.messages.vote import Vote
 from lft.consensus.exceptions import InvalidProposer, InvalidVoter
 
 
-class RotateTerm(Term):
+class RotateEpoch(Epoch):
     def __init__(self, num: int, voters: Sequence[bytes], rotate_bound: int = 1):
         self._num = num
         self._rotate_bound = rotate_bound
@@ -84,11 +84,11 @@ class RotateTerm(Term):
         }
 
     @classmethod
-    def _deserialize(cls: Type['RotateTerm'], **kwargs) -> 'RotateTerm':
-        return RotateTerm(**kwargs)
+    def _deserialize(cls: Type['RotateEpoch'], **kwargs) -> 'RotateEpoch':
+        return RotateEpoch(**kwargs)
 
     def __eq__(self, other):
-        if isinstance(other, RotateTerm):
+        if isinstance(other, RotateEpoch):
             if self.voters == other.voters and self.num == other.num and self.quorum_num == other.quorum_num:
                 if self._rotate_bound == other._rotate_bound:
                     return True
