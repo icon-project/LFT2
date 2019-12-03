@@ -1,7 +1,8 @@
 import json
 from typing import Union
-
 from lft.serialization import Serializable
+
+__all__ = ("Serializer", )
 
 
 class _JSONEncoder(json.JSONEncoder):

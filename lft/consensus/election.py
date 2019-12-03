@@ -1,18 +1,20 @@
 import logging
-from lft.consensus.layers.round import RoundMessages
+from typing import DefaultDict, OrderedDict, Set, Optional, Dict
 from lft.consensus.messages.data import Data, DataFactory, DataPool, DataVerifier
 from lft.consensus.messages.vote import Vote, VoteFactory, VotePool
 from lft.consensus.events import (RoundEndEvent, BroadcastDataEvent, BroadcastVoteEvent,
                                   ReceiveDataEvent, ReceiveVoteEvent)
-from lft.consensus.term import Term
+from lft.consensus.epoch import Epoch
 from lft.consensus.exceptions import InvalidProposer
 from lft.event import EventSystem
 
+__all__ = ("Election", "ElectionMessages")
 
-class RoundLayer:
+
+class Election:
     def __init__(self,
                  node_id: bytes,
-                 term: Term,
+                 epoch: Epoch,
                  round_num: int,
                  event_system: EventSystem,
                  data_factory: DataFactory,
@@ -20,7 +22,7 @@ class RoundLayer:
                  data_pool: DataPool,
                  vote_pool: VotePool):
         self._node_id: bytes = node_id
-        self._term = term
+        self._epoch = epoch
         self._round_num = round_num
 
         self._event_system: EventSystem = event_system
@@ -34,7 +36,7 @@ class RoundLayer:
         self._data_verifier: DataVerifier = None
 
         self._candidate_id: bytes = None
-        self._messages: RoundMessages = RoundMessages(term)
+        self._messages: ElectionMessages = ElectionMessages(epoch)
 
         self._is_voted = False
         self._is_ended = False
@@ -93,7 +95,7 @@ class RoundLayer:
             new_candidate = result
             round_end = RoundEndEvent(
                 is_success=True,
-                term_num=self._term.num,
+                epoch_num=self._epoch.num,
                 round_num=self._round_num,
                 candidate_id=new_candidate.id,
                 commit_id=new_candidate.prev_id
@@ -101,7 +103,7 @@ class RoundLayer:
         else:
             round_end = RoundEndEvent(
                 is_success=False,
-                term_num=self._term.num,
+                epoch_num=self._epoch.num,
                 round_num=self._round_num,
                 candidate_id=None,
                 commit_id=None
@@ -109,39 +111,39 @@ class RoundLayer:
         self._event_system.simulator.raise_event(round_end)
 
     async def _new_unreal_datums(self):
-        none_data = await self._data_factory.create_none_data(term_num=self._term.num,
+        none_data = await self._data_factory.create_none_data(epoch_num=self._epoch.num,
                                                               round_num=self._round_num,
-                                                              proposer_id=self._term.get_proposer_id(self._round_num))
+                                                              proposer_id=self._epoch.get_proposer_id(self._round_num))
         self._messages.add_data(none_data)
 
-        not_data = await self._data_factory.create_not_data(term_num=self._term.num,
-                                                            round_num=self._round_num,
-                                                            proposer_id=self._term.get_proposer_id(self._round_num))
-        self._messages.add_data(not_data)
+        lazy_data = await self._data_factory.create_lazy_data(epoch_num=self._epoch.num,
+                                                              round_num=self._round_num,
+                                                              proposer_id=self._epoch.get_proposer_id(self._round_num))
+        self._messages.add_data(lazy_data)
 
     async def _new_real_data_if_proposer(self):
         try:
-            self._term.verify_proposer(self._node_id, self._round_num)
+            self._epoch.verify_proposer(self._node_id, self._round_num)
         except InvalidProposer:
             pass
         else:
             candidate_data = self._data_pool.get_data(self._candidate_id)
-            candidate_votes = self._vote_pool.get_votes(candidate_data.term_num, candidate_data.round_num)
+            candidate_votes = self._vote_pool.get_votes(candidate_data.epoch_num, candidate_data.round_num)
             candidate_votes = {vote.voter_id: vote for vote in candidate_votes if vote.data_id == self._candidate_id}
             candidate_votes = tuple(candidate_votes[voter] if voter in candidate_votes else None
-                                    for voter in self._term.voters)
+                                    for voter in self._epoch.voters)
 
             new_data = await self._data_factory.create_data(
                 data_number=candidate_data.number + 1,
                 prev_id=self._candidate_id,
-                term_num=self._term.num,
+                epoch_num=self._epoch.num,
                 round_num=self._round_num,
                 prev_votes=candidate_votes
             )
             await self._raise_broadcast_data(new_data)
 
     async def _update_result(self):
-        if not self._messages.result or not self._messages.result.is_complete():
+        if not self._messages.result or not self._messages.result.is_determinative():
             self._messages.update()
         if not self._messages.result:
             return
@@ -173,10 +175,10 @@ class RoundLayer:
         if await self._verify_data(data):
             vote = await self._vote_factory.create_vote(data_id=data.id,
                                                         commit_id=self._candidate_id,
-                                                        term_num=self._term.num,
+                                                        epoch_num=self._epoch.num,
                                                         round_num=self._round_num)
         else:
-            vote = await self._vote_factory.create_none_vote(term_num=self._term.num,
+            vote = await self._vote_factory.create_none_vote(epoch_num=self._epoch.num,
                                                              round_num=self._round_num)
         await self._raise_broadcast_vote(vote)
 
@@ -188,7 +190,7 @@ class RoundLayer:
         candidate_data = self._data_pool.get_data(self._candidate_id)
         if candidate_data.number + 1 != data.number:
             return False
-        if data.is_not():
+        if data.is_lazy():
             return False
         try:
             await self._data_verifier.verify(data)
@@ -196,3 +198,100 @@ class RoundLayer:
             return False
         else:
             return True
+
+
+Datums = OrderedDict[bytes, Data]  # dict[data_id] = data
+Votes = DefaultDict[bytes, Dict[bytes, Vote]]  # dict[data_id][voter_id] = vote
+
+
+class ElectionMessages:
+    def __init__(self, epoch: Epoch):
+        self._epoch = epoch
+
+        self._datums: Datums = OrderedDict()
+        self._votes: Votes = DefaultDict(dict)
+        self._voters: Set[bytes] = set()
+        self._result: Optional[Data] = None
+
+    @property
+    def result(self):
+        return self._result
+
+    @property
+    def first_real_data(self):
+        return next((data for data in self._datums.values() if data.is_real()), None)
+
+    def add_data(self, data: Data):
+        self._datums[data.id] = data
+
+    def add_vote(self, vote: Vote):
+        self._voters.add(vote.voter_id)
+        self._votes[vote.data_id][vote.voter_id] = vote
+
+    def update(self):
+        # RealData : Determine round success and round end
+        # NoneData : Determine round failure and round end
+        # LazyData : Cannot determine but round end
+        # None : Nothing changes
+
+        if self._update_quorum_data():
+            return
+
+        if self._update_possible_data():
+            return
+
+        if self._update_lazy_data():
+            return
+
+        self._result = None
+
+    def _update_quorum_data(self):
+        quorum_datums = [data for data in self._datums.values()
+                         if len(self._votes[data.id]) >= self._epoch.quorum_num]
+        quorum_datums.sort(key=lambda data: not data.is_determinative())
+        assert ((len(quorum_datums) <= 1) or
+                (len(quorum_datums) == 2 and quorum_datums[0].is_determinative() and quorum_datums[1].is_lazy()))
+
+        if quorum_datums and quorum_datums[0].is_determinative():
+            self._result = quorum_datums[0]
+            return True
+        return False
+
+    def _update_possible_data(self):
+        unvoter = self._get_unvoters()
+        if len(unvoter) >= self._epoch.quorum_num:
+            return False
+
+        possible_datums = [data for data in self._datums.values()
+                           if data.is_real()
+                           if len(self._votes[data.id]) < self._epoch.quorum_num
+                           if len(self._votes[data.id]) + len(unvoter) >= self._epoch.quorum_num]
+
+        if not possible_datums:
+            self._result = self._find_none_data()
+            return True
+
+        return False
+
+    def _update_lazy_data(self):
+        assert len(self._voters) <= len(self._epoch.voters)
+        if len(self._voters) == len(self._epoch.voters):
+            self._result = self._find_lazy_data()
+            return True
+        return False
+
+    def _find_none_data(self):
+        try:
+            return next(data for data in self._datums.values() if data.is_none())
+        except StopIteration:
+            assert "NoneData does not exist"
+
+    def _find_lazy_data(self):
+        try:
+            return next(data for data in self._datums.values() if data.is_lazy())
+        except StopIteration:
+            assert "LazyData does not exist"
+
+    def _get_unvoters(self):
+        return set(self._epoch.voters) - self._voters
+

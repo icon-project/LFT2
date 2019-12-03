@@ -6,6 +6,8 @@ from lft.event import EventMediator, EventInstantMediatorExecutor, EventRecorder
 from lft.event import EventReplayerMediatorExecutor, EventRecorderMediatorExecutor
 from lft.event.mediators.mixin import EventMediatorRecorderMixin
 
+__all__ = ("JsonRpcEventMediator", "JsonRpcEventInstantMediatorExecutor",
+           "JsonRpcEventRecorderMediatorExecutor", "JsonRpcEventReplayerMediatorExecutor")
 
 class JsonRpcEventInstantMediatorExecutor(EventInstantMediatorExecutor):
     def execute(self, url: str, method: str, params: dict=None):

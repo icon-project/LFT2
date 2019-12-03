@@ -18,6 +18,8 @@ from typing import Dict, Iterable
 
 from lft.serialization import Serializable
 
+__all__ = ("Message", "MessagePool")
+
 
 class Message(Serializable):
     @property
@@ -27,7 +29,7 @@ class Message(Serializable):
 
     @property
     @abstractmethod
-    def term_num(self) -> int:
+    def epoch_num(self) -> int:
         raise NotImplementedError
 
     @property
@@ -46,14 +48,14 @@ class MessagePool:
     def get_message(self, message_id: bytes) -> Message:
         return self._messages[message_id]
 
-    def get_messages(self, term_num: int, round_num: int) -> Iterable[Message]:
+    def get_messages(self, epoch_num: int, round_num: int) -> Iterable[Message]:
         for message in self._messages.values():
-            if message.term_num == term_num and message.round_num == round_num:
+            if message.epoch_num == epoch_num and message.round_num == round_num:
                 yield message
 
-    def prune_message(self, latest_term_num: int, latest_round_num: int):
+    def prune_message(self, latest_epoch_num: int, latest_round_num: int):
         self._messages = {
             mid: message for mid, message in self._messages.items()
-            if ((message.term_num > latest_term_num) or
-                (message.term_num == latest_term_num and message.round_num >= latest_round_num))
+            if ((message.epoch_num > latest_epoch_num) or
+                (message.epoch_num == latest_epoch_num and message.round_num >= latest_round_num))
         }

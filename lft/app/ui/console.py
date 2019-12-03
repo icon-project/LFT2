@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from lft.app import App
     from lft.app.node import Node
 
+__all__ = ("Console", )
+
 
 class Console:
     def run(self, app: 'App'):

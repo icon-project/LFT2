@@ -1,8 +1,9 @@
-import json
 import os
 from typing import Any, IO
 from lft.event import EventSimulator, Event, AnyEvent
 from lft.serialization import Serializer, Serializable
+
+__all__ = ("EventRecorder", )
 
 
 class EventRecorder:

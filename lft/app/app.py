@@ -7,10 +7,12 @@ from typing import List, Optional
 from lft.app import Node
 from lft.app.data import DefaultData
 from lft.app.ui.listener import Listener
-from lft.app.term import RotateTerm
+from lft.app.epoch import RotateEpoch
 from lft.consensus.events import InitializeEvent
 
 RECORD_PATH = "record.log"
+
+__all__ = ("RECORD_PATH", "App", "InstantApp", "ReplayApp", "RecordApp", "Mode")
 
 
 class App(ABC):
@@ -63,21 +65,21 @@ class App(ABC):
 
     def _raise_init_event(self, init_node: Node, nodes: List[Node]):
         genesis_round_num = 0
-        genesis_term_num = 0
+        genesis_epoch_num = 0
         genesis_data = DefaultData(
             id_=b'genesis',
             prev_id=b'',
             proposer_id=b'',
             number=0,
-            term_num=genesis_term_num,
+            epoch_num=genesis_epoch_num,
             round_num=genesis_round_num,
             prev_votes=()
         )
 
-        term = RotateTerm(1, tuple(node.node_id for node in nodes))
-        prev_term = RotateTerm(0, [])
+        epoch = RotateEpoch(1, tuple(node.node_id for node in nodes))
+        prev_epoch = RotateEpoch(0, [])
         round_num = 0
-        event = InitializeEvent(prev_term, term, round_num, genesis_data, ())
+        event = InitializeEvent(prev_epoch, epoch, round_num, genesis_data, ())
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 

@@ -1,26 +1,15 @@
-# Copyright 2019 ICON Foundation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 import math
 from typing import Sequence, Type
 
 from lft.consensus.messages.data import Data
-from lft.consensus.term import Term
+from lft.consensus.epoch import Epoch
 from lft.consensus.messages.vote import Vote
 from lft.consensus.exceptions import InvalidProposer, InvalidVoter
 
+__all__ = ("RotateEpoch", )
 
-class RotateTerm(Term):
+
+class RotateEpoch(Epoch):
     def __init__(self, num: int, voters: Sequence[bytes], rotate_bound: int = 1):
         self._num = num
         self._rotate_bound = rotate_bound
@@ -84,11 +73,11 @@ class RotateTerm(Term):
         }
 
     @classmethod
-    def _deserialize(cls: Type['RotateTerm'], **kwargs) -> 'RotateTerm':
-        return RotateTerm(**kwargs)
+    def _deserialize(cls: Type['RotateEpoch'], **kwargs) -> 'RotateEpoch':
+        return RotateEpoch(**kwargs)
 
     def __eq__(self, other):
-        if isinstance(other, RotateTerm):
+        if isinstance(other, RotateEpoch):
             if self.voters == other.voters and self.num == other.num and self.quorum_num == other.quorum_num:
                 if self._rotate_bound == other._rotate_bound:
                     return True

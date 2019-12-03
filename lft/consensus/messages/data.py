@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Sequence, Iterable, DefaultDict, Dict
+from typing import Sequence, Iterable
 
 from lft.consensus.messages.message import Message, MessagePool
 from lft.consensus.messages.vote import Vote
+
+__all__ = ("Data", "DataFactory", "DataPool", "DataVerifier")
 
 
 class Data(Message):
@@ -27,25 +29,25 @@ class Data(Message):
         raise NotImplementedError
 
     @abstractmethod
-    def is_not(self) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
     def is_none(self) -> bool:
         raise NotImplementedError
 
-    def is_real(self) -> bool:
-        return not self.is_none() and not self.is_not()
+    @abstractmethod
+    def is_lazy(self) -> bool:
+        raise NotImplementedError
 
-    def is_complete(self) -> bool:
-        return not self.is_not()
+    def is_real(self) -> bool:
+        return not self.is_none() and not self.is_lazy()
+
+    def is_determinative(self) -> bool:
+        return not self.is_lazy()
 
     def __eq__(self, other):
         return self.id == other.id \
                and self.number == other.number \
                and self.prev_id == other.prev_id \
                and self.proposer_id == other.proposer_id \
-               and self.term_num == other.term_num \
+               and self.epoch_num == other.epoch_num \
                and self.round_num == other.round_num \
                and self.prev_votes == other.prev_votes
 
@@ -67,21 +69,21 @@ class DataFactory(ABC):
     async def create_data(self,
                           data_number: int,
                           prev_id: bytes,
-                          term_num: int,
+                          epoch_num: int,
                           round_num: int,
                           prev_votes: Sequence['Vote']) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod
-    async def create_not_data(self,
-                              term_num: int,
-                              round_num: int,
-                              proposer_id: bytes) -> 'Data':
+    async def create_none_data(self,
+                               epoch_num: int,
+                               round_num: int,
+                               proposer_id: bytes) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod
-    async def create_none_data(self,
-                               term_num: int,
+    async def create_lazy_data(self,
+                               epoch_num: int,
                                round_num: int,
                                proposer_id: bytes) -> 'Data':
         raise NotImplementedError
@@ -98,13 +100,13 @@ class DataPool(MessagePool):
     def get_data(self, data_id: bytes) -> Data:
         return self.get_message(data_id)
 
-    def get_datums(self, term_num: int, round_num: int) -> Iterable[Data]:
-        return self.get_messages(term_num, round_num)
+    def get_datums(self, epoch_num: int, round_num: int) -> Iterable[Data]:
+        return self.get_messages(epoch_num, round_num)
 
     def get_datums_connected(self, prev_id: bytes) -> Iterable[Data]:
         for data in self._messages.values():
             if data.prev_id == prev_id:
                 yield data
 
-    def prune_data(self, latest_term_num: int, latest_round_num: int):
-        super().prune_message(latest_term_num, latest_round_num)
+    def prune_data(self, latest_epoch_num: int, latest_round_num: int):
+        super().prune_message(latest_epoch_num, latest_round_num)

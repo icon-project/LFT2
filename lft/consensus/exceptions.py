@@ -19,17 +19,17 @@ class AlreadySync(Exception):
         self.data_id = data_id
 
 
-class InvalidTerm(Exception):
-    def __init__(self, term: int, expected: int):
-        self.term = term
+class InvalidEpoch(Exception):
+    def __init__(self, epoch: int, expected: int):
+        self.epoch = epoch
         self.expected = expected
 
 
 class InvalidRound(Exception):
-    def __init__(self, term: int, round_: int, expected_term: int, expected_round: int):
-        self.term = term
+    def __init__(self, epoch: int, round_: int, expected_epoch: int, expected_round: int):
+        self.epoch = epoch
         self.round = round_
-        self.expected_term = expected_term
+        self.expected_epoch = expected_epoch
         self.expected_round = expected_round
 
 

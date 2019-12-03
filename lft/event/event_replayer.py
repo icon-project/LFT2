@@ -1,8 +1,10 @@
-import json
 import os
 from typing import IO
 from lft.event import EventSimulator, EventRecord, Event, AnyEvent
 from lft.serialization import Serializer
+
+
+__all__ = ("EventReplayer", )
 
 
 class EventReplayer:

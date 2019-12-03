@@ -11,6 +11,8 @@ from lft.app.ui.console import Console
 if TYPE_CHECKING:
     from lft.app import App
 
+__all__ = ("Listener",)
+
 
 class Listener:
     def __init__(self, app: 'App'):

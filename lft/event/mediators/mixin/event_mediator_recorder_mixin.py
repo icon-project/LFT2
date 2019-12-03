@@ -4,6 +4,8 @@ import os
 import pickle
 from typing import Any, IO
 
+__all__ = ("EventMediatorRecorderMixin")
+
 
 class EventMediatorRecorderMixin:
     def _write(self, io: IO, number: int, result: Any):
