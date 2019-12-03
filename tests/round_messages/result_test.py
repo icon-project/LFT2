@@ -38,15 +38,15 @@ async def test_complete_round_failure_none():
 
 
 @pytest.mark.asyncio
-async def test_complete_round_failure_not():
+async def test_complete_round_failure_lazy():
     term, round_num, round_messages, data, voters = await setup()
 
-    # Round must add NotData on RoundStart
-    not_data = await DefaultDataFactory(voters[0]).create_not_data(term.num, round_num, term.get_proposer_id(round_num))
-    round_messages.add_data(not_data)
+    # Round must add LazyData on RoundStart
+    lazy_data = await DefaultDataFactory(voters[0]).create_lazy_data(term.num, round_num, term.get_proposer_id(round_num))
+    round_messages.add_data(lazy_data)
 
     for voter in voters[:term.quorum_num]:
-        vote = await DefaultVoteFactory(voter).create_not_vote(voter, term.num, round_num)
+        vote = await DefaultVoteFactory(voter).create_lazy_vote(voter, term.num, round_num)
         round_messages.add_vote(vote)
     round_messages.update()
     candidate = round_messages.result

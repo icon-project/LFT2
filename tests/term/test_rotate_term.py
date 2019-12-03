@@ -48,7 +48,7 @@ class MockData(Data):
     def prev_votes(self) -> Sequence[Vote]:
         return ()
 
-    def is_not(self) -> bool:
+    def is_lazy(self) -> bool:
         return False
 
     def is_none(self) -> bool:

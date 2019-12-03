@@ -93,7 +93,7 @@ async def test_sync_layer_reach_quorum(voter_num: int):
 
     async with setup_items(voter_num, round_num) as (
             voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
-        # Propose NotData
+        # Propose LazyData
         await sync_layer.round_start()
 
         mediator = event_system.get_mediator(DelayedEventMediator)
@@ -102,7 +102,7 @@ async def test_sync_layer_reach_quorum(voter_num: int):
         delay, event = mediator.execute.call_args_list[0][0]
         assert delay == TIMEOUT_PROPOSE
         assert isinstance(event, ReceiveDataEvent)
-        assert event.data.is_not()
+        assert event.data.is_lazy()
 
         mediator.execute.reset_mock()
 
@@ -125,7 +125,7 @@ async def test_sync_layer_reach_quorum(voter_num: int):
             timeout, event = call_args[0]
             assert timeout == TIMEOUT_VOTE
             assert isinstance(event, ReceiveVoteEvent)
-            assert event.vote.is_not()
+            assert event.vote.is_lazy()
         mediator.execute.reset_mock()
 
         none_vote = await vote_factories[-1].create_none_vote(term.num, round_num)
@@ -141,7 +141,7 @@ async def test_sync_layer_reach_quorum_consensus(voter_num: int):
 
     async with setup_items(voter_num, round_num) as (
             voters, event_system, sync_layer, round_layer, term, candidate_data, candidate_votes):
-        # Propose NotData
+        # Propose LazyData
         await sync_layer.round_start()
 
         mediator = event_system.get_mediator(DelayedEventMediator)
@@ -150,7 +150,7 @@ async def test_sync_layer_reach_quorum_consensus(voter_num: int):
         delay, event = mediator.execute.call_args_list[0][0]
         assert delay == TIMEOUT_PROPOSE
         assert isinstance(event, ReceiveDataEvent)
-        assert event.data.is_not()
+        assert event.data.is_lazy()
 
         mediator.execute.reset_mock()
 

@@ -27,18 +27,18 @@ class Data(Message):
         raise NotImplementedError
 
     @abstractmethod
-    def is_not(self) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
     def is_none(self) -> bool:
         raise NotImplementedError
 
+    @abstractmethod
+    def is_lazy(self) -> bool:
+        raise NotImplementedError
+
     def is_real(self) -> bool:
-        return not self.is_none() and not self.is_not()
+        return not self.is_none() and not self.is_lazy()
 
     def is_complete(self) -> bool:
-        return not self.is_not()
+        return not self.is_lazy()
 
     def __eq__(self, other):
         return self.id == other.id \
@@ -73,14 +73,14 @@ class DataFactory(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def create_not_data(self,
-                              term_num: int,
-                              round_num: int,
-                              proposer_id: bytes) -> 'Data':
+    async def create_none_data(self,
+                               term_num: int,
+                               round_num: int,
+                               proposer_id: bytes) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod
-    async def create_none_data(self,
+    async def create_lazy_data(self,
                                term_num: int,
                                round_num: int,
                                proposer_id: bytes) -> 'Data':

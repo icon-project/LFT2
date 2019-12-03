@@ -23,11 +23,11 @@ class Vote(Message):
         raise NotImplementedError
 
     @abstractmethod
-    def is_not(self) -> bool:
+    def is_none(self) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def is_none(self) -> bool:
+    def is_lazy(self) -> bool:
         raise NotImplementedError
 
     def __eq__(self, other):
@@ -52,10 +52,10 @@ class VoteFactory(ABC):
     async def create_vote(self, data_id: bytes, commit_id: bytes, term_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
-    async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> 'Vote':
+    async def create_none_vote(self, term_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
-    async def create_none_vote(self, term_num: int, round_num: int) -> 'Vote':
+    async def create_lazy_vote(self, voter_id: bytes, term_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
     async def create_vote_verifier(self) -> 'VoteVerifier':

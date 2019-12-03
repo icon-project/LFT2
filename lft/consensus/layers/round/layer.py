@@ -114,10 +114,10 @@ class RoundLayer:
                                                               proposer_id=self._term.get_proposer_id(self._round_num))
         self._messages.add_data(none_data)
 
-        not_data = await self._data_factory.create_not_data(term_num=self._term.num,
-                                                            round_num=self._round_num,
-                                                            proposer_id=self._term.get_proposer_id(self._round_num))
-        self._messages.add_data(not_data)
+        lazy_data = await self._data_factory.create_lazy_data(term_num=self._term.num,
+                                                              round_num=self._round_num,
+                                                              proposer_id=self._term.get_proposer_id(self._round_num))
+        self._messages.add_data(lazy_data)
 
     async def _new_real_data_if_proposer(self):
         try:
@@ -188,7 +188,7 @@ class RoundLayer:
         candidate_data = self._data_pool.get_data(self._candidate_id)
         if candidate_data.number + 1 != data.number:
             return False
-        if data.is_not():
+        if data.is_lazy():
             return False
         try:
             await self._data_verifier.verify(data)

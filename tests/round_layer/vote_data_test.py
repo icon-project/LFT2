@@ -26,7 +26,7 @@ PROPOSE_ID = b'propose'
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("success_vote_num, none_vote_num, not_vote_num, expected_success, expected_complete",
+@pytest.mark.parametrize("success_vote_num, none_vote_num, lazy_vote_num, expected_success, expected_complete",
                          [(5, 2, 0, True, True),
                           (5, 0, 0, True, True),
                           (2, 5, 0, False, True),
@@ -35,7 +35,7 @@ PROPOSE_ID = b'propose'
                           (4, 0, 0, False, False),
                           (4, 1, 2, False, True)]
                          )
-async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, expected_success, expected_complete):
+async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, expected_success, expected_complete):
     """ GIVEN SyncRound and propose data,
     WHEN repeats _on_add_votes amount of vote_num
     THEN raised expected RoundEndEvent
@@ -80,9 +80,9 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, not_vote_num, e
             )
         )
 
-    for i in range(not_vote_num):
+    for i in range(lazy_vote_num):
         await do_vote(
-            await validator_vote_factories[success_vote_num + none_vote_num + i].create_not_vote(
+            await validator_vote_factories[success_vote_num + none_vote_num + i].create_lazy_vote(
                 voter_id=voters[success_vote_num + none_vote_num + i],
                 term_num=0,
                 round_num=1

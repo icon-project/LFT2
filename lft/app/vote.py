@@ -7,7 +7,7 @@ T = TypeVar("T")
 
 class DefaultVote(Vote):
     NoneVote = bytes(16)
-    NotVote = bytes([255] * 16)
+    LazyVote = bytes([255] * 16)
 
     def __init__(self, id_: bytes, data_id: bytes, commit_id: bytes, voter_id: bytes, term_num: int, round_num: int):
         self._id = id_
@@ -41,11 +41,11 @@ class DefaultVote(Vote):
     def round_num(self) -> int:
         return self._round_num
 
-    def is_not(self) -> bool:
-        return self._data_id == self.NotVote
-
     def is_none(self) -> bool:
         return self._data_id == self.NoneVote
+
+    def is_lazy(self) -> bool:
+        return self._data_id == self.LazyVote
 
     def _serialize(self) -> dict:
         return {
@@ -95,13 +95,13 @@ class DefaultVoteFactory(VoteFactory):
         vote_id = self._create_id(data_id, commit_id, self._node_id, term_num, round_num)
         return DefaultVote(vote_id, data_id, commit_id, self._node_id, term_num, round_num)
 
-    async def create_not_vote(self, voter_id: bytes, term_num: int, round_num: int) -> DefaultVote:
-        vote_id = self._create_id(voter_id, voter_id, voter_id, term_num, round_num)
-        return DefaultVote(vote_id, DefaultVote.NotVote, DefaultVote.NotVote, voter_id, term_num, round_num)
-
     async def create_none_vote(self, term_num: int, round_num: int) -> DefaultVote:
         vote_id = self._create_id(DefaultVote.NoneVote, DefaultVote.NoneVote, self._node_id, term_num, round_num)
         return DefaultVote(vote_id, DefaultVote.NoneVote, DefaultVote.NoneVote, self._node_id, term_num, round_num)
+
+    async def create_lazy_vote(self, voter_id: bytes, term_num: int, round_num: int) -> DefaultVote:
+        vote_id = self._create_id(voter_id, voter_id, voter_id, term_num, round_num)
+        return DefaultVote(vote_id, DefaultVote.LazyVote, DefaultVote.LazyVote, voter_id, term_num, round_num)
 
     async def create_vote_verifier(self) -> DefaultVoteVerifier:
         return DefaultVoteVerifier()

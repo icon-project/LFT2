@@ -91,7 +91,7 @@ class Consensus(EventRegister):
 
     async def _receive_data_and_change_candidate_if_available(self, data: 'Data'):
         round_ = self._new_or_get_round(data.term_num, data.round_num)
-        if data.is_not():
+        if data.is_lazy():
             await round_.receive_data(data)
         else:
             if round_.candidate_id == data.prev_id:

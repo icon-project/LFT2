@@ -71,7 +71,7 @@ class SyncLayer:
 
         self._messages.add_vote(vote)
         await self._receive_vote_if_data_exist(vote)
-        await self._raise_not_votes_if_available()
+        await self._raise_lazy_votes_if_available()
 
     async def _raise_receive_data(self, delay: float, data: Data):
         event = ReceiveDataEvent(data)
@@ -87,7 +87,7 @@ class SyncLayer:
         mediator = self._event_system.get_mediator(DelayedEventMediator)
         mediator.execute(delay, event)
 
-    async def _raise_not_votes_if_available(self):
+    async def _raise_lazy_votes_if_available(self):
         if self._vote_timeout_started:
             return
         if not self._messages.reach_quorum(self._term.quorum_num):
@@ -97,7 +97,7 @@ class SyncLayer:
 
         self._vote_timeout_started = True
         for voter in self._term.get_voters_id():
-            vote = await self._vote_factory.create_not_vote(voter, self._term.num, self._round_num)
+            vote = await self._vote_factory.create_lazy_vote(voter, self._term.num, self._round_num)
             await self._raise_receive_vote(delay=TIMEOUT_VOTE, vote=vote)
 
     async def _new_unreal_datums(self):
@@ -108,10 +108,10 @@ class SyncLayer:
         await self._receive_data(none_data)
 
         expected_proposer = self._term.get_proposer_id(self._round_num)
-        not_data = await self._data_factory.create_not_data(self._term.num,
-                                                            self._round_num,
-                                                            expected_proposer)
-        await self._raise_receive_data(delay=TIMEOUT_PROPOSE, data=not_data)
+        lazy_data = await self._data_factory.create_lazy_data(self._term.num,
+                                                              self._round_num,
+                                                              expected_proposer)
+        await self._raise_receive_data(delay=TIMEOUT_PROPOSE, data=lazy_data)
 
     async def _receive_votes_if_exist(self, data: Data):
         votes_by_data_id = self._messages.get_votes(data_id=data.id)

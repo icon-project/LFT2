@@ -121,9 +121,9 @@ async def _random_vote(vote_factory: DefaultVoteFactory):
                            term_num=random.randint(0, 10),
                            round_num=random.randint(0, 10))
     elif r < 10:
-        return await vote_factory.create_not_vote(voter_id=vote_factory._node_id,
-                                                  term_num=random.randint(0, 10),
-                                                  round_num=random.randint(0, 10))
+        return await vote_factory.create_lazy_vote(voter_id=vote_factory._node_id,
+                                                   term_num=random.randint(0, 10),
+                                                   round_num=random.randint(0, 10))
     else:
         return await vote_factory.create_none_vote(term_num=random.randint(0, 10),
                                                    round_num=random.randint(0, 10))

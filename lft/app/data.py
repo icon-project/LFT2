@@ -8,7 +8,7 @@ T = TypeVar("T")
 
 class DefaultData(Data):
     NoneData = bytes(16)
-    NotData = bytes([255] * 16)
+    LazyData = bytes([255] * 16)
 
     def __init__(self,
                  id_: bytes,
@@ -54,11 +54,11 @@ class DefaultData(Data):
     def prev_votes(self) -> Sequence['DefaultVote']:
         return self._prev_votes
 
-    def is_not(self) -> bool:
-        return self._id == self.NotData
-
     def is_none(self) -> bool:
         return self._id == self.NoneData
+
+    def is_lazy(self) -> bool:
+        return self._id == self.LazyData
 
     def _serialize(self) -> dict:
         return {
@@ -121,17 +121,17 @@ class DefaultDataFactory(DataFactory):
         data_id = self._create_id(prev_id, self._node_id, data_number, term_num, round_num, prev_votes)
         return DefaultData(data_id, prev_id, self._node_id, data_number, term_num, round_num, prev_votes=prev_votes)
 
-    async def create_not_data(self,
-                              term_num: int,
-                              round_num: int,
-                              proposer_id: bytes) -> DefaultData:
-        return DefaultData(DefaultData.NotData, DefaultData.NotData, proposer_id, -1, term_num, round_num)
-
     async def create_none_data(self,
                                term_num: int,
                                round_num: int,
                                proposer_id: bytes) -> 'Data':
         return DefaultData(DefaultData.NoneData, DefaultData.NoneData, proposer_id, -1, term_num, round_num)
+
+    async def create_lazy_data(self,
+                               term_num: int,
+                               round_num: int,
+                               proposer_id: bytes) -> DefaultData:
+        return DefaultData(DefaultData.LazyData, DefaultData.LazyData, proposer_id, -1, term_num, round_num)
 
     async def create_data_verifier(self) -> DefaultDataVerifier:
         return DefaultDataVerifier()

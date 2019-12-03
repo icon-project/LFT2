@@ -34,7 +34,7 @@ class RoundMessages:
     def update(self):
         # RealData : Determine round success and round end
         # NoneData : Determine round failure and round end
-        # NotData : Cannot determine but round end
+        # LazyData : Cannot determine but round end
         # None : Nothing changes
 
         if self._update_quorum_data():
@@ -43,7 +43,7 @@ class RoundMessages:
         if self._update_possible_data():
             return
 
-        if self._update_not_data():
+        if self._update_lazy_data():
             return
 
         self._result = None
@@ -53,7 +53,7 @@ class RoundMessages:
                          if len(self._votes[data.id]) >= self._term.quorum_num]
         quorum_datums.sort(key=lambda data: not data.is_complete())
         assert ((len(quorum_datums) <= 1) or
-                (len(quorum_datums) == 2 and quorum_datums[0].is_complete() and quorum_datums[1].is_not()))
+                (len(quorum_datums) == 2 and quorum_datums[0].is_complete() and quorum_datums[1].is_lazy()))
 
         if quorum_datums and quorum_datums[0].is_complete():
             self._result = quorum_datums[0]
@@ -76,24 +76,24 @@ class RoundMessages:
 
         return False
 
-    def _update_not_data(self):
+    def _update_lazy_data(self):
         assert len(self._voters) <= len(self._term.voters)
         if len(self._voters) == len(self._term.voters):
-            self._result = self._find_not_data()
+            self._result = self._find_lazy_data()
             return True
         return False
-
-    def _find_not_data(self):
-        try:
-            return next(data for data in self._datums.values() if data.is_not())
-        except StopIteration:
-            assert "NotData does not exist"
 
     def _find_none_data(self):
         try:
             return next(data for data in self._datums.values() if data.is_none())
         except StopIteration:
             assert "NoneData does not exist"
+
+    def _find_lazy_data(self):
+        try:
+            return next(data for data in self._datums.values() if data.is_lazy())
+        except StopIteration:
+            assert "LazyData does not exist"
 
     def _get_unvoters(self):
         return set(self._term.voters) - self._voters
