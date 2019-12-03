@@ -26,7 +26,7 @@ PROPOSE_ID = b'propose'
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("success_vote_num, none_vote_num, lazy_vote_num, expected_success, expected_complete",
+@pytest.mark.parametrize("success_vote_num, none_vote_num, lazy_vote_num, expected_success, expected_determinative",
                          [(5, 2, 0, True, True),
                           (5, 0, 0, True, True),
                           (2, 5, 0, False, True),
@@ -35,7 +35,7 @@ PROPOSE_ID = b'propose'
                           (4, 0, 0, False, False),
                           (4, 1, 2, False, True)]
                          )
-async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, expected_success, expected_complete):
+async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, expected_success, expected_determinative):
     """ GIVEN SyncRound and propose data,
     WHEN repeats _on_add_votes amount of vote_num
     THEN raised expected RoundEndEvent
@@ -90,7 +90,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, 
         )
 
     # THEN
-    if expected_complete:
+    if expected_determinative:
         event_system.simulator.raise_event.called_once()
         event = event_system.simulator.raise_event.call_args_list[0][0][0]
         assert isinstance(event, RoundEndEvent)

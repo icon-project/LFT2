@@ -141,7 +141,7 @@ class RoundLayer:
             await self._raise_broadcast_data(new_data)
 
     async def _update_result(self):
-        if not self._messages.result or not self._messages.result.is_complete():
+        if not self._messages.result or not self._messages.result.is_determinative():
             self._messages.update()
         if not self._messages.result:
             return

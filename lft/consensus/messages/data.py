@@ -37,7 +37,7 @@ class Data(Message):
     def is_real(self) -> bool:
         return not self.is_none() and not self.is_lazy()
 
-    def is_complete(self) -> bool:
+    def is_determinative(self) -> bool:
         return not self.is_lazy()
 
     def __eq__(self, other):

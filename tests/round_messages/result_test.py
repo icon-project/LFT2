@@ -8,7 +8,7 @@ from lft.consensus.layers.round import RoundMessages
 
 
 @pytest.mark.asyncio
-async def test_complete_round_success():
+async def test_round_success():
     epoch, round_num, round_messages, data, voters = await setup()
 
     last_vote = await DefaultVoteFactory(voters[-1]).create_vote(data.id, b'', epoch.num, round_num)
@@ -20,7 +20,7 @@ async def test_complete_round_success():
 
 
 @pytest.mark.asyncio
-async def test_complete_round_failure_none():
+async def test_round_failure_none():
     epoch, round_num, round_messages, data, voters = await setup()
 
     # Round must add NoneData on RoundStart
@@ -38,7 +38,7 @@ async def test_complete_round_failure_none():
 
 
 @pytest.mark.asyncio
-async def test_complete_round_failure_lazy():
+async def test_round_failure_lazy():
     epoch, round_num, round_messages, data, voters = await setup()
 
     # Round must add LazyData on RoundStart

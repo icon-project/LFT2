@@ -51,11 +51,11 @@ class RoundMessages:
     def _update_quorum_data(self):
         quorum_datums = [data for data in self._datums.values()
                          if len(self._votes[data.id]) >= self._epoch.quorum_num]
-        quorum_datums.sort(key=lambda data: not data.is_complete())
+        quorum_datums.sort(key=lambda data: not data.is_determinative())
         assert ((len(quorum_datums) <= 1) or
-                (len(quorum_datums) == 2 and quorum_datums[0].is_complete() and quorum_datums[1].is_lazy()))
+                (len(quorum_datums) == 2 and quorum_datums[0].is_determinative() and quorum_datums[1].is_lazy()))
 
-        if quorum_datums and quorum_datums[0].is_complete():
+        if quorum_datums and quorum_datums[0].is_determinative():
             self._result = quorum_datums[0]
             return True
         return False
