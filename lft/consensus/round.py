@@ -19,14 +19,14 @@ TIMEOUT_VOTE = 2.0
 
 class Round:
     def __init__(self,
-                 round_layer: Election,
+                 election: Election,
                  node_id: bytes,
                  epoch: Epoch,
                  round_num: int,
                  event_system: EventSystem,
                  data_factory: DataFactory,
                  vote_factory: VoteFactory):
-        self._round_layer = round_layer
+        self._election = election
         self._node_id = node_id
 
         self._epoch = epoch
@@ -51,19 +51,19 @@ class Round:
 
     @property
     def result_id(self):
-        return self._round_layer.result_id
+        return self._election.result_id
 
     @property
     def candidate_id(self):
-        return self._round_layer._candidate_id
+        return self._election._candidate_id
 
     @candidate_id.setter
     def candidate_id(self, new_candidate_id: bytes):
-        self._round_layer._candidate_id = new_candidate_id
+        self._election._candidate_id = new_candidate_id
 
     async def round_start(self):
         await self._new_unreal_datums()
-        await self._round_layer.round_start()
+        await self._election.round_start()
 
     async def receive_data(self, data: Data):
         try:
@@ -81,7 +81,7 @@ class Round:
         self._verify_acceptable_data(data)
 
         self._messages.add_data(data)
-        await self._round_layer.receive_data(data)
+        await self._election.receive_data(data)
         await self._receive_votes_if_exist(data)
 
     async def _receive_vote(self, vote: Vote):
@@ -134,11 +134,11 @@ class Round:
     async def _receive_votes_if_exist(self, data: Data):
         votes_by_data_id = self._messages.get_votes(data_id=data.id)
         for vote in votes_by_data_id.values():
-            await self._round_layer.receive_vote(vote)
+            await self._election.receive_vote(vote)
 
     async def _receive_vote_if_data_exist(self, vote: Vote):
         if self._messages.get_data(vote.data_id):
-            await self._round_layer.receive_vote(vote)
+            await self._election.receive_vote(vote)
 
     def _verify_acceptable_data(self, data: Data):
         if self._epoch.num != data.epoch_num:
