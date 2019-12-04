@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Sequence
 
@@ -34,6 +35,8 @@ class Consensus(EventRegister):
         self._round_pool = RoundPool()
         self._data_pool = DataPool()
         self._vote_pool = VotePool()
+
+        self._logger = logging.getLogger(node_id.hex())
 
     async def _on_event_initialize(self, event: InitializeEvent):
         await self.initialize(event.prev_epoch, event.epoch, event.round_num, event.candidate_data, event.candidate_votes)
@@ -132,9 +135,9 @@ class Consensus(EventRegister):
         epoch.verify_voter(vote.voter_id)
 
     def _new_round(self, epoch: 'Epoch', round_num: int, candidate_id: bytes):
-        round_layer = Election(self._node_id, epoch, round_num, self._event_system,
-                               self._data_factory, self._vote_factory, self._data_pool, self._vote_pool)
-        new_round = Round(round_layer, self._node_id, epoch, round_num,
+        election = Election(self._node_id, epoch, round_num, self._event_system,
+                            self._data_factory, self._vote_factory, self._data_pool, self._vote_pool)
+        new_round = Round(election, self._node_id, epoch, round_num,
                           self._event_system, self._data_factory, self._vote_factory)
         new_round.candidate_id = candidate_id
         self._round_pool.add_round(new_round)
