@@ -76,9 +76,8 @@ class Consensus(EventRegister):
 
         try:
             self._verify_acceptable_data(data)
-        except (InvalidEpoch, InvalidRound, InvalidProposer):
+        except (InvalidEpoch, InvalidRound, InvalidProposer) as e:
             return
-
         self._data_pool.add_data(data)
         await self._receive_data_and_change_candidate_if_available(data)
 
