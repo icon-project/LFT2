@@ -36,12 +36,13 @@ async def test_route_message_to_round():
         round_ = consensus._round_pool.get_round(epoch.num, i)
         assert consensus._data_pool.get_data(data.id) == data
         for vi, vote in enumerate(votes):
+            assert vote == consensus._vote_pool.get_vote(vote.id)
             assert vote == round_.receive_vote.call_args_list[vi][0][0]
 
         if i != 0:
             prev_round = consensus._round_pool.get_round(epoch.num, i -1)
             for vi, vote in enumerate(data.prev_votes):
-                print(prev_round.receive_vote.call_args_list)
+                assert vote == consensus._vote_pool.get_vote(vote.id)
                 assert vote == prev_round.receive_vote.call_args_list[vi][0][0]
 
 
