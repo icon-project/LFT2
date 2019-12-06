@@ -52,7 +52,7 @@ async def test_receive_invalid_voter():
     assert_not_added_any_message(consensus)
 
 
-@pytest.mark.ayncio
+@pytest.mark.asyncio
 async def test_receive_invalid_prev_voter():
     # GIVEN
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
@@ -103,6 +103,7 @@ async def test_receive_invalid_prev_voter_num():
     assert_not_added_any_message(consensus)
 
 
+@pytest.mark.asyncio
 async def test_receive_invalid_prev_vote_round():
     # GIVEN
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
@@ -122,7 +123,7 @@ async def test_receive_invalid_prev_vote_round():
     consensus._data_pool.add_data.assert_not_called()
 
 
-@pytest.mark.ayncio
+@pytest.mark.asyncio
 async def test_receive_past_round_message():
     # GIVEN
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
