@@ -103,6 +103,25 @@ async def test_receive_invalid_prev_voter_num():
     assert_not_added_any_message(consensus)
 
 
+async def test_receive_invalid_prev_vote_round():
+    # GIVEN
+    consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
+    mocking_message_pool(consensus)
+    # WHEN
+    invalid_proposer_data = DefaultData(
+        id_=INVALID_ID,
+        prev_id=genesis_data.id,
+        proposer_id=voters[1],
+        number=1,
+        epoch_num=1,
+        round_num=1,
+        prev_votes=[vote_factory.create_vote(INVALID_ID, genesis_data.id, 1, 1) for vote_factory in vote_factories]
+    )
+    consensus.receive_data(invalid_proposer_data)
+    # THEN
+    consensus._data_pool.add_data.assert_not_called()
+
+
 @pytest.mark.ayncio
 async def test_receive_past_round_message():
     # GIVEN
