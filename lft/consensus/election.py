@@ -111,14 +111,14 @@ class Election:
         self._event_system.simulator.raise_event(round_end)
 
     async def _new_unreal_datums(self):
-        none_data = await self._data_factory.create_none_data(epoch_num=self._epoch.num,
-                                                              round_num=self._round_num,
-                                                              proposer_id=self._epoch.get_proposer_id(self._round_num))
+        none_data = self._data_factory.create_none_data(epoch_num=self._epoch.num,
+                                                        round_num=self._round_num,
+                                                        proposer_id=self._epoch.get_proposer_id(self._round_num))
         self._messages.add_data(none_data)
 
-        lazy_data = await self._data_factory.create_lazy_data(epoch_num=self._epoch.num,
-                                                              round_num=self._round_num,
-                                                              proposer_id=self._epoch.get_proposer_id(self._round_num))
+        lazy_data = self._data_factory.create_lazy_data(epoch_num=self._epoch.num,
+                                                        round_num=self._round_num,
+                                                        proposer_id=self._epoch.get_proposer_id(self._round_num))
         self._messages.add_data(lazy_data)
 
     async def _new_real_data_if_proposer(self):
@@ -178,8 +178,8 @@ class Election:
                                                         epoch_num=self._epoch.num,
                                                         round_num=self._round_num)
         else:
-            vote = await self._vote_factory.create_none_vote(epoch_num=self._epoch.num,
-                                                             round_num=self._round_num)
+            vote = self._vote_factory.create_none_vote(epoch_num=self._epoch.num,
+                                                       round_num=self._round_num)
         await self._raise_broadcast_vote(vote)
 
     async def _verify_data(self, data):

@@ -115,20 +115,20 @@ class Round:
 
         self._vote_timeout_started = True
         for voter in self._epoch.get_voters_id():
-            vote = await self._vote_factory.create_lazy_vote(voter, self._epoch.num, self._num)
+            vote = self._vote_factory.create_lazy_vote(voter, self._epoch.num, self._num)
             await self._raise_receive_vote(delay=TIMEOUT_VOTE, vote=vote)
 
     async def _new_unreal_datums(self):
-        none_data = await self._data_factory.create_none_data(epoch_num=self._epoch.num,
-                                                              round_num=self._num,
-                                                              proposer_id=self._epoch.get_proposer_id(self._num))
+        none_data = self._data_factory.create_none_data(epoch_num=self._epoch.num,
+                                                        round_num=self._num,
+                                                        proposer_id=self._epoch.get_proposer_id(self._num))
         # NoneData must be received before RoundStart
         await self._receive_data(none_data)
 
         expected_proposer = self._epoch.get_proposer_id(self._num)
-        lazy_data = await self._data_factory.create_lazy_data(self._epoch.num,
-                                                              self._num,
-                                                              expected_proposer)
+        lazy_data = self._data_factory.create_lazy_data(self._epoch.num,
+                                                        self._num,
+                                                        expected_proposer)
         await self._raise_receive_data(delay=TIMEOUT_PROPOSE, data=lazy_data)
 
     async def _receive_votes_if_exist(self, data: Data):

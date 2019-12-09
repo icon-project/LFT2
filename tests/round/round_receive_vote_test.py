@@ -53,10 +53,10 @@ async def test_round_already_vote():
         same_vote._id = b'1'
         await round_._receive_vote(same_vote)
 
-        none_vote = await round_._vote_factory.create_none_vote(epoch.num, round_num)
+        none_vote = round_._vote_factory.create_none_vote(epoch.num, round_num)
         await round_._receive_vote(none_vote)
 
-        same_none_vote = await round_._vote_factory.create_none_vote(epoch.num, round_num)
+        same_none_vote = round_._vote_factory.create_none_vote(epoch.num, round_num)
         with pytest.raises(AlreadyVoted):
             await round_._receive_vote(same_none_vote)
         same_none_vote._id = b'3'
@@ -76,7 +76,7 @@ async def test_round_none_vote_received():
         random.shuffle(voters)
         none_votes = []
         for voter in voters[:epoch.quorum_num]:
-            none_vote = await DefaultVoteFactory(voter).create_none_vote(epoch.num, round_num)
+            none_vote = DefaultVoteFactory(voter).create_none_vote(epoch.num, round_num)
             none_votes.append(none_vote)
             await round_.receive_vote(none_vote)
 
@@ -116,7 +116,7 @@ async def test_round_reach_quorum(voter_num: int):
 
         mediator.execute.assert_not_called()
 
-        none_vote = await quorum_vote_factories[-1].create_none_vote(epoch.num, round_num)
+        none_vote = quorum_vote_factories[-1].create_none_vote(epoch.num, round_num)
         await round_.receive_vote(none_vote)
 
         assert len(mediator.execute.call_args_list) == len(voters)
@@ -128,7 +128,7 @@ async def test_round_reach_quorum(voter_num: int):
             assert event.vote.is_lazy()
         mediator.execute.reset_mock()
 
-        none_vote = await vote_factories[-1].create_none_vote(epoch.num, round_num)
+        none_vote = vote_factories[-1].create_none_vote(epoch.num, round_num)
         await round_.receive_vote(none_vote)
 
         mediator.execute.assert_not_called()

@@ -52,10 +52,10 @@ class VoteFactory(ABC):
     async def create_vote(self, data_id: bytes, commit_id: bytes, epoch_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
-    async def create_none_vote(self, epoch_num: int, round_num: int) -> 'Vote':
+    def create_none_vote(self, epoch_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
-    async def create_lazy_vote(self, voter_id: bytes, epoch_num: int, round_num: int) -> 'Vote':
+    def create_lazy_vote(self, voter_id: bytes, epoch_num: int, round_num: int) -> 'Vote':
         raise NotImplementedError
 
     async def create_vote_verifier(self) -> 'VoteVerifier':

@@ -75,17 +75,17 @@ class DataFactory(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def create_none_data(self,
-                               epoch_num: int,
-                               round_num: int,
-                               proposer_id: bytes) -> 'Data':
+    def create_none_data(self,
+                         epoch_num: int,
+                         round_num: int,
+                         proposer_id: bytes) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod
-    async def create_lazy_data(self,
-                               epoch_num: int,
-                               round_num: int,
-                               proposer_id: bytes) -> 'Data':
+    def create_lazy_data(self,
+                         epoch_num: int,
+                         round_num: int,
+                         proposer_id: bytes) -> 'Data':
         raise NotImplementedError
 
     @abstractmethod
