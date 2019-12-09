@@ -1,3 +1,4 @@
+from typing import List
 from unittest.mock import MagicMock
 
 import pytest
@@ -6,7 +7,7 @@ from lft.app.data import DefaultData
 from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVote
 from lft.consensus.messages.data import DataPool
-from lft.consensus.messages.vote import VotePool
+from lft.consensus.messages.vote import VotePool, VoteFactory
 from tests.consensus.mocks import RoundMock
 from tests.consensus.setup_consensus import setup_consensus
 
@@ -18,16 +19,9 @@ async def test_receive_invalid_proposer_data():
     mocking_message_pool(consensus)
 
     # WHEN
-    invalid_proposer_data = DefaultData(
-        id_=INVALID_ID,
-        prev_id=genesis_data.id,
-        proposer_id=voters[1],
-        number=1,
-        epoch_num=1,
-        round_num=0,
-        prev_votes=[]
-    )
-    consensus.receive_data(invalid_proposer_data)
+    data = await create_valid_data(0, voters, vote_factories)
+    data._proposer_id = voters[1]
+    consensus.receive_data(data)
 
     # THEN
     assert_not_added_any_message(consensus)
@@ -89,16 +83,10 @@ async def test_receive_invalid_prev_voter_num():
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
     mocking_message_pool(consensus)
     # WHEN
-    invalid_proposer_data = DefaultData(
-        id_=INVALID_ID,
-        prev_id=genesis_data.id,
-        proposer_id=voters[1],
-        number=1,
-        epoch_num=1,
-        round_num=1,
-        prev_votes=[]
-    )
-    consensus.receive_data(invalid_proposer_data)
+
+    data = await create_valid_data(1, voters, vote_factories)
+    data._prev_votes = []
+    consensus.receive_data(data)
     # THEN
     assert_not_added_any_message(consensus)
 
@@ -109,18 +97,12 @@ async def test_receive_invalid_prev_vote_round():
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
     mocking_message_pool(consensus)
     # WHEN
-    invalid_proposer_data = DefaultData(
-        id_=INVALID_ID,
-        prev_id=genesis_data.id,
-        proposer_id=voters[1],
-        number=1,
-        epoch_num=1,
-        round_num=1,
-        prev_votes=[vote_factory.create_vote(INVALID_ID, genesis_data.id, 1, 1) for vote_factory in vote_factories]
-    )
-    consensus.receive_data(invalid_proposer_data)
+    data = await create_valid_data(1, voters, vote_factories)
+    for vote in data.prev_votes:
+        vote._round_num = 1
+    consensus.receive_data(data)
     # THEN
-    consensus._data_pool.add_data.assert_not_called()
+    assert_not_added_any_message(consensus)
 
 
 @pytest.mark.asyncio
@@ -133,17 +115,8 @@ async def test_receive_past_round_message():
     consensus._round_pool.first_round = MagicMock(return_value=candidate_round)
 
     # WHEN
-    prev_votes = [vote_factory.create_vote(b'prev', b'commit', 1, 2) for vote_factory in vote_factories]
-    past_data = DefaultData(
-        id_=b'id',
-        prev_id=b'prev',
-        number=3,
-        proposer_id=voters[3],
-        epoch_num=1,
-        round_num=3,
-        prev_votes=prev_votes
-    )
-    consensus.receive_data(past_data)
+    data = await create_valid_data(3, voters, vote_factories)
+    consensus.receive_data(data)
     past_vote = DefaultVote(
         id_=b'id',
         data_id=b'id',
@@ -164,7 +137,7 @@ async def test_receive_past_epoch():
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
     mocking_message_pool(consensus)
 
-    candidate_round = RoundMock(epoch, 4)
+    candidate_round = RoundMock(epoch, 2)
     consensus._round_pool.first_round = MagicMock(return_value=candidate_round)
     genesis_epoch = RotateEpoch(0, voters)
     consensus._epoch_pool.get_epoch = MagicMock(return_value=genesis_epoch)
@@ -201,11 +174,11 @@ async def test_receive_future_epoch():
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
     mocking_message_pool(consensus)
 
-    candidate_round = RoundMock(epoch, 4)
+    candidate_round = RoundMock(epoch, 2)
     consensus._round_pool.first_round = MagicMock(return_value=candidate_round)
 
     # WHEN
-    prev_votes = [vote_factory.create_vote(b'prev', b'commit', 0, 2) for vote_factory in vote_factories]
+    prev_votes = [vote_factory.create_vote(b'prev', b'commit', 2, 2) for vote_factory in vote_factories]
     past_data = DefaultData(
         id_=b'id',
         prev_id=b'prev',
@@ -238,3 +211,20 @@ def assert_not_added_any_message(consensus):
 def mocking_message_pool(consensus):
     consensus._data_pool = MagicMock(DataPool())
     consensus._vote_pool = MagicMock(VotePool())
+
+
+async def create_valid_data(round_: int, voters, vote_factories: List[VoteFactory]):
+    if round_ == 0:
+        prev_votes = []
+    else:
+        prev_votes = [await vote_factory.create_vote(b'prev', b'commit', 1, round_) for vote_factory in vote_factories]
+
+    return DefaultData(
+        id_=b'data',
+        prev_id=b'prev',
+        proposer_id=voters[round_ % 4],
+        number=round_ + 1,
+        epoch_num=1,
+        round_num=round_,
+        prev_votes=prev_votes
+    )
