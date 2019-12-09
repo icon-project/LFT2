@@ -210,7 +210,9 @@ class ElectionMessages:
 
         self._datums: Datums = OrderedDict()
         self._votes: Votes = DefaultDict(dict)
+
         self._voters: Set[bytes] = set()
+        self._real_voters: Set[bytes] = set()
         self._result: Optional[Data] = None
 
     @property
@@ -226,6 +228,9 @@ class ElectionMessages:
 
     def add_vote(self, vote: Vote):
         self._voters.add(vote.voter_id)
+        if vote.is_real():
+            self._real_voters.add(vote.voter_id)
+
         self._votes[vote.data_id][vote.voter_id] = vote
 
     def update(self):
@@ -293,5 +298,5 @@ class ElectionMessages:
             assert "LazyData does not exist"
 
     def _get_unvoters(self):
-        return set(self._epoch.voters) - self._voters
+        return set(self._epoch.voters) - self._real_voters
 

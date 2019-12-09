@@ -30,6 +30,9 @@ class Vote(Message):
     def is_lazy(self) -> bool:
         raise NotImplementedError
 
+    def is_real(self):
+        return not self.is_lazy()
+
     def __eq__(self, other):
         return self.id == other.id \
                and self.data_id == other.data_id \
