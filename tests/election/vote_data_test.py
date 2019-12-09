@@ -19,8 +19,8 @@ PROPOSE_ID = b'propose'
                           (4, 0, 0, False, False),
                           (4, 1, 2, False, True)]
                          )
-async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, expected_success, expected_determinative):
-    """ GIVEN SyncRound and propose data,
+async def test_receive_vote(success_vote_num, none_vote_num, lazy_vote_num, expected_success, expected_determinative):
+    """ GIVEN election and propose data,
     WHEN repeats _on_add_votes amount of vote_num
     THEN raised expected RoundEndEvent
     """

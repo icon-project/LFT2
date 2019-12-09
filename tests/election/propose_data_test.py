@@ -13,9 +13,9 @@ PROPOSE_ID = b"b"
                          [(b"b", CANDIDATE_ID, b"b"),
                           (b"b", b"other_id", DefaultVote.NoneVote),
                           (LEADER_ID, None, DefaultVote.NoneVote)])
-async def test_on_propose(propose_id, propose_prev_id, expected_vote_data_id):
+async def test_receive_data(propose_id, propose_prev_id, expected_vote_data_id):
     # TODO propose not data, correct data, non_connection_data
-    """ GIVEN SyncLayer with candidate_data and ProposeSequence, setup
+    """ GIVEN Election with candidate_data and ProposeSequence, setup
     WHEN raise ProposeSequence
     THEN Receive VoteEvent about ProposeSequence
     """
