@@ -95,9 +95,16 @@ class DataFactory(ABC):
 
 class DataPool(MessagePool):
     def add_data(self, data: Data):
-        self.add_message(data)
+        if data.is_real():
+            self.add_message(data)
+        else:
+            # To avoid id collision dummy_id is generated.
+            # Unreal data must be added for node recovery and removed by only pruning
+            dummy_id = self._int_to_bytes(data.epoch_num) + data.id + self._int_to_bytes(data.round_num)
+            self._messages[dummy_id] = data
 
     def get_data(self, data_id: bytes) -> Data:
+        # Only real data can be gotten.
         return self.get_message(data_id)
 
     def get_datums(self, epoch_num: int, round_num: int) -> Iterable[Data]:
@@ -110,3 +117,6 @@ class DataPool(MessagePool):
 
     def prune_data(self, latest_epoch_num: int, latest_round_num: int):
         super().prune_message(latest_epoch_num, latest_round_num)
+
+    def _int_to_bytes(self, x: int) -> bytes:
+        return x.to_bytes((x.bit_length() + 7) // 8, 'big')
