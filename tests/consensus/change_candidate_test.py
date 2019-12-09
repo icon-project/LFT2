@@ -3,9 +3,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_candidate_change_by_vote():
-    """ GIVEN a mock_round
-    WHEN Call try_candidate_change with
-    """
+    pass
 
 
 @pytest.mark.asyncio
