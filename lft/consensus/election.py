@@ -36,7 +36,7 @@ class Election:
         self._data_verifier: DataVerifier = None
 
         self._candidate_id: bytes = None
-        self._messages: ElectionMessages = ElectionMessages(epoch)
+        self._messages: ElectionMessages = ElectionMessages(epoch, round_num, data_factory)
 
         self._is_voted = False
         self._is_ended = False
@@ -205,8 +205,10 @@ Votes = DefaultDict[bytes, Dict[bytes, Vote]]  # dict[data_id][voter_id] = vote
 
 
 class ElectionMessages:
-    def __init__(self, epoch: Epoch):
+    def __init__(self, epoch: Epoch, round_num: int, data_factory: DataFactory):
         self._epoch = epoch
+        self._round_num = round_num
+        self._data_factory = data_factory
 
         self._datums: Datums = OrderedDict()
         self._votes: Votes = DefaultDict(dict)
@@ -289,13 +291,15 @@ class ElectionMessages:
         try:
             return next(data for data in self._datums.values() if data.is_none())
         except StopIteration:
-            assert "NoneData does not exist"
+            proposer_id = self._epoch.get_proposer_id(self._round_num)
+            return self._data_factory.create_none_data(self._epoch.num, self._round_num, proposer_id)
 
     def _find_lazy_data(self):
         try:
             return next(data for data in self._datums.values() if data.is_lazy())
         except StopIteration:
-            assert "LazyData does not exist"
+            proposer_id = self._epoch.get_proposer_id(self._round_num)
+            return self._data_factory.create_lazy_data(self._epoch.num, self._round_num, proposer_id)
 
     def _get_unvoters(self):
         return set(self._epoch.voters) - self._real_voters

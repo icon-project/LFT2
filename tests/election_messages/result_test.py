@@ -60,7 +60,7 @@ async def setup():
 
     voters = [os.urandom(16) for _ in range(7)]
     epoch = RotateEpoch(epoch_num, voters)
-    election_messages = ElectionMessages(epoch)
+    election_messages = ElectionMessages(epoch, round_num, DefaultDataFactory(voters[0]))
 
     election_messages.update()
     assert election_messages.result is None
