@@ -76,7 +76,7 @@ class Consensus(EventRegister):
 
         try:
             self._verify_acceptable_data(data)
-        except (InvalidEpoch, InvalidRound, InvalidProposer) as e:
+        except (InvalidEpoch, InvalidRound, InvalidProposer):
             return
         self._data_pool.add_data(data)
         await self._receive_data_and_change_candidate_if_available(data)
@@ -84,7 +84,7 @@ class Consensus(EventRegister):
     async def receive_vote(self, vote: 'Vote'):
         try:
             self._verify_acceptable_vote(vote)
-        except (InvalidEpoch, InvalidRound, InvalidVoter) as e:
+        except (InvalidEpoch, InvalidRound, InvalidVoter):
             return
         self._vote_pool.add_vote(vote)
         await self._receive_vote_and_change_candidate_if_available(vote)
