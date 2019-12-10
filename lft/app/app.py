@@ -76,10 +76,10 @@ class App(ABC):
             prev_votes=()
         )
 
-        epoch = RotateEpoch(1, tuple(node.node_id for node in nodes))
-        prev_epoch = RotateEpoch(0, [])
-        round_num = 0
-        event = InitializeEvent(prev_epoch, epoch, round_num, genesis_data, ())
+        data_pool = [genesis_data]
+        vote_pool = []
+        epoch_pool = [RotateEpoch(0, []), RotateEpoch(1, tuple(node.node_id for node in nodes))]
+        event = InitializeEvent(genesis_data.prev_id, epoch_pool, data_pool, vote_pool)
         event.deterministic = False
         init_node.event_system.simulator.raise_event(event)
 

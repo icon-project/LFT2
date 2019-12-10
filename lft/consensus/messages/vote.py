@@ -30,7 +30,7 @@ class Vote(Message):
     def is_lazy(self) -> bool:
         raise NotImplementedError
 
-    def is_real(self):
+    def is_real(self) -> bool:
         return not self.is_lazy()
 
     def __eq__(self, other):

@@ -11,11 +11,10 @@ __all__ = ("InitializeEvent", "ReceiveDataEvent", "ReceiveVoteEvent",
 
 @dataclass
 class InitializeEvent(Event):
-    prev_epoch: Optional['Epoch']
-    epoch: 'Epoch'
-    round_num: int
-    candidate_data: 'Data'
-    candidate_votes: Sequence['Vote']
+    commit_id: bytes
+    epoch_pool: Sequence['Epoch']
+    data_pool: Sequence['Data']
+    vote_pool: Sequence['Vote']
 
 
 @dataclass

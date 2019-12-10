@@ -42,6 +42,9 @@ class Data(Message):
     def is_determinative(self) -> bool:
         return not self.is_lazy()
 
+    def is_genesis(self) -> bool:
+        return self.epoch_num == 0 and self.round_num == 0
+
     def __eq__(self, other):
         return self.id == other.id \
                and self.number == other.number \

@@ -38,7 +38,9 @@ class Election:
         self._candidate_id: bytes = None
         self._messages: ElectionMessages = ElectionMessages(epoch, round_num, data_factory)
 
+        self._is_proposed = False
         self._is_voted = False
+
         self._is_ended = False
         self._is_started = False
 
@@ -59,11 +61,17 @@ class Election:
         await self._vote_if_real_data_exist()
 
     async def receive_data(self, data: Data):
+        if data.is_real() and data.proposer_id == self._node_id:
+            self._is_proposed = True
+
         self._messages.add_data(data)
         await self._update_result()
         await self._vote_if_available(data)
 
     async def receive_vote(self, vote: Vote):
+        if vote.is_real() and vote.voter_id == self._node_id:
+            self._is_voted = True
+
         self._messages.add_vote(vote)
         await self._update_result()
 
@@ -122,25 +130,29 @@ class Election:
         self._messages.add_data(lazy_data)
 
     async def _new_real_data_if_proposer(self):
+        if self._is_proposed:
+            return
+
         try:
             self._epoch.verify_proposer(self._node_id, self._round_num)
         except InvalidProposer:
-            pass
-        else:
-            candidate_data = self._data_pool.get_data(self._candidate_id)
-            candidate_votes = self._vote_pool.get_votes(candidate_data.epoch_num, candidate_data.round_num)
-            candidate_votes = {vote.voter_id: vote for vote in candidate_votes if vote.data_id == self._candidate_id}
-            candidate_votes = tuple(candidate_votes[voter] if voter in candidate_votes else None
-                                    for voter in self._epoch.voters)
+            return
 
-            new_data = await self._data_factory.create_data(
-                data_number=candidate_data.number + 1,
-                prev_id=self._candidate_id,
-                epoch_num=self._epoch.num,
-                round_num=self._round_num,
-                prev_votes=candidate_votes
-            )
-            await self._raise_broadcast_data(new_data)
+        candidate_data = self._data_pool.get_data(self._candidate_id)
+        candidate_votes = self._vote_pool.get_votes(candidate_data.epoch_num, candidate_data.round_num)
+        candidate_votes = {vote.voter_id: vote for vote in candidate_votes if vote.data_id == self._candidate_id}
+        candidate_votes = tuple(candidate_votes[voter] if voter in candidate_votes else None
+                                for voter in self._epoch.voters)
+
+        new_data = await self._data_factory.create_data(
+            data_number=candidate_data.number + 1,
+            prev_id=self._candidate_id,
+            epoch_num=self._epoch.num,
+            round_num=self._round_num,
+            prev_votes=candidate_votes
+        )
+        await self._raise_broadcast_data(new_data)
+        self._is_proposed = True
 
     async def _update_result(self):
         if not self._messages.result or not self._messages.result.is_determinative():

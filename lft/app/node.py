@@ -33,7 +33,7 @@ class Node:
         self.event_system.simulator.register_handler(RoundEndEvent, self._on_round_end_event)
 
     async def _on_init_event(self, init_event: InitializeEvent):
-        self._nodes = init_event.epoch.voters
+        self._nodes = init_event.epoch_pool[-1].voters
 
     async def _on_round_end_event(self, round_end_event: RoundEndEvent):
         self._round_num = round_end_event.round_num + 1
