@@ -48,7 +48,7 @@ async def test_receive_vote(success_vote_num, none_vote_num, lazy_vote_num, expe
 
 async def do_votes(election, success_vote_num, none_vote_num, lazy_vote_num, voters):
     validator_vote_factories = [DefaultVoteFactory(x) for x in voters]
-    
+
     for i in range(success_vote_num):
         await do_vote(
             election,
@@ -61,6 +61,7 @@ async def do_votes(election, success_vote_num, none_vote_num, lazy_vote_num, vot
         )
     for i in range(none_vote_num):
         await do_vote(
+            election,
             validator_vote_factories[success_vote_num + i].create_none_vote(
                 epoch_num=0,
                 round_num=1
@@ -69,7 +70,7 @@ async def do_votes(election, success_vote_num, none_vote_num, lazy_vote_num, vot
     for i in range(lazy_vote_num):
         await do_vote(
             election,
-            await validator_vote_factories[i].create_lazy_vote(
+            validator_vote_factories[i].create_lazy_vote(
                 voter_id=voters[i],
                 epoch_num=0,
                 round_num=1
@@ -109,10 +110,9 @@ async def test_not_deterministic_to_deterministic(is_success):
 
     # WHEN
     if is_success:
-        await do_votes(election, 2, 0, 0, voters)
+        await do_votes(election, 2, 0, 0, voters[5:7])
     else:
-        await do_votes(election, 0, 1, 0, voters)
-
+        await do_votes(election, 0, 2, 0, voters[5:7])
     # THEN
     if is_success:
         assert election.result_id == consensus_data.id
