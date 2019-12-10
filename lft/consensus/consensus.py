@@ -125,13 +125,20 @@ class Consensus(EventRegister):
 
     def _verify_acceptable_data(self, data: 'Data'):
         self._verify_acceptable_message(data)
-        epoch = self._epoch_pool.get_epoch(data.epoch_num)
+        epoch = self._get_epoch(data.epoch_num)
         epoch.verify_proposer(data.proposer_id, data.round_num)
 
     def _verify_acceptable_vote(self, vote: 'Vote'):
         self._verify_acceptable_message(vote)
-        epoch = self._epoch_pool.get_epoch(vote.epoch_num)
+        epoch = self._get_epoch(vote.epoch_num)
         epoch.verify_voter(vote.voter_id)
+
+    def _get_epoch(self, epoch_num: int):
+        try:
+            epoch = self._epoch_pool.get_epoch(epoch_num)
+        except KeyError:
+            raise InvalidEpoch(epoch_num, self._round_pool.first_round().epoch_num)
+        return epoch
 
     def _new_round(self, epoch: 'Epoch', round_num: int, candidate_id: bytes):
         election = Election(self._node_id, epoch, round_num, self._event_system,
