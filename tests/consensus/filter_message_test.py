@@ -21,7 +21,7 @@ async def test_receive_invalid_proposer_data():
     # WHEN
     data = await create_valid_data(0, voters, vote_factories)
     data._proposer_id = voters[1]
-    consensus.receive_data(data)
+    await consensus.receive_data(data)
 
     # THEN
     assert_not_added_any_message(consensus)
@@ -42,6 +42,7 @@ async def test_receive_invalid_voter():
         epoch_num=1,
         round_num=0
     )
+    await consensus.receive_vote(invalid_vote)
 
     assert_not_added_any_message(consensus)
 
@@ -71,38 +72,10 @@ async def test_receive_invalid_prev_voter():
         round_num=0,
         prev_votes=[invalid_vote]
     )
-    consensus.receive_data(invalid_proposer_data)
+    await consensus.receive_data(invalid_proposer_data)
 
     # THEN
-    assert_not_added_any_message(consensus)
-
-
-@pytest.mark.asyncio
-async def test_receive_invalid_prev_voter_num():
-    # GIVEN
-    consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
-    mocking_message_pool(consensus)
-    # WHEN
-
-    data = await create_valid_data(1, voters, vote_factories)
-    data._prev_votes = []
-    consensus.receive_data(data)
-    # THEN
-    assert_not_added_any_message(consensus)
-
-
-@pytest.mark.asyncio
-async def test_receive_invalid_prev_vote_round():
-    # GIVEN
-    consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
-    mocking_message_pool(consensus)
-    # WHEN
-    data = await create_valid_data(1, voters, vote_factories)
-    for vote in data.prev_votes:
-        vote._round_num = 1
-    consensus.receive_data(data)
-    # THEN
-    assert_not_added_any_message(consensus)
+    consensus._vote_pool.add_vote.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -125,7 +98,7 @@ async def test_receive_past_round_message():
         epoch_num=1,
         round_num=3
     )
-    consensus.receive_vote(past_vote)
+    await consensus.receive_vote(past_vote)
 
     # THEN
     assert_not_added_any_message(consensus)
@@ -137,32 +110,32 @@ async def test_receive_past_epoch():
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
     mocking_message_pool(consensus)
 
-    candidate_round = RoundMock(epoch, 2)
-    consensus._round_pool.first_round = MagicMock(return_value=candidate_round)
-    genesis_epoch = RotateEpoch(0, voters)
-    consensus._epoch_pool.get_epoch = MagicMock(return_value=genesis_epoch)
+    consensus._epoch_pool.add_epoch(RotateEpoch(2, voters))
+    consensus._epoch_pool.prune_epoch(2)
 
     # WHEN
-    prev_votes = [vote_factory.create_vote(b'prev', b'commit', 0, 2) for vote_factory in vote_factories]
+    prev_votes = [await vote_factory.create_vote(b'prev', b'commit', 1, 2) for vote_factory in vote_factories]
+
     past_data = DefaultData(
         id_=b'id',
         prev_id=b'prev',
         number=3,
         proposer_id=voters[3],
-        epoch_num=0,
+        epoch_num=1,
         round_num=3,
         prev_votes=prev_votes
     )
-    consensus.receive_data(past_data)
+
+    await consensus.receive_data(past_data)
     past_vote = DefaultVote(
         id_=b'id',
         data_id=b'id',
         commit_id=b"prev",
         voter_id=voters[1],
-        epoch_num=0,
+        epoch_num=1,
         round_num=3
     )
-    consensus.receive_vote(past_vote)
+    await consensus.receive_vote(past_vote)
 
     # THEN
     assert_not_added_any_message(consensus)
@@ -174,21 +147,18 @@ async def test_receive_future_epoch():
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
     mocking_message_pool(consensus)
 
-    candidate_round = RoundMock(epoch, 2)
-    consensus._round_pool.first_round = MagicMock(return_value=candidate_round)
-
     # WHEN
-    prev_votes = [vote_factory.create_vote(b'prev', b'commit', 2, 2) for vote_factory in vote_factories]
+    prev_votes = [await vote_factory.create_vote(b'prev', b'commit', 2, 0) for vote_factory in vote_factories]
     past_data = DefaultData(
         id_=b'id',
         prev_id=b'prev',
         number=3,
         proposer_id=voters[3],
         epoch_num=2,
-        round_num=0,
+        round_num=1,
         prev_votes=prev_votes
     )
-    consensus.receive_data(past_data)
+    await consensus.receive_data(past_data)
     past_vote = DefaultVote(
         id_=b'id',
         data_id=b'id',
@@ -197,7 +167,7 @@ async def test_receive_future_epoch():
         epoch_num=2,
         round_num=1
     )
-    consensus.receive_vote(past_vote)
+    await consensus.receive_vote(past_vote)
 
     # THEN
     assert_not_added_any_message(consensus)
@@ -205,6 +175,7 @@ async def test_receive_future_epoch():
 
 def assert_not_added_any_message(consensus):
     consensus._data_pool.add_data.assert_not_called()
+    print("add data is not called")
     consensus._vote_pool.add_vote.assert_not_called()
 
 
