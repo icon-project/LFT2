@@ -1,13 +1,10 @@
 from typing import Tuple, List
-from unittest.mock import patch, MagicMock
 
 import pytest
 
 from lft.app.data import DefaultData
-from lft.consensus.election import Election
 from lft.consensus.messages.data import Data
 from lft.consensus.messages.vote import Vote, VoteFactory
-from lft.consensus.round import Round
 from tests.consensus.mocks import RoundMock
 from tests.consensus.setup_consensus import setup_consensus
 

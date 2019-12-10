@@ -1,15 +1,10 @@
-from unittest import mock
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 from lft.app.data import DefaultData, DefaultDataFactory
 from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus import Consensus
-from lft.consensus.election import Election
-from lft.consensus.messages.data import DataFactory, DataPool
-from lft.consensus.messages.vote import VoteFactory, VotePool
-from lft.consensus.round import Round, RoundPool
-from lft.consensus.epoch import Epoch, EpochPool
+from lft.consensus.epoch import Epoch
 from lft.event import EventSystem
 from tests.consensus.mocks import RoundMock
 

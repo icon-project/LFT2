@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, AsyncMock
 
 from lft.consensus.epoch import Epoch
-from lft.consensus.round import Round, RoundPool
+from lft.consensus.round import Round
 
 
 class RoundMock(Round):
