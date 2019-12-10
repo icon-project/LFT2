@@ -9,7 +9,7 @@ from tests.consensus.setup_consensus import setup_consensus
 
 
 @pytest.mark.asyncio
-async def test_route_messages():
+async def test_delivery_message():
     # GIVEN
     consensus, voters, vote_factories, epoch, genesis_data = await setup_consensus()
 

@@ -12,6 +12,8 @@ from tests.consensus.mocks import RoundMock
 from tests.consensus.setup_consensus import setup_consensus
 
 INVALID_ID = b'invalid'
+
+
 @pytest.mark.asyncio
 async def test_receive_invalid_proposer_data():
     # GIVEN
