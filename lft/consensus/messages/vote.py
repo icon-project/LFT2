@@ -67,7 +67,7 @@ class VotePool(MessagePool):
         self.add_message(vote)
 
     def get_vote(self, vote_id) -> Vote:
-        return self.get_messages(vote_id)
+        return self.get_message(vote_id)
 
     def get_votes(self, epoch_num: int, round_num: int) -> Iterable[Vote]:
         return self.get_messages(epoch_num, round_num)
