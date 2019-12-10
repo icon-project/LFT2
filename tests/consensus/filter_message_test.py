@@ -89,7 +89,7 @@ async def test_receive_past_round_message():
 
     # WHEN
     data = await create_valid_data(3, voters, vote_factories)
-    consensus.receive_data(data)
+    await consensus.receive_data(data)
     past_vote = DefaultVote(
         id_=b'id',
         data_id=b'id',
