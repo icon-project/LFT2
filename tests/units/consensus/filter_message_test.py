@@ -8,8 +8,8 @@ from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVote
 from lft.consensus.messages.data import DataPool
 from lft.consensus.messages.vote import VotePool, VoteFactory
-from tests.consensus.mocks import RoundMock
-from tests.consensus.setup_consensus import setup_consensus
+from tests.units.consensus.mocks import RoundMock
+from tests.units.consensus.setup_consensus import setup_consensus
 
 INVALID_ID = b'invalid'
 

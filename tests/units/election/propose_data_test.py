@@ -3,7 +3,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.vote import DefaultVote
 from lft.consensus.events import BroadcastVoteEvent, ReceiveVoteEvent
-from tests.election.setup_election import setup_election, CANDIDATE_ID, LEADER_ID
+from tests.units.election.setup_election import setup_election, CANDIDATE_ID, LEADER_ID
 
 PROPOSE_ID = b"b"
 

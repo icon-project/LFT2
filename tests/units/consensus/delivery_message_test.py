@@ -5,7 +5,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.consensus.messages.data import Data
 from lft.consensus.messages.vote import Vote, VoteFactory
-from tests.consensus.setup_consensus import setup_consensus
+from tests.units.consensus.setup_consensus import setup_consensus
 
 
 @pytest.mark.asyncio

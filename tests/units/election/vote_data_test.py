@@ -3,7 +3,7 @@ import pytest
 from lft.app.data import DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.events import RoundEndEvent
-from tests.election.setup_election import setup_election, CANDIDATE_ID, LEADER_ID
+from tests.units.election.setup_election import setup_election, CANDIDATE_ID, LEADER_ID
 
 PEER_NUM = 7
 PROPOSE_ID = b'propose'

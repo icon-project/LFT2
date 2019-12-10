@@ -6,7 +6,7 @@ from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus import Consensus
 from lft.event import EventSystem
-from tests.consensus.mocks import RoundMock
+from tests.units.consensus.mocks import RoundMock
 
 
 async def setup_consensus():
