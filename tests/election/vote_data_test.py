@@ -46,6 +46,52 @@ async def test_receive_vote(success_vote_num, none_vote_num, lazy_vote_num, expe
             verify_fail_round_end(round_end=event)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("is_success", [True, False])
+async def test_not_deterministic_to_deterministic(is_success):
+    # GIVEN
+    election, consensus_data, event_system, voters = await set_election_for_receive_vote()
+
+    await do_votes(election, 3, 2, 7, voters)
+
+    event_system.simulator.raise_event.assert_called_once()
+    event_system.simulator.raise_event.reset_mock()
+    assert election._messages.result.is_lazy()
+
+    # WHEN
+    if is_success:
+        await do_votes(election, 2, 0, 0, voters[5:7])
+    else:
+        await do_votes(election, 0, 2, 0, voters[5:7])
+    # THEN
+    if is_success:
+        assert election.result_id == consensus_data.id
+    else:
+        assert not election.result_id
+        assert election._messages.result.is_none()
+
+
+async def set_election_for_receive_vote():
+    event_system, election, voters = await setup_election(PEER_NUM)
+    await election.round_start()
+    consensus_data = DefaultData(
+        id_=PROPOSE_ID,
+        prev_id=CANDIDATE_ID,
+        proposer_id=LEADER_ID,
+        number=1,
+        epoch_num=0,
+        round_num=1,
+        prev_votes=[]
+    )
+    await election.receive_data(data=consensus_data)
+    event_system.simulator.raise_event.reset_mock()
+    return election, consensus_data, event_system, voters
+
+
+async def do_vote(election, vote):
+    await election.receive_vote(vote)
+
+
 async def do_votes(election, success_vote_num, none_vote_num, lazy_vote_num, voters):
     validator_vote_factories = [DefaultVoteFactory(x) for x in voters]
 
@@ -76,52 +122,6 @@ async def do_votes(election, success_vote_num, none_vote_num, lazy_vote_num, vot
                 round_num=1
             )
         )
-
-
-async def set_election_for_receive_vote():
-    event_system, election, voters = await setup_election(PEER_NUM)
-    await election.round_start()
-    consensus_data = DefaultData(
-        id_=PROPOSE_ID,
-        prev_id=CANDIDATE_ID,
-        proposer_id=LEADER_ID,
-        number=1,
-        epoch_num=0,
-        round_num=1,
-        prev_votes=[]
-    )
-    await election.receive_data(data=consensus_data)
-    event_system.simulator.raise_event.reset_mock()
-    return election, consensus_data, event_system, voters
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("is_success", [True, False])
-async def test_not_deterministic_to_deterministic(is_success):
-    # GIVEN
-    election, consensus_data, event_system, voters = await set_election_for_receive_vote()
-
-    await do_votes(election, 3, 2, 7, voters)
-
-    event_system.simulator.raise_event.assert_called_once()
-    event_system.simulator.raise_event.reset_mock()
-    assert election._messages.result.is_lazy()
-
-    # WHEN
-    if is_success:
-        await do_votes(election, 2, 0, 0, voters[5:7])
-    else:
-        await do_votes(election, 0, 2, 0, voters[5:7])
-    # THEN
-    if is_success:
-        assert election.result_id == consensus_data.id
-    else:
-        assert not election.result_id
-        assert election._messages.result.is_none()
-
-
-async def do_vote(election, vote):
-    await election.receive_vote(vote)
 
 
 def verify_fail_round_end(round_end: RoundEndEvent):
