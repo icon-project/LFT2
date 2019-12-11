@@ -105,7 +105,7 @@ class Consensus(EventRegister):
     async def _receive_data_and_change_candidate_if_available(self, data: 'Data'):
         round_ = self._new_or_get_round(data.epoch_num, data.round_num)
         if data.is_real():
-            if round_.candidate_id == data.prev_id:
+            if data.is_genesis() or data.prev_id in self._data_pool:
                 async with self._try_change_candidate(round_, pruning_messages=True):
                     await round_.receive_data(data)
         else:
