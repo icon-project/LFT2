@@ -113,7 +113,10 @@ class Consensus(EventRegister):
 
     async def _receive_vote_and_change_candidate_if_available(self, vote: 'Vote'):
         round_ = self._new_or_get_round(vote.epoch_num, vote.round_num)
-        async with self._try_change_candidate(round_, pruning_messages=True):
+        if not vote.is_none() and not vote.is_lazy():
+            async with self._try_change_candidate(round_, pruning_messages=True):
+                await round_.receive_vote(vote)
+        else:
             await round_.receive_vote(vote)
 
     def _verify_acceptable_message(self, message: 'Message'):
