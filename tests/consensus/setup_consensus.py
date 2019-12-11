@@ -1,22 +1,21 @@
 from unittest.mock import MagicMock
+from functools import partial
 
 from lft.app.data import DefaultData, DefaultDataFactory
 from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus import Consensus
-from lft.consensus.epoch import Epoch
 from lft.event import EventSystem
 from tests.consensus.mocks import RoundMock
 
 
 async def setup_consensus():
-    def _new_round_mock(self, epoch: 'Epoch', round_num: int, candidate_id: bytes):
+    def _new_round_mock(self, epoch_num: int, round_num: int, candidate_id: bytes):
+        epoch = self._get_epoch(epoch_num)
         new_round = RoundMock(epoch, round_num)
         new_round.candidate_id = candidate_id
         self._round_pool.add_round(new_round)
         return new_round
-
-    Consensus._new_round = _new_round_mock
 
     voters = [bytes([x]) for x in range(4)]
     vote_factories = [DefaultVoteFactory(voter) for voter in voters]
@@ -27,11 +26,12 @@ async def setup_consensus():
     consensus = Consensus(event_system,
                           voters[0],
                           data_factory,
-                          vote_factory
-                          )
+                          vote_factory)
+    consensus._new_round = partial(_new_round_mock, consensus)
 
-    genesis_term = RotateEpoch(0, [])
-    now_term = RotateEpoch(1, voters)
+    genesis_epoch = RotateEpoch(0, [])
+    now_epoch = RotateEpoch(1, voters)
+    epochs = [genesis_epoch, now_epoch]
 
     genesis_data = DefaultData(
         id_=b"genesis",
@@ -43,6 +43,8 @@ async def setup_consensus():
         prev_votes=[]
     )
 
-    await consensus.initialize(genesis_term, now_term, 0, genesis_data, [])
+    datums = [genesis_data]
+    votes = []
 
-    return consensus, voters, vote_factories, now_term, genesis_data
+    await consensus.initialize(commit_id=genesis_data.prev_id, epoch_pool=epochs, data_pool=datums, vote_pool=votes)
+    return consensus, voters, vote_factories, now_epoch, genesis_data

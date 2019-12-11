@@ -58,7 +58,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, 
         )
     for i in range(none_vote_num):
         await do_vote(
-            await validator_vote_factories[success_vote_num + i].create_none_vote(
+            validator_vote_factories[success_vote_num + i].create_none_vote(
                 epoch_num=0,
                 round_num=1
             )
@@ -66,7 +66,7 @@ async def test_on_vote_sequence(success_vote_num, none_vote_num, lazy_vote_num, 
 
     for i in range(lazy_vote_num):
         await do_vote(
-            await validator_vote_factories[success_vote_num + none_vote_num + i].create_lazy_vote(
+            validator_vote_factories[success_vote_num + none_vote_num + i].create_lazy_vote(
                 voter_id=voters[success_vote_num + none_vote_num + i],
                 epoch_num=0,
                 round_num=1

@@ -97,11 +97,11 @@ class DefaultVoteFactory(VoteFactory):
         vote_id = self._create_id(data_id, commit_id, self._node_id, epoch_num, round_num)
         return DefaultVote(vote_id, data_id, commit_id, self._node_id, epoch_num, round_num)
 
-    async def create_none_vote(self, epoch_num: int, round_num: int) -> DefaultVote:
+    def create_none_vote(self, epoch_num: int, round_num: int) -> DefaultVote:
         vote_id = self._create_id(DefaultVote.NoneVote, DefaultVote.NoneVote, self._node_id, epoch_num, round_num)
         return DefaultVote(vote_id, DefaultVote.NoneVote, DefaultVote.NoneVote, self._node_id, epoch_num, round_num)
 
-    async def create_lazy_vote(self, voter_id: bytes, epoch_num: int, round_num: int) -> DefaultVote:
+    def create_lazy_vote(self, voter_id: bytes, epoch_num: int, round_num: int) -> DefaultVote:
         vote_id = self._create_id(voter_id, voter_id, voter_id, epoch_num, round_num)
         return DefaultVote(vote_id, DefaultVote.LazyVote, DefaultVote.LazyVote, voter_id, epoch_num, round_num)
 

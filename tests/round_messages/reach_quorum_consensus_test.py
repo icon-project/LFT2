@@ -73,13 +73,13 @@ async def test_reach_quorum_consensus_none_vote(setup: Setup, voter_num: int):
     voters, vote_factories, quorum, data, round_messages = setup
 
     for vote_factory in vote_factories[:quorum - 1]:
-        vote = await vote_factory.create_none_vote(data.epoch_num, data.round_num)
+        vote = vote_factory.create_none_vote(data.epoch_num, data.round_num)
         round_messages.add_vote(vote)
 
     assert not round_messages.reach_quorum_consensus(quorum)
 
     vote_factory = vote_factories[-1]
-    vote = await vote_factory.create_none_vote(data.epoch_num, data.round_num)
+    vote = vote_factory.create_none_vote(data.epoch_num, data.round_num)
     round_messages.add_vote(vote)
 
     assert round_messages.reach_quorum_consensus(quorum)

@@ -80,13 +80,13 @@ async def test_reach_quorum_none_vote(setup: Setup, voter_num: int):
     voters, vote_factories, quorum, round_messages = setup
 
     for vote_factory in vote_factories[:quorum - 1]:
-        vote = await vote_factory.create_none_vote(epoch_num=random.randint(0, 10), round_num=random.randint(0, 10))
+        vote = vote_factory.create_none_vote(epoch_num=random.randint(0, 10), round_num=random.randint(0, 10))
         round_messages.add_vote(vote)
 
     assert not round_messages.reach_quorum(quorum)
 
     vote_factory = vote_factories[-1]
-    vote = await vote_factory.create_none_vote(epoch_num=random.randint(0, 10), round_num=random.randint(0, 10))
+    vote = vote_factory.create_none_vote(epoch_num=random.randint(0, 10), round_num=random.randint(0, 10))
     round_messages.add_vote(vote)
 
     assert round_messages.reach_quorum(quorum)
@@ -121,9 +121,9 @@ async def _random_vote(vote_factory: DefaultVoteFactory):
                            epoch_num=random.randint(0, 10),
                            round_num=random.randint(0, 10))
     elif r < 10:
-        return await vote_factory.create_lazy_vote(voter_id=vote_factory._node_id,
-                                                   epoch_num=random.randint(0, 10),
-                                                   round_num=random.randint(0, 10))
+        return vote_factory.create_lazy_vote(voter_id=vote_factory._node_id,
+                                             epoch_num=random.randint(0, 10),
+                                             round_num=random.randint(0, 10))
     else:
-        return await vote_factory.create_none_vote(epoch_num=random.randint(0, 10),
-                                                   round_num=random.randint(0, 10))
+        return vote_factory.create_none_vote(epoch_num=random.randint(0, 10),
+                                             round_num=random.randint(0, 10))

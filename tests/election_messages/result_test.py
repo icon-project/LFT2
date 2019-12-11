@@ -24,11 +24,11 @@ async def test_round_failure_none():
     epoch, round_num, election_messages, data, voters = await setup()
 
     # Round must add NoneData on RoundStart
-    none_data = await DefaultDataFactory(voters[0]).create_none_data(epoch.num, round_num, epoch.get_proposer_id(round_num))
+    none_data = DefaultDataFactory(voters[0]).create_none_data(epoch.num, round_num, epoch.get_proposer_id(round_num))
     election_messages.add_data(none_data)
 
     for voter in voters[:epoch.quorum_num]:
-        vote = await DefaultVoteFactory(voter).create_none_vote(epoch.num, round_num)
+        vote = DefaultVoteFactory(voter).create_none_vote(epoch.num, round_num)
         election_messages.add_vote(vote)
 
     election_messages.update()
@@ -42,11 +42,11 @@ async def test_round_failure_lazy():
     epoch, round_num, election_messages, data, voters = await setup()
 
     # Round must add LazyData on RoundStart
-    lazy_data = await DefaultDataFactory(voters[0]).create_lazy_data(epoch.num, round_num, epoch.get_proposer_id(round_num))
+    lazy_data = DefaultDataFactory(voters[0]).create_lazy_data(epoch.num, round_num, epoch.get_proposer_id(round_num))
     election_messages.add_data(lazy_data)
 
     for voter in voters[:epoch.quorum_num]:
-        vote = await DefaultVoteFactory(voter).create_lazy_vote(voter, epoch.num, round_num)
+        vote = DefaultVoteFactory(voter).create_lazy_vote(voter, epoch.num, round_num)
         election_messages.add_vote(vote)
     election_messages.update()
     candidate = election_messages.result
@@ -60,7 +60,7 @@ async def setup():
 
     voters = [os.urandom(16) for _ in range(7)]
     epoch = RotateEpoch(epoch_num, voters)
-    election_messages = ElectionMessages(epoch)
+    election_messages = ElectionMessages(epoch, round_num, DefaultDataFactory(voters[0]))
 
     election_messages.update()
     assert election_messages.result is None

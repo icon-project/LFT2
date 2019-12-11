@@ -42,6 +42,10 @@ class MessagePool:
     def __init__(self):
         self._messages: Dict[bytes, Message] = {}
 
+    def __contains__(self, id_: bytes):
+        assert isinstance(id_, bytes)
+        return id_ in self._messages
+
     def add_message(self, message: Message):
         self._messages[message.id] = message
 
