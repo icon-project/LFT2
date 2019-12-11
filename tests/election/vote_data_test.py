@@ -48,7 +48,7 @@ async def test_receive_vote(success_vote_num, none_vote_num, lazy_vote_num, expe
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("is_success", [True, False])
-async def test_not_deterministic_to_deterministic(is_success):
+async def test_not_determinative_to_determinative(is_success):
     # GIVEN
     election, consensus_data, event_system, voters = await set_election_for_receive_vote()
 
