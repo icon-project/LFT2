@@ -197,8 +197,12 @@ class Consensus(EventRegister):
             if pruning_messages:
                 candidate_round = self._round_pool.first_round()
                 candidate_data = self._data_pool.get_data(candidate_round.result_id)
-                if not candidate_data.is_genesis():
+                try:
                     commit_data = self._data_pool.get_data(candidate_data.prev_id)
+                except KeyError:
+                    # Already pruned
+                    pass
+                else:
                     self._prune_messages(commit_data.epoch_num, commit_data.round_num)
 
     _handler_prototypes = {

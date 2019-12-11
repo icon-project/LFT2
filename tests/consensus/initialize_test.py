@@ -76,6 +76,30 @@ params["none"]["results"] = [
     RoundEndEvent(True, epoch_num=1, round_num=3, candidate_id=b'd1', commit_id=b'd0'),
 ]
 
+
+params["resume"] = {}
+params["resume"]["epochs"] = [
+    RotateEpoch(num=1, voters=[b'a'])
+]
+params["resume"]["votes"] = [
+    DefaultVote(b'v0', data_id=b'd0', commit_id=b'', voter_id=b'a', epoch_num=1, round_num=10),
+    DefaultVoteFactory(b'a').create_none_vote(epoch_num=1, round_num=12),
+    DefaultVoteFactory(b'a').create_lazy_vote(voter_id=b'a', epoch_num=1, round_num=14),
+    DefaultVote(b'v1', data_id=b'd1', commit_id=b'd0', voter_id=b'a', epoch_num=1, round_num=16),
+]
+params["resume"]["datums"] = [
+    DefaultData(b'd0', prev_id=b'', proposer_id=b'a', number=1, epoch_num=1, round_num=10, prev_votes=()),
+    DefaultDataFactory(b'').create_none_data(epoch_num=1, round_num=12, proposer_id=b'a'),
+    DefaultDataFactory(b'').create_lazy_data(epoch_num=1, round_num=14, proposer_id=b'a'),
+    DefaultData(b'd1', prev_id=b'd0', proposer_id=b'a', number=1, epoch_num=1, round_num=16, prev_votes=(params["resume"]["votes"][0],)),
+]
+params["resume"]["results"] = [
+    RoundEndEvent(True, epoch_num=1, round_num=10, candidate_id=b'd0', commit_id=b''),
+    RoundEndEvent(False, epoch_num=1, round_num=12, candidate_id=None, commit_id=None),
+    RoundEndEvent(False, epoch_num=1, round_num=14, candidate_id=None, commit_id=None),
+    RoundEndEvent(True, epoch_num=1, round_num=16, candidate_id=b'd1', commit_id=b'd0'),
+]
+
 epoch_params = [param["epochs"] for param in params.values()]
 data_params = [param["datums"] for param in params.values()]
 vote_params = [param["votes"] for param in params.values()]
