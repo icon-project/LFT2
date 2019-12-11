@@ -100,7 +100,6 @@ async def set_election_for_receive_vote():
 async def test_not_deterministic_to_deterministic(is_success):
     # GIVEN
     election, consensus_data, event_system, voters = await set_election_for_receive_vote()
-    validator_vote_factories = [DefaultVoteFactory(x) for x in voters]
 
     await do_votes(election, 3, 2, 7, voters)
 
