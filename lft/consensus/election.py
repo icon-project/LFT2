@@ -254,15 +254,12 @@ class ElectionMessages:
         # None : Nothing changes
 
         if self._update_quorum_data():
-            print("aa")
             return
 
         if self._update_possible_data():
-            print("bb")
             return
 
         if self._update_lazy_data():
-            print("cc")
             return
 
         self._result = None
