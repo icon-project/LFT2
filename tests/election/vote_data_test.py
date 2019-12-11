@@ -47,8 +47,10 @@ async def test_receive_vote(success_vote_num, none_vote_num, lazy_vote_num, expe
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("is_success", [True, False])
-async def test_not_determinative_to_determinative(is_success):
+@pytest.mark.parametrize("additional_success_num,additional_none_num,expected_result",
+                         [(2, 0, PROPOSE_ID),
+                          (0, 2, None)])
+async def test_not_determinative_to_determinative(additional_success_num, additional_none_num, expected_result):
     # GIVEN
     election, consensus_data, event_system, voters = await set_election_for_receive_vote()
 
@@ -56,19 +58,11 @@ async def test_not_determinative_to_determinative(is_success):
 
     event_system.simulator.raise_event.assert_called_once()
     event_system.simulator.raise_event.reset_mock()
-    assert election._messages.result.is_lazy()
+    assert not election.result_id
 
     # WHEN
-    if is_success:
-        await do_votes(election, 2, 0, 0, voters[5:7])
-    else:
-        await do_votes(election, 0, 2, 0, voters[5:7])
-    # THEN
-    if is_success:
-        assert election.result_id == consensus_data.id
-    else:
-        assert not election.result_id
-        assert election._messages.result.is_none()
+    await do_votes(election, additional_success_num, additional_none_num, 0, voters[5:7])
+    assert election.result_id == expected_result
 
 
 async def set_election_for_receive_vote():
