@@ -123,8 +123,12 @@ class Consensus(EventRegister):
         # To get the messages at the round of messages the app has to gossip.
 
         candidate_round = self._round_pool.first_round()
-        if candidate_round.is_newer_than(message.epoch_num, message.round_num):
-            raise InvalidRound(message.epoch_num, message.round_num, candidate_round.epoch_num, candidate_round.num)
+        if candidate_round.epoch_num != 0 or candidate_round.num != 0:
+            # Genesis Data does not have commit data
+            commit_id = candidate_round.candidate_id
+            commit_data = self._data_pool.get_data(commit_id)
+            if (commit_data.epoch_num, commit_data.round_num) >= (message.epoch_num, message.round_num):
+                raise InvalidRound(message.epoch_num, message.round_num, candidate_round.epoch_num, candidate_round.num)
 
         if candidate_round.epoch_num + 1 < message.epoch_num:
             raise InvalidEpoch(message.epoch_num, candidate_round.epoch_num)

@@ -157,19 +157,13 @@ class Round:
             raise AlreadyVoted(vote.id, vote.voter_id)
 
     def is_newer_than(self, epoch_num: int, round_num: int):
-        if self.epoch_num == epoch_num:
-            return self.num > round_num
-        else:
-            return self.epoch_num > epoch_num
+        return (self.epoch_num, self.num) > (epoch_num, round_num)
 
     def is_older_than(self, epoch_num: int, round_num: int):
-        if self.epoch_num == epoch_num:
-            return self.num < round_num
-        else:
-            return self.epoch_num < epoch_num
+        return (self.epoch_num, self.num) < (epoch_num, round_num)
 
     def is_equal_to(self, epoch_num: int, round_num: int):
-        return self.epoch_num == epoch_num and self.num == round_num
+        return (self.epoch_num, self.num) == (epoch_num, round_num)
 
     def __gt__(self, other: 'Round'):
         if not isinstance(other, Round):
