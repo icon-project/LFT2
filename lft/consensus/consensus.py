@@ -1,7 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Iterable
-
+from typing import TYPE_CHECKING, Iterable, Optional
 from lft.event import EventRegister
 from lft.consensus.epoch import EpochPool
 from lft.consensus.messages.data import DataPool
@@ -177,36 +176,47 @@ class Consensus(EventRegister):
         self._data_pool.prune_data(latest_epoch_num, latest_round_num)
         self._vote_pool.prune_vote(latest_epoch_num, latest_round_num)
 
+    def _prune_messages_before_commit(self):
+        candidate_round = self._round_pool.first_round()
+        candidate_data = self._data_pool.get_data(candidate_round.result_id)
+        try:
+            commit_data = self._data_pool.get_data(candidate_data.prev_id)
+        except KeyError:
+            # Already pruned
+            pass
+        else:
+            self._prune_messages(commit_data.epoch_num, commit_data.round_num)
+
     @asynccontextmanager
     async def _try_change_candidate(self, target_round: Round, pruning_messages=False):
         old_result_id = target_round.result_id
         try:
             yield
         finally:
-            if old_result_id == target_round.result_id:
-                return
-            if target_round.result_id is None:
+            new_result_id = target_round.result_id
+            if not self._is_candidate_changed(old_result_id, new_result_id):
                 return
 
             self._prune_round(target_round.epoch_num, target_round.num)
             self._round_pool.change_candidate()
-
-            datums = self._data_pool.get_datums_connected(target_round.result_id)
-            for data in datums:
-                round_ = self._new_or_get_round(data.epoch_num, data.round_num)
-                async with self._try_change_candidate(round_):
-                    await self.receive_data(data)
+            await self._try_change_candidate_connected_datums(target_round.result_id)
 
             if pruning_messages:
-                candidate_round = self._round_pool.first_round()
-                candidate_data = self._data_pool.get_data(candidate_round.result_id)
-                try:
-                    commit_data = self._data_pool.get_data(candidate_data.prev_id)
-                except KeyError:
-                    # Already pruned
-                    pass
-                else:
-                    self._prune_messages(commit_data.epoch_num, commit_data.round_num)
+                self._prune_messages_before_commit()
+
+    async def _try_change_candidate_connected_datums(self, prev_id: bytes):
+        datums = self._data_pool.get_datums_connected(prev_id)
+        for data in datums:
+            round_ = self._new_or_get_round(data.epoch_num, data.round_num)
+            async with self._try_change_candidate(round_):
+                await self.receive_data(data)
+
+    def _is_candidate_changed(self, old_result_id: Optional[bytes], new_result_id: Optional[bytes]):
+        if old_result_id == new_result_id:
+            return False
+        if new_result_id is None:
+            return False
+        return True
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
