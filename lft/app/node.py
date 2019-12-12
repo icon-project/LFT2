@@ -34,7 +34,7 @@ class Node:
         self._round_num = 0
 
         # For store
-        self._commit_datums = OrderedDict()  # type: OrderedDict[int, Data]
+        self.commit_datums = OrderedDict()  # type: OrderedDict[int, Data]
 
         self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
         self.event_system.simulator.register_handler(RoundEndEvent, self._on_round_end_event)
@@ -46,7 +46,7 @@ class Node:
         self._round_num = round_end_event.round_num + 1
         if round_end_event.is_success and round_end_event.commit_id:
             data = self._consensus._data_pool.get_data(round_end_event.commit_id)
-            self._commit_datums[data.number] = data
+            self.commit_datums[data.number] = data
         await self._start_new_round()
 
     async def _start_new_round(self):
