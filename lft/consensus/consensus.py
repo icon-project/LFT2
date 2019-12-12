@@ -193,20 +193,19 @@ class Consensus(EventRegister):
 
     @asynccontextmanager
     async def _try_change_candidate(self, target_round: Round, pruning_messages=False):
-        old_result_id = target_round.result_id
+        is_candidate_changed = self._is_candidate_changed(target_round)
         try:
             yield
         finally:
-            new_result_id = target_round.result_id
-            if not self._is_candidate_changed(old_result_id, new_result_id):
+            if not is_candidate_changed():
                 return
-
             self._prune_round(target_round.epoch_num, target_round.num)
             self._round_pool.change_candidate()
             await self._try_change_candidate_connected_datums(target_round.result_id)
 
-            if pruning_messages:
-                self._prune_messages_before_commit()
+            if not pruning_messages:
+                return
+            self._prune_messages_before_commit()
 
     async def _try_change_candidate_connected_datums(self, prev_id: bytes):
         datums = self._data_pool.get_datums_connected(prev_id)
@@ -215,12 +214,17 @@ class Consensus(EventRegister):
             async with self._try_change_candidate(round_):
                 await self.receive_data(data)
 
-    def _is_candidate_changed(self, old_result_id: Optional[bytes], new_result_id: Optional[bytes]):
-        if old_result_id == new_result_id:
-            return False
-        if new_result_id is None:
-            return False
-        return True
+    def _is_candidate_changed(self, target_round: Round):
+        old_result_id = target_round.result_id
+
+        def _checker():
+            new_result_id = target_round.result_id
+            if new_result_id is None:
+                return False
+            if new_result_id == old_result_id:
+                return False
+            return True
+        return _checker
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,
