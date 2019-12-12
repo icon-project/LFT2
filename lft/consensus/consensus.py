@@ -220,7 +220,7 @@ class Consensus(EventRegister):
             if not is_candidate_changed():
                 return
             self._prune_round(target_round.epoch_num, target_round.num)
-            self._round_pool.change_candidate()
+            await self._propagate_candidate_changed(target_round)
             await self._try_change_candidate_connected_datums(target_round.result_id)
 
             if not pruning_messages:
@@ -233,6 +233,10 @@ class Consensus(EventRegister):
             round_ = self._new_or_get_round(data.epoch_num, data.round_num)
             async with self._try_change_candidate(round_):
                 await self.receive_data(data)
+
+    async def _propagate_candidate_changed(self, target_round: Round):
+        candidate = self._data_pool.get_data(target_round.result_id)
+        self._round_pool.change_candidate(candidate.prev_id)
 
     def _is_candidate_changed(self, target_round: Round):
         old_result_id = target_round.result_id

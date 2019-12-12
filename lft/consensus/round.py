@@ -259,7 +259,8 @@ class RoundPool:
                         if (round_.is_newer_than(latest_epoch_num, latest_round_num) or
                             round_.is_equal_to(latest_epoch_num, latest_round_num))]
 
-    def change_candidate(self):
+    def change_candidate(self, commit_id: bytes):
         candidate_round = self.first_round()
+        candidate_round.candidate_id = commit_id
         for round_ in self._rounds[1:]:
             round_.candidate_id = candidate_round.result_id
