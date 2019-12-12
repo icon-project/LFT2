@@ -91,6 +91,11 @@ class Consensus(EventRegister):
         except (InvalidEpoch, InvalidRound, InvalidProposer):
             return
         self._data_pool.add_data(data)
+
+        try:
+            self._verify_round_message(data)
+        except InvalidRound:
+            return
         await self._receive_data_and_change_candidate_if_available(data)
 
     async def receive_vote(self, vote: 'Vote'):
@@ -99,6 +104,11 @@ class Consensus(EventRegister):
         except (InvalidEpoch, InvalidRound, InvalidVoter):
             return
         self._vote_pool.add_vote(vote)
+
+        try:
+            self._verify_round_message(vote)
+        except InvalidRound:
+            return
         await self._receive_vote_and_change_candidate_if_available(vote)
 
     async def _receive_prev_votes(self, data: 'Data'):
@@ -132,8 +142,8 @@ class Consensus(EventRegister):
             # Genesis Data does not have commit data
             commit_id = candidate_round.candidate_id
             commit_data = self._data_pool.get_data(commit_id)
-            if (commit_data.epoch_num, commit_data.round_num) >= (message.epoch_num, message.round_num):
-                raise InvalidRound(message.epoch_num, message.round_num, candidate_round.epoch_num, candidate_round.num)
+            if (message.epoch_num, message.round_num) <= (commit_data.epoch_num, commit_data.round_num):
+                raise InvalidRound(message.epoch_num, message.round_num, commit_data.epoch_num, commit_data.round_num)
 
         if candidate_round.epoch_num + 1 < message.epoch_num:
             raise InvalidEpoch(message.epoch_num, candidate_round.epoch_num)
@@ -152,6 +162,11 @@ class Consensus(EventRegister):
         self._verify_acceptable_message(vote)
         epoch = self._get_epoch(vote.epoch_num)
         epoch.verify_voter(vote.voter_id)
+
+    def _verify_round_message(self, message: 'Message'):
+        candidate_round = self._round_pool.first_round()
+        if candidate_round.is_newer_than(message.epoch_num, message.round_num):
+            raise InvalidRound(message.epoch_num, message.round_num, candidate_round.epoch_num, candidate_round.num)
 
     def _get_epoch(self, epoch_num: int):
         try:
