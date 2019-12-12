@@ -74,7 +74,7 @@ class Consensus(EventRegister):
                 await self.receive_vote(vote)
 
     async def round_start(self, new_epoch: 'Epoch', new_round_num: int):
-        if self._round_pool.first_round().is_newer_than(new_epoch.num, new_round_num):
+        if self._get_candidate_round().is_newer_than(new_epoch.num, new_round_num):
             # Maybe sync
             return
 
@@ -137,7 +137,7 @@ class Consensus(EventRegister):
         # To avoid MMO attack, app must prevent to receive newer messages than current round's.
         # To get the messages at the round of messages the app has to gossip.
 
-        candidate_round = self._round_pool.first_round()
+        candidate_round = self._get_candidate_round()
         if candidate_round.epoch_num != 0 or candidate_round.num != 0:
             # Genesis Data does not have commit data
             commit_id = candidate_round.candidate_id
@@ -164,7 +164,7 @@ class Consensus(EventRegister):
         epoch.verify_voter(vote.voter_id)
 
     def _verify_round_message(self, message: 'Message'):
-        candidate_round = self._round_pool.first_round()
+        candidate_round = self._get_candidate_round()
         if candidate_round.is_newer_than(message.epoch_num, message.round_num):
             raise InvalidRound(message.epoch_num, message.round_num, candidate_round.epoch_num, candidate_round.num)
 
@@ -172,7 +172,7 @@ class Consensus(EventRegister):
         try:
             return self._epoch_pool.get_epoch(epoch_num)
         except KeyError:
-            raise InvalidEpoch(epoch_num, self._round_pool.first_round().epoch_num)
+            raise InvalidEpoch(epoch_num, self._get_candidate_round().epoch_num)
 
     def _new_round(self, epoch_num: int, round_num: int, candidate_id: bytes):
         epoch = self._get_epoch(epoch_num)
@@ -188,9 +188,12 @@ class Consensus(EventRegister):
         try:
             return self._round_pool.get_round(epoch_num, round_num)
         except KeyError:
-            candidate_round = self._round_pool.first_round()
+            candidate_round = self._get_candidate_round()
             round_ = self._new_round(epoch_num, round_num, candidate_round.result_id)
             return round_
+
+    def _get_candidate_round(self):
+        return self._round_pool.first_round()
 
     def _prune_round(self, latest_epoch_num: int, latest_round_num: int):
         self._epoch_pool.prune_epoch(latest_epoch_num - 1)  # Need prev epoch
@@ -201,7 +204,7 @@ class Consensus(EventRegister):
         self._vote_pool.prune_vote(latest_epoch_num, latest_round_num)
 
     def _prune_messages_before_commit(self):
-        candidate_round = self._round_pool.first_round()
+        candidate_round = self._get_candidate_round()
         candidate_data = self._data_pool.get_data(candidate_round.result_id)
         try:
             commit_data = self._data_pool.get_data(candidate_data.prev_id)
