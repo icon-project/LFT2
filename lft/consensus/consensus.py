@@ -54,19 +54,24 @@ class Consensus(EventRegister):
         for epoch in epoch_pool:
             self._epoch_pool.add_epoch(epoch)
 
-        data_pool = list(data_pool)
-        data_pool.sort(key=lambda d: (d.epoch_num, d.round_num))
-
-        vote_pool = list(vote_pool)
-        vote_pool.sort(key=lambda v: (v.epoch_num, v.round_num))
-
         for data in data_pool:
-            self._new_round(data.epoch_num, data.round_num, commit_id)
+            if data.id == commit_id:
+                self._data_pool.add_data(data)
+            else:
+                self._new_round(data.epoch_num, data.round_num, commit_id)
 
-        for data in data_pool:
-            await self.receive_data(data)
-        for vote in vote_pool:
-            await self.receive_vote(vote)
+        for round_ in self._round_pool.rounds:
+            datums = (data for data in data_pool
+                      if data.epoch_num == round_.epoch_num
+                      if data.round_num == round_.num)
+            for data in datums:
+                await self.receive_data(data)
+
+            votes = (vote for vote in vote_pool
+                     if vote.epoch_num == round_.epoch_num
+                     if vote.round_num == round_.num)
+            for vote in votes:
+                await self.receive_vote(vote)
 
     async def round_start(self, new_epoch: 'Epoch', new_round_num: int):
         if self._round_pool.first_round().is_newer_than(new_epoch.num, new_round_num):

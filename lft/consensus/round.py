@@ -1,6 +1,6 @@
 import logging
 from bisect import insort
-from typing import List, OrderedDict, DefaultDict, Set, Union
+from typing import List, OrderedDict, DefaultDict, Set, Union, Sequence
 from lft.consensus.messages.data import Data, DataFactory
 from lft.consensus.messages.vote import Vote, VoteFactory
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
@@ -236,6 +236,10 @@ class RoundMessages:
 class RoundPool:
     def __init__(self):
         self._rounds: List[Round] = []
+
+    @property
+    def rounds(self) -> Sequence[Round]:
+        return self._rounds
 
     def first_round(self):
         return self._rounds[0]
