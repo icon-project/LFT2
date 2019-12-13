@@ -1,7 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Iterable
-
+from typing import TYPE_CHECKING, Iterable, Optional
 from lft.event import EventRegister
 from lft.consensus.epoch import EpochPool
 from lft.consensus.messages.data import DataPool
@@ -55,22 +54,27 @@ class Consensus(EventRegister):
         for epoch in epoch_pool:
             self._epoch_pool.add_epoch(epoch)
 
-        data_pool = list(data_pool)
-        data_pool.sort(key=lambda d: (d.epoch_num, d.round_num))
-
-        vote_pool = list(vote_pool)
-        vote_pool.sort(key=lambda v: (v.epoch_num, v.round_num))
-
         for data in data_pool:
-            self._new_round(data.epoch_num, data.round_num, commit_id)
+            if data.id == commit_id:
+                self._data_pool.add_data(data)
+            else:
+                self._new_round(data.epoch_num, data.round_num, commit_id)
 
-        for data in data_pool:
-            await self.receive_data(data)
-        for vote in vote_pool:
-            await self.receive_vote(vote)
+        for round_ in self._round_pool.rounds:
+            datums = (data for data in data_pool
+                      if data.epoch_num == round_.epoch_num
+                      if data.round_num == round_.num)
+            for data in datums:
+                await self.receive_data(data)
+
+            votes = (vote for vote in vote_pool
+                     if vote.epoch_num == round_.epoch_num
+                     if vote.round_num == round_.num)
+            for vote in votes:
+                await self.receive_vote(vote)
 
     async def round_start(self, new_epoch: 'Epoch', new_round_num: int):
-        if self._round_pool.first_round().is_newer_than(new_epoch.num, new_round_num):
+        if self._get_candidate_round().is_newer_than(new_epoch.num, new_round_num):
             # Maybe sync
             return
 
@@ -87,6 +91,11 @@ class Consensus(EventRegister):
         except (InvalidEpoch, InvalidRound, InvalidProposer):
             return
         self._data_pool.add_data(data)
+
+        try:
+            self._verify_round_message(data)
+        except InvalidRound:
+            return
         await self._receive_data_and_change_candidate_if_available(data)
 
     async def receive_vote(self, vote: 'Vote'):
@@ -95,6 +104,11 @@ class Consensus(EventRegister):
         except (InvalidEpoch, InvalidRound, InvalidVoter):
             return
         self._vote_pool.add_vote(vote)
+
+        try:
+            self._verify_round_message(vote)
+        except InvalidRound:
+            return
         await self._receive_vote_and_change_candidate_if_available(vote)
 
     async def _receive_prev_votes(self, data: 'Data'):
@@ -105,7 +119,7 @@ class Consensus(EventRegister):
     async def _receive_data_and_change_candidate_if_available(self, data: 'Data'):
         round_ = self._new_or_get_round(data.epoch_num, data.round_num)
         if data.is_real():
-            if round_.candidate_id == data.prev_id:
+            if data.is_genesis() or data.prev_id in self._data_pool:
                 async with self._try_change_candidate(round_, pruning_messages=True):
                     await round_.receive_data(data)
         else:
@@ -113,16 +127,23 @@ class Consensus(EventRegister):
 
     async def _receive_vote_and_change_candidate_if_available(self, vote: 'Vote'):
         round_ = self._new_or_get_round(vote.epoch_num, vote.round_num)
-        async with self._try_change_candidate(round_, pruning_messages=True):
+        if not vote.is_none() and not vote.is_lazy():
+            async with self._try_change_candidate(round_, pruning_messages=True):
+                await round_.receive_vote(vote)
+        else:
             await round_.receive_vote(vote)
 
     def _verify_acceptable_message(self, message: 'Message'):
         # To avoid MMO attack, app must prevent to receive newer messages than current round's.
         # To get the messages at the round of messages the app has to gossip.
 
-        candidate_round = self._round_pool.first_round()
-        if candidate_round.is_newer_than(message.epoch_num, message.round_num):
-            raise InvalidRound(message.epoch_num, message.round_num, candidate_round.epoch_num, candidate_round.num)
+        candidate_round = self._get_candidate_round()
+        if candidate_round.epoch_num != 0 or candidate_round.num != 0:
+            # Genesis Data does not have commit data
+            commit_id = candidate_round.candidate_id
+            commit_data = self._data_pool.get_data(commit_id)
+            if (message.epoch_num, message.round_num) <= (commit_data.epoch_num, commit_data.round_num):
+                raise InvalidRound(message.epoch_num, message.round_num, commit_data.epoch_num, commit_data.round_num)
 
         if candidate_round.epoch_num + 1 < message.epoch_num:
             raise InvalidEpoch(message.epoch_num, candidate_round.epoch_num)
@@ -142,11 +163,16 @@ class Consensus(EventRegister):
         epoch = self._get_epoch(vote.epoch_num)
         epoch.verify_voter(vote.voter_id)
 
+    def _verify_round_message(self, message: 'Message'):
+        candidate_round = self._get_candidate_round()
+        if candidate_round.is_newer_than(message.epoch_num, message.round_num):
+            raise InvalidRound(message.epoch_num, message.round_num, candidate_round.epoch_num, candidate_round.num)
+
     def _get_epoch(self, epoch_num: int):
         try:
             return self._epoch_pool.get_epoch(epoch_num)
         except KeyError:
-            raise InvalidEpoch(epoch_num, self._round_pool.first_round().epoch_num)
+            raise InvalidEpoch(epoch_num, self._get_candidate_round().epoch_num)
 
     def _new_round(self, epoch_num: int, round_num: int, candidate_id: bytes):
         epoch = self._get_epoch(epoch_num)
@@ -162,9 +188,12 @@ class Consensus(EventRegister):
         try:
             return self._round_pool.get_round(epoch_num, round_num)
         except KeyError:
-            candidate_round = self._round_pool.first_round()
+            candidate_round = self._get_candidate_round()
             round_ = self._new_round(epoch_num, round_num, candidate_round.result_id)
             return round_
+
+    def _get_candidate_round(self):
+        return self._round_pool.first_round()
 
     def _prune_round(self, latest_epoch_num: int, latest_round_num: int):
         self._epoch_pool.prune_epoch(latest_epoch_num - 1)  # Need prev epoch
@@ -174,36 +203,55 @@ class Consensus(EventRegister):
         self._data_pool.prune_data(latest_epoch_num, latest_round_num)
         self._vote_pool.prune_vote(latest_epoch_num, latest_round_num)
 
+    def _prune_messages_before_commit(self):
+        candidate_round = self._get_candidate_round()
+        candidate_data = self._data_pool.get_data(candidate_round.result_id)
+        try:
+            commit_data = self._data_pool.get_data(candidate_data.prev_id)
+        except KeyError:
+            # Already pruned
+            pass
+        else:
+            self._prune_messages(commit_data.epoch_num, commit_data.round_num)
+
     @asynccontextmanager
     async def _try_change_candidate(self, target_round: Round, pruning_messages=False):
-        old_result_id = target_round.result_id
+        is_candidate_changed = self._is_candidate_changed(target_round)
         try:
             yield
         finally:
-            if old_result_id == target_round.result_id:
+            if not is_candidate_changed():
                 return
-            if target_round.result_id is None:
-                return
-
             self._prune_round(target_round.epoch_num, target_round.num)
-            self._round_pool.change_candidate()
+            await self._propagate_candidate_changed(target_round)
+            await self._try_change_candidate_connected_datums(target_round.result_id)
 
-            datums = self._data_pool.get_datums_connected(target_round.result_id)
-            for data in datums:
-                round_ = self._new_or_get_round(data.epoch_num, data.round_num)
-                async with self._try_change_candidate(round_):
-                    await self.receive_data(data)
+            if not pruning_messages:
+                return
+            self._prune_messages_before_commit()
 
-            if pruning_messages:
-                candidate_round = self._round_pool.first_round()
-                candidate_data = self._data_pool.get_data(candidate_round.result_id)
-                try:
-                    commit_data = self._data_pool.get_data(candidate_data.prev_id)
-                except KeyError:
-                    # Already pruned
-                    pass
-                else:
-                    self._prune_messages(commit_data.epoch_num, commit_data.round_num)
+    async def _try_change_candidate_connected_datums(self, prev_id: bytes):
+        datums = self._data_pool.get_datums_connected(prev_id)
+        for data in datums:
+            round_ = self._new_or_get_round(data.epoch_num, data.round_num)
+            async with self._try_change_candidate(round_):
+                await self.receive_data(data)
+
+    async def _propagate_candidate_changed(self, target_round: Round):
+        candidate = self._data_pool.get_data(target_round.result_id)
+        self._round_pool.change_candidate(candidate.prev_id)
+
+    def _is_candidate_changed(self, target_round: Round):
+        old_result_id = target_round.result_id
+
+        def _checker():
+            new_result_id = target_round.result_id
+            if new_result_id is None:
+                return False
+            if new_result_id == old_result_id:
+                return False
+            return True
+        return _checker
 
     _handler_prototypes = {
         InitializeEvent: _on_event_initialize,

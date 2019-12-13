@@ -1,6 +1,6 @@
 import logging
 from bisect import insort
-from typing import List, OrderedDict, DefaultDict, Set, Union
+from typing import List, OrderedDict, DefaultDict, Set, Union, Sequence
 from lft.consensus.messages.data import Data, DataFactory
 from lft.consensus.messages.vote import Vote, VoteFactory
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
@@ -157,19 +157,13 @@ class Round:
             raise AlreadyVoted(vote.id, vote.voter_id)
 
     def is_newer_than(self, epoch_num: int, round_num: int):
-        if self.epoch_num == epoch_num:
-            return self.num > round_num
-        else:
-            return self.epoch_num > epoch_num
+        return (self.epoch_num, self.num) > (epoch_num, round_num)
 
     def is_older_than(self, epoch_num: int, round_num: int):
-        if self.epoch_num == epoch_num:
-            return self.num < round_num
-        else:
-            return self.epoch_num < epoch_num
+        return (self.epoch_num, self.num) < (epoch_num, round_num)
 
     def is_equal_to(self, epoch_num: int, round_num: int):
-        return self.epoch_num == epoch_num and self.num == round_num
+        return (self.epoch_num, self.num) == (epoch_num, round_num)
 
     def __gt__(self, other: 'Round'):
         if not isinstance(other, Round):
@@ -243,6 +237,10 @@ class RoundPool:
     def __init__(self):
         self._rounds: List[Round] = []
 
+    @property
+    def rounds(self) -> Sequence[Round]:
+        return self._rounds
+
     def first_round(self):
         return self._rounds[0]
 
@@ -261,7 +259,8 @@ class RoundPool:
                         if (round_.is_newer_than(latest_epoch_num, latest_round_num) or
                             round_.is_equal_to(latest_epoch_num, latest_round_num))]
 
-    def change_candidate(self):
+    def change_candidate(self, commit_id: bytes):
         candidate_round = self.first_round()
+        candidate_round.candidate_id = commit_id
         for round_ in self._rounds[1:]:
             round_.candidate_id = candidate_round.result_id
