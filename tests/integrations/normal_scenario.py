@@ -8,7 +8,7 @@ from lft.app import RecordApp, App
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("node_num,duration", [(4, 1000)])
+@pytest.mark.parametrize("node_num,duration", [(4, 5)])
 async def test_normal_scenario(node_num, duration):
     app = RecordApp(node_num, Path("integration_test"))
     app.nodes = app._gen_nodes()
