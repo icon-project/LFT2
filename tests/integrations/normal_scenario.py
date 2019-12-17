@@ -35,18 +35,19 @@ async def test_with_stop_nodes(node_num, stop_num, duration, expected_min_num):
     non_fault_num = node_num - stop_num
 
     app._connect_nodes()
-    for node in app.nodes[non_fault_num - 1:]:
-        node.event_system.stop()
+    for node in app.nodes[non_fault_num:]:
+        node.event_system.simulator.stop()
     app._start(app.nodes)
     await asyncio.sleep(duration)
 
-    await stop_nodes(app)
+    # await stop_nodes(app)
+    for node in app.nodes[:non_fault_num + 1]:
+        node.event_system.simulator.stop()
 
     await verify_commit_datums(app.nodes[:non_fault_num], expected_min_num)
-    # Restart nodes
-    for node in app.nodes[non_fault_num - 1:]:
-        node.start(False)
-        node.event_system.start()
+    # # Restart nodes
+    for node in app.nodes[non_fault_num:]:
+        node.event_system.simulator.start(False)
 
     await asyncio.sleep(int(duration/10))
     await verify_commit_datums(app.nodes, expected_min_num)
@@ -61,7 +62,7 @@ async def test_with_byzantine(node_num, byzantine_num, duration, expected_min_nu
 
     app._connect_nodes()
     byzantines = []
-    for node in app.nodes[non_fault_num - 1:]:
+    for node in app.nodes[non_fault_num:]:
         bp = DoubleProposer(node)
         bv = DoubleVoter(node)
         byzantines.append(bp)
@@ -72,7 +73,8 @@ async def test_with_byzantine(node_num, byzantine_num, duration, expected_min_nu
     app._start(app.nodes)
 
     await asyncio.sleep(duration)
-
+    for byzantine in byzantines:
+        byzantine.stop()
     await stop_nodes(app)
 
     await verify_commit_datums(app.nodes, expected_min_num)
