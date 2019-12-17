@@ -1,14 +1,12 @@
 import asyncio
-from datetime import datetime
 from pathlib import Path
-from time import sleep
-from typing import List, Optional
+from typing import Optional
 
 import pytest
 
-from lft.app import RecordApp, App
+from lft.app import RecordApp
 from lft.consensus.messages.data import Data
-from tests.integrations.double_propoer import DoubleProposer
+from tests.byzantine.double_propoer import DoubleProposer
 
 
 @pytest.mark.asyncio
@@ -70,8 +68,6 @@ async def test_with_byzantine(node_num, byzantine_num, duration):
     await stop_nodes(app)
 
     await verify_commit_datums(app.nodes[:non_fault_num])
-
-
 
 
 async def verify_commit_datums(nodes):
