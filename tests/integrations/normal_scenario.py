@@ -12,7 +12,8 @@ from tests.integrations.double_propoer import DoubleProposer
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("node_num,duration", [(4, 100)])
+@pytest.mark.parametrize("node_num,duration", [(4, 1000)])
+@pytest.mark.skip(reason="Need too much time")
 async def test_normal_scenario(node_num, duration):
 
     app = RecordApp(node_num, Path("integration_test"))
@@ -28,7 +29,8 @@ async def test_normal_scenario(node_num, duration):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("node_num,stop_num,duration", [(4, 1, 100)])
+@pytest.mark.parametrize("node_num,stop_num,duration", [(4, 1, 1000)])
+@pytest.mark.skip(reason="Need too much time")
 async def test_with_stop_nodes(node_num, stop_num, duration):
     app = RecordApp(node_num, Path("integration_test"))
     app.nodes = app._gen_nodes()
@@ -48,6 +50,7 @@ async def test_with_stop_nodes(node_num, stop_num, duration):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("node_num,byzantine_num,duration", [(4, 1, 100)])
+@pytest.mark.skip(reason="Need too much time")
 async def test_with_byzantine(node_num, byzantine_num, duration):
     app = RecordApp(node_num, Path("integration_test"))
     app.nodes = app._gen_nodes()
