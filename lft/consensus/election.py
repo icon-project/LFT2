@@ -226,7 +226,6 @@ class ElectionMessages:
         self._votes: Votes = DefaultDict(dict)
 
         self._voters: Set[bytes] = set()
-        self._real_voters: Set[bytes] = set()
         self._result: Optional[Data] = None
 
     @property
@@ -242,9 +241,6 @@ class ElectionMessages:
 
     def add_vote(self, vote: Vote):
         self._voters.add(vote.voter_id)
-        if vote.is_real():
-            self._real_voters.add(vote.voter_id)
-
         self._votes[vote.data_id][vote.voter_id] = vote
 
     def update(self):
@@ -254,9 +250,6 @@ class ElectionMessages:
         # None : Nothing changes
 
         if self._update_quorum_data():
-            return
-
-        if self._update_possible_data():
             return
 
         if self._update_lazy_data():
@@ -276,22 +269,6 @@ class ElectionMessages:
             return True
         return False
 
-    def _update_possible_data(self):
-        unvoter = self._get_unvoters()
-        if len(unvoter) >= self._epoch.quorum_num:
-            return False
-
-        possible_datums = [data for data in self._datums.values()
-                           if data.is_real()
-                           if len(self._votes[data.id]) < self._epoch.quorum_num
-                           if len(self._votes[data.id]) + len(unvoter) >= self._epoch.quorum_num]
-
-        if not possible_datums:
-            self._result = self._find_none_data()
-            return True
-
-        return False
-
     def _update_lazy_data(self):
         assert len(self._voters) <= len(self._epoch.voters)
         if len(self._voters) == len(self._epoch.voters):
@@ -299,20 +276,10 @@ class ElectionMessages:
             return True
         return False
 
-    def _find_none_data(self):
-        try:
-            return next(data for data in self._datums.values() if data.is_none())
-        except StopIteration:
-            proposer_id = self._epoch.get_proposer_id(self._round_num)
-            return self._data_factory.create_none_data(self._epoch.num, self._round_num, proposer_id)
-
     def _find_lazy_data(self):
         try:
             return next(data for data in self._datums.values() if data.is_lazy())
         except StopIteration:
             proposer_id = self._epoch.get_proposer_id(self._round_num)
             return self._data_factory.create_lazy_data(self._epoch.num, self._round_num, proposer_id)
-
-    def _get_unvoters(self):
-        return set(self._epoch.voters) - self._real_voters
 
