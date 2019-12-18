@@ -11,73 +11,43 @@ from tests.byzantine.double_voter import DoubleVoter
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("node_num,duration,expected_min_number", [(4, 100, 50)])
-async def test_normal_scenario(node_num, duration, expected_min_number):
+@pytest.mark.parametrize("non_fault_num,stop_num,byzantine_num,duration,min_data_number",
+                         [(4, 0, 0, 100, 50),
+                          (3, 1, 0, 100, 50),
+                          (3, 0, 1, 100, 50)])
+async def test_run_nodes(non_fault_num, stop_num, byzantine_num, duration, min_data_number):
+    # GIVEN
+    node_num = non_fault_num + stop_num + byzantine_num
 
     app = RecordApp(node_num, Path("integration_test"))
     app.nodes = app._gen_nodes()
     app._connect_nodes()
-    app._start(app.nodes)
 
-    await asyncio.sleep(duration)
+    await setup_stops(app.nodes, non_fault_num, stop_num)
+    await setup_byzantines(app.nodes, byzantine_num)
 
-    await stop_nodes(app)
-
-    await verify_commit_datums(app.nodes, expected_min_number)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("node_num,stop_num,duration,expected_min_num", [(4, 1, 100, 50)])
-async def test_with_stop_nodes(node_num, stop_num, duration, expected_min_num):
-    app = RecordApp(node_num, Path("integration_test"))
-    app.nodes = app._gen_nodes()
-
-    non_fault_num = node_num - stop_num
-
-    app._connect_nodes()
-    for node in app.nodes[non_fault_num:]:
-        node.event_system.simulator.stop()
+    # WHEN
     app._start(app.nodes)
     await asyncio.sleep(duration)
 
-    # await stop_nodes(app)
-    for node in app.nodes[:non_fault_num + 1]:
-        node.event_system.simulator.stop()
+    # THEN
+    await stop_nodes(app.nodes[:non_fault_num])
+    await stop_nodes(app.nodes[len(app.nodes) - byzantine_num:])
+    await verify_commit_datums(app.nodes[:non_fault_num], min_data_number)
 
-    await verify_commit_datums(app.nodes[:non_fault_num], expected_min_num)
-    # # Restart nodes
-    for node in app.nodes[non_fault_num:]:
-        node.event_system.simulator.start(False)
-
+    await resume_stops(app.nodes, non_fault_num, stop_num)
     await asyncio.sleep(int(duration/10))
-    await verify_commit_datums(app.nodes, expected_min_num)
+
+    await stop_nodes(app.nodes[non_fault_num: non_fault_num + stop_num])
+    await verify_commit_datums(app.nodes[:non_fault_num + stop_num], min_data_number)
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("node_num,byzantine_num,duration,expected_min_num", [(4, 1, 100, 50)])
-async def test_with_byzantine(node_num, byzantine_num, duration, expected_min_num):
-    app = RecordApp(node_num, Path("integration_test"))
-    app.nodes = app._gen_nodes()
-    non_fault_num = node_num - byzantine_num
-
-    app._connect_nodes()
-    byzantines = []
-    for node in app.nodes[non_fault_num:]:
-        bp = DoubleProposer(node)
-        bv = DoubleVoter(node)
-        byzantines.append(bp)
-        byzantines.append(bv)
-        bp.start()
-        bv.start()
-
-    app._start(app.nodes)
-
-    await asyncio.sleep(duration)
-    for byzantine in byzantines:
-        byzantine.stop()
-    await stop_nodes(app)
-
-    await verify_commit_datums(app.nodes, expected_min_num)
+# @pytest.mark.asyncio
+# @pytest.mark.parametrize(("non_fault_num,stop_num,byzantine_num,first_duration,first_min_number,"
+#                           "second_duration,second_min_num"),
+#                          [(3, 2, 1, 100, 50, 100, 100)
+#                           ])
+# async def test_
 
 
 async def verify_commit_datums(nodes, expected_number):
@@ -101,6 +71,27 @@ async def verify_commit_datums(nodes, expected_number):
         assert nodes[min_commit[0]].commit_datums[min_commit[1] - 1] == node.commit_datums[min_commit[1] - 1]
 
 
-async def stop_nodes(app):
-    for node in app.nodes:
+async def setup_stops(nodes, non_fault_num, stop_num):
+    for node in nodes[non_fault_num: non_fault_num + stop_num]:
+        node.event_system.simulator.stop()
+
+
+async def setup_byzantines(nodes, byzantine_num):
+    byzantines = []
+    for node in nodes[len(nodes) - byzantine_num:]:
+        bp = DoubleProposer(node)
+        bp.start()
+        bv = DoubleVoter(node)
+        bv.start()
+        byzantines.append((bp, bv))
+    return byzantines
+
+
+async def resume_stops(nodes, non_fault_num, stop_num):
+    for node in nodes[non_fault_num: non_fault_num + stop_num]:
+        node.event_system.simulator.start(False)
+
+
+async def stop_nodes(nodes):
+    for node in nodes:
         node.close()
