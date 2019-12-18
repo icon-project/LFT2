@@ -54,7 +54,7 @@ async def test_run_nodes(non_fault_num, stop_num, byzantine_num, duration, min_d
                          [(3, 2, 1, 100, 50, 100, 100, 100)
                           ])
 @pytest.mark.skip("Before jenkins merge and fix bugs")
-async def test_run_nodes_and_stop_network_and_run_network_again(
+async def test_run_networks_with_byzantine_and_stop_network_and_restore_network_again(
         non_fault_num, stop_num, byzantine_num, first_duration,
         first_min_num, stop_duration, second_duration, second_min_num):
     app = RecordApp(non_fault_num + byzantine_num, Path("integration_test"))
