@@ -2,7 +2,7 @@ from io import StringIO
 from typing import TypeVar
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator, TimestampEventMediator, JsonRpcEventMediator
-from tests.event_system.event_system_replay_0_test import Event1, Event2, Event3, on_test1, on_test2, on_test3
+from tests.units.event_system.event_system_replay_0_test import Event1, Event2, Event3, on_test1, on_test2, on_test3
 
 T = TypeVar("T")
 
@@ -35,8 +35,8 @@ def test_event_system():
 
 
 record = r"""
-{"!type": "lft.event.event_recorder.EventRecord", "!data": {"number": 0, "event": {"!type": "tests.event_system.event_system_replay_0_test.Event1", "!data": {}}}}
-{"!type": "lft.event.event_recorder.EventRecord", "!data": {"number": 2, "event": {"!type": "tests.event_system.event_system_replay_0_test.Event3", "!data": {"num": 3}}}}
+{"!type": "lft.event.event_recorder.EventRecord", "!data": {"number": 0, "event": {"!type": "tests.units.event_system.event_system_replay_0_test.Event1", "!data": {}}}}
+{"!type": "lft.event.event_recorder.EventRecord", "!data": {"number": 2, "event": {"!type": "tests.units.event_system.event_system_replay_0_test.Event3", "!data": {"num": 3}}}}
 """
 
 timestamp = r"""

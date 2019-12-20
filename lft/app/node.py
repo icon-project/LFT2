@@ -1,9 +1,10 @@
-from typing import IO, Dict, Type
+from typing import IO, Dict, Type, OrderedDict
 from lft.app.data import DefaultDataFactory
 from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVoteFactory
 from lft.app.network import Network
 from lft.app.logger import Logger
+from lft.consensus.messages.data import Data
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
@@ -27,7 +28,11 @@ class Node:
             DefaultDataFactory(self.node_id),
             DefaultVoteFactory(self.node_id)
         )
-        self._round_num = 0
+        self._epoch_num = -1
+        self._round_num = -1
+
+        # For store
+        self.commit_datums: OrderedDict[int, Data] = OrderedDict()
 
         self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
         self.event_system.simulator.register_handler(RoundEndEvent, self._on_round_end_event)
@@ -36,6 +41,13 @@ class Node:
         self._nodes = init_event.epoch_pool[-1].voters
 
     async def _on_round_end_event(self, round_end_event: RoundEndEvent):
+        if round_end_event.is_success and round_end_event.commit_id:
+            data = self._consensus._data_pool.get_data(round_end_event.commit_id)
+            self.commit_datums[data.number] = data
+
+        if (self._epoch_num, self._round_num) > (round_end_event.epoch_num, round_end_event.round_num):
+            return
+        self._epoch_num = round_end_event.epoch_num
         self._round_num = round_end_event.round_num + 1
         await self._start_new_round()
 

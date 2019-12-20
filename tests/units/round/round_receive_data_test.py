@@ -1,7 +1,7 @@
 import pytest
 from lft.app.vote import DefaultVoteFactory
 from lft.consensus.exceptions import InvalidEpoch, InvalidRound, AlreadyProposed
-from tests.round.setup_items import setup_items
+from tests.units.round.setup_items import setup_items
 
 
 @pytest.mark.asyncio

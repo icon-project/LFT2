@@ -163,7 +163,7 @@ class Election:
         if self._is_ended:
             return
         await self._raise_round_end(self._messages.result)
-        self._is_ended = True
+        self._is_ended = self._messages.result and self._messages.result.is_determinative()
 
     async def _vote_if_real_data_exist(self):
         first_real_data = self._messages.first_real_data

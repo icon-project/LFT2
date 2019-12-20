@@ -27,13 +27,16 @@ class App(ABC):
     def start(self):
         self.nodes = self._gen_nodes()
 
-        for node in self.nodes:
-            for peer in (peer for peer in self.nodes if peer != node):
-                node.register_peer(peer)
+        self._connect_nodes()
 
         self.listener.start()
         self._start(self.nodes)
         self._run_forever(self.nodes)
+
+    def _connect_nodes(self):
+        for node in self.nodes:
+            for peer in (peer for peer in self.nodes if peer != node):
+                node.register_peer(peer)
 
     def close(self):
         self.listener.stop()

@@ -1,6 +1,6 @@
 import pytest
 from lft.consensus.events import BroadcastDataEvent, ReceiveDataEvent
-from tests.election.setup_election import setup_election, CANDIDATE_ID
+from tests.units.election.setup_election import setup_election, CANDIDATE_ID
 
 PEER_NUM = 7
 
