@@ -86,7 +86,7 @@ async def verify_commit_datums(nodes, expected_number):
     max_commit = (99, 0)
     for i, node in enumerate(nodes):
         last_number = max(node.commit_datums.keys())
-        prev_data = None  # type: Optional[Data]
+        prev_data: Optional[Data] = None
         for number in range(last_number + 1):
             data = node.commit_datums[number]
             if prev_data:

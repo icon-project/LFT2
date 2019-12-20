@@ -1,13 +1,10 @@
-from typing import IO, Dict, Type, Optional, List
-
-from collections import OrderedDict
-
+from typing import IO, Dict, Type, OrderedDict
 from lft.app.data import DefaultDataFactory
 from lft.app.epoch import RotateEpoch
 from lft.app.vote import DefaultVoteFactory
 from lft.app.network import Network
 from lft.app.logger import Logger
-from lft.consensus.messages.data import Data, DataPool
+from lft.consensus.messages.data import Data
 from lft.event import EventSystem, EventMediator
 from lft.event.mediators import DelayedEventMediator
 from lft.consensus.consensus import Consensus
@@ -35,7 +32,7 @@ class Node:
         self._round_num = -1
 
         # For store
-        self.commit_datums = OrderedDict()  # type: OrderedDict[int, Data]
+        self.commit_datums: OrderedDict[int, Data] = OrderedDict()
 
         self.event_system.simulator.register_handler(InitializeEvent, self._on_init_event)
         self.event_system.simulator.register_handler(RoundEndEvent, self._on_round_end_event)
