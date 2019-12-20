@@ -5,7 +5,7 @@ from lft.consensus.round import TIMEOUT_PROPOSE, TIMEOUT_VOTE
 from lft.consensus.events import ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.exceptions import InvalidEpoch, InvalidRound, AlreadyVoted
 from lft.event.mediators import DelayedEventMediator
-from tests.units.round import setup_items
+from tests.units.round.setup_items import setup_items
 
 
 @pytest.mark.asyncio
