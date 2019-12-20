@@ -31,7 +31,8 @@ class Node:
             DefaultDataFactory(self.node_id),
             DefaultVoteFactory(self.node_id)
         )
-        self._round_num = 0
+        self._epoch_num = -1
+        self._round_num = -1
 
         # For store
         self.commit_datums = OrderedDict()  # type: OrderedDict[int, Data]
@@ -43,10 +44,14 @@ class Node:
         self._nodes = init_event.epoch_pool[-1].voters
 
     async def _on_round_end_event(self, round_end_event: RoundEndEvent):
-        self._round_num = round_end_event.round_num + 1
         if round_end_event.is_success and round_end_event.commit_id:
             data = self._consensus._data_pool.get_data(round_end_event.commit_id)
             self.commit_datums[data.number] = data
+
+        if (self._epoch_num, self._round_num) > (round_end_event.epoch_num, round_end_event.round_num):
+            return
+        self._epoch_num = round_end_event.epoch_num
+        self._round_num = round_end_event.round_num + 1
         await self._start_new_round()
 
     async def _start_new_round(self):
