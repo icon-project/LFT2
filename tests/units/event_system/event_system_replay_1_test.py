@@ -2,7 +2,7 @@ from io import StringIO
 from typing import TypeVar
 from lft.event import EventSystem
 from lft.event.mediators import DelayedEventMediator, TimestampEventMediator, JsonRpcEventMediator
-from tests.units.event_system import Event1, Event2, Event3, on_test1, on_test2, on_test3
+from tests.units.event_system import Event1, Event2, Event3
 
 T = TypeVar("T")
 
