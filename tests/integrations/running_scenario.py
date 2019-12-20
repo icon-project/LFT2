@@ -15,7 +15,6 @@ from tests.byzantine.double_voter import DoubleVoter
                          [(4, 0, 0, 100, 50),
                           (3, 1, 0, 100, 50),
                           (3, 0, 1, 100, 50)])
-@pytest.mark.skip("TODO jenkins fix")
 async def test_run_nodes(non_fault_num, stop_num, byzantine_num, duration, min_data_number):
     # GIVEN
     node_num = non_fault_num + stop_num + byzantine_num
@@ -53,7 +52,6 @@ async def test_run_nodes(non_fault_num, stop_num, byzantine_num, duration, min_d
                           "second_duration,second_min_num"),
                          [(3, 2, 1, 100, 50, 100, 100, 100)
                           ])
-@pytest.mark.skip("TODO jenkins fix")
 async def test_run_networks_with_byzantine_and_stop_network_and_restore_network_again(
         non_fault_num, stop_num, byzantine_num, first_duration,
         first_min_num, stop_duration, second_duration, second_min_num):
