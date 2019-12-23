@@ -1,4 +1,6 @@
 import asyncio
+import datetime
+import inspect
 from pathlib import Path
 from typing import Optional
 
@@ -19,7 +21,11 @@ async def test_run_nodes(non_fault_num, stop_num, byzantine_num, duration, min_d
     # GIVEN
     node_num = non_fault_num + stop_num + byzantine_num
 
-    app = RecordApp(node_num, Path("integration_test"))
+    args = str(list(locals().values()))
+    args.replace(" ", "")
+    path = create_record_path("test_run_nodes", args)
+
+    app = RecordApp(node_num, path)
     app.nodes = app._gen_nodes()
     app._connect_nodes()
 
@@ -55,7 +61,13 @@ async def test_run_nodes(non_fault_num, stop_num, byzantine_num, duration, min_d
 async def test_run_networks_with_byzantine_and_stop_network_and_restore_network_again(
         non_fault_num, stop_num, byzantine_num, first_duration,
         first_min_num, stop_duration, second_duration, second_min_num):
-    app = RecordApp(non_fault_num + byzantine_num, Path("integration_test"))
+
+    args = str(list(locals().values()))
+    args.replace(" ", "")
+    path = create_record_path("test_run_networks_with_byzantine_and_stop_network_and_restore_network_again", args)
+
+    app = RecordApp(non_fault_num + byzantine_num, path)
+
     app.nodes = app._gen_nodes()
     app._connect_nodes()
 
@@ -100,6 +112,12 @@ async def verify_commit_datums(nodes, expected_number):
         assert nodes[min_commit[0]].commit_datums[min_commit[1] - 1] == node.commit_datums[min_commit[1] - 1]
 
     return max_commit[1]
+
+
+def create_record_path(test_name, params) -> Path:
+    now = datetime.datetime.now()
+    now_str = now.strftime('%Y-%m-%d-%H:%M:%S')
+    return Path(f"{test_name}/{now_str}/{params}")
 
 
 async def setup_stops(nodes):
