@@ -1,11 +1,6 @@
-name: Integration tests
+name: IntegrationTest
 
-on:
-  push:
-    branches:
-      - develop
-      - master
-  - pull_request
+on: [pull_request]
 
 jobs:
   build:
