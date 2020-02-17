@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        make dev
+        make develop
     - name: Test with pytest
       run: |
         pytest tests/units
