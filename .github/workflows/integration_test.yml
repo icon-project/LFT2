@@ -27,8 +27,9 @@ jobs:
     - name: action-slack
       uses: 8398a7/action-slack@v2.6.0
       with:
-        status: failure
+        status: ${{job.status}}
         author_name: LFT2-Integrations
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} # require
+      if: fails()
