@@ -59,3 +59,4 @@ async def test_receive_data(propose_id, propose_prev_id, expected_vote_data_id):
     await election.receive_data(data=second_propose)
     # THEN
     event_system.simulator.raise_event.assert_not_called()
+    assert False
