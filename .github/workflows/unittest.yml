@@ -20,3 +20,10 @@ jobs:
     - name: Test with pytest
       run: |
         pytest tests/units
+    - name: action-slack
+      uses: 8398a7/action-slack@v2.6.0
+      with:
+        author_name: LFT2-github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} # require
