@@ -39,6 +39,7 @@ jobs:
 
     - name: Zip eventlogs
       run: zip -r integration_result.zip test_*
+      if: failure()
 
     - name: Post results to slack
       uses: adrey/slack-file-upload-action@master
@@ -46,3 +47,4 @@ jobs:
         token: ${{ secrets.SLACK_TOKEN }}
         path: integration_result.zip
         channel: group-consensus-noti
+      if: failure()
