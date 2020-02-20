@@ -115,9 +115,7 @@ async def verify_commit_datums(nodes, expected_number):
 
 
 def create_record_path(test_name, params) -> Path:
-    now = datetime.datetime.now()
-    now_str = now.strftime('%Y-%m-%d-%H:%M:%S')
-    return Path(f"{test_name}/{now_str}/{params}")
+    return Path(f"{test_name}/{params}")
 
 
 async def setup_stops(nodes):
