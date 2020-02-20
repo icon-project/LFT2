@@ -15,7 +15,8 @@ deps = {
     ],
 }
 
-deps['dev'] = deps['lft'] + deps['app'] + deps['test']
+deps['app'] = deps['lft'] + deps['app']
+deps['dev'] = deps['test'] = deps['app'] + deps['test']
 install_requires = deps['lft']
 
 setup(
