@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from mock import MagicMock
 from typing import Tuple, List
 from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.vote import DefaultVoteFactory
