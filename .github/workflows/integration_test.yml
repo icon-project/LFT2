@@ -38,7 +38,7 @@ jobs:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
     - name: Zip eventlogs
-      run: zip integration_result.zip test_*/*
+      run: zip -r integration_result.zip test_*
 
     - name: Post results to slack
       uses: adrey/slack-file-upload-action@master
