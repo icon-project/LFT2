@@ -37,6 +37,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} # require
 
+    - name: View files
+      run: ls -al
+
     - name: Zip eventlogs
       uses: montudor/action-zip@v0.1.0
       with:
