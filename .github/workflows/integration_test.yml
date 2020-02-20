@@ -43,7 +43,7 @@ jobs:
     - name: Zip eventlogs
       uses: montudor/action-zip@v0.1.0
       with:
-        args: zip integration_results.zip test_*
+        args: zip -qq -r ./integration_results.zip ./test_*
 
     - name: Post results to slack
       uses: adrey/slack-file-upload-action@master
