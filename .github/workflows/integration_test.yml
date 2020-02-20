@@ -19,15 +19,30 @@ jobs:
       with:
         python-version: 3.8
 
-    - name: view files
-      run: ls -al
+    - name: install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        make develop
+
+    - name: test with pytest
+      run: |
+        pytest tests/integrations
+
+    - name: notify test results to slack
+      uses: 8397a7/action-slack@v2.6.0
+      with:
+        status: ${{job.status}}
+        author_name: lft1-integrations
+      env:
+        github_token: ${{ secrets.github_token }} # required
+        slack_webhook_url: ${{ secrets.slack_webhook_url }} # require
 
     - name: Zip eventlogs
-      run: zip lft.zip lf*
+      run: zip integration_result.zip test_*
 
     - name: Post results to slack
       uses: adrey/slack-file-upload-action@master
       with:
         token: ${{ secrets.SLACK_TOKEN }}
-        path: lft.zip
+        path: integration_result.zip
         channel: group-consensus-noti
