@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from mock import MagicMock
 from functools import partial
 
 from lft.app.data import DefaultData, DefaultDataFactory

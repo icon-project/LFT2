@@ -1,6 +1,6 @@
 import os
 from contextlib import asynccontextmanager
-from unittest.mock import MagicMock
+from mock import MagicMock
 from lft.app.data import DefaultDataFactory
 from lft.app.vote import DefaultVoteFactory
 from lft.app.epoch import RotateEpoch

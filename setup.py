@@ -9,12 +9,14 @@ deps = {
         "ipython==7.9.0"
     ],
     'test': [
+        "mock==4.0.1",
         "pytest==4.6.3",
         "pytest-asyncio==0.10.0"
     ],
 }
 
-deps['dev'] = deps['lft'] + deps['app'] + deps['test']
+deps['app'] = deps['lft'] + deps['app']
+deps['dev'] = deps['test'] = deps['app'] + deps['test']
 install_requires = deps['lft']
 
 setup(
@@ -22,7 +24,7 @@ setup(
     version='0.1.0',
     description='Loopchain Fault Tolerance',
     author='ICON Foundation',
-    python_requires=">=3.8.0",
+    python_requires=">=3.7.0",
     install_requires=install_requires,
     extras_require=deps,
     license='Apache License 2.0',

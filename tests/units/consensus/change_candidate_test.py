@@ -1,7 +1,7 @@
 import os
 import pytest
 from typing import Tuple
-from unittest.mock import MagicMock
+from mock import MagicMock
 from lft.app.data import DefaultDataFactory, DefaultData
 from lft.app.vote import DefaultVoteFactory
 from lft.app.epoch import RotateEpoch
