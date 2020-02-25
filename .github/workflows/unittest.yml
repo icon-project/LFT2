@@ -34,3 +34,4 @@ jobs:
         https://github.com/icon-project/LFT2/actions/runs/{{ GITHUB_RUN_ID }}'
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: failure()

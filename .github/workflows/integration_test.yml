@@ -32,24 +32,19 @@ jobs:
       run: |
         pytest tests/integrations
 
-    - name: Notify test results to slack
-      uses: 8398a7/action-slack@v2.6.0
-      with:
-        status: ${{job.status}}
-        author_name: LFT2-Integrations ${{ github.event.pull_request.head.ref }}
-        fields: repo,ref
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
     - name: Zip eventlogs
       run: zip -r integration_result.zip test_*
       if: failure()
 
-    - name: Post results to slack
-      uses: adrey/slack-file-upload-action@master
+    - name: upload result
       with:
-        token: ${{ secrets.SLACK_TOKEN }}
         path: integration_result.zip
-        channel: group-consensus-noti
       if: failure()
+
+    - name: slack-notification
+      uses: Ilshidur/action-slack@master
+      with:
+        args: 'LFT2 ${{ github.ref }} integration test is ${{ job.status }}
+        https://github.com/icon-project/LFT2/actions/runs/{{ GITHUB_RUN_ID }}'
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
