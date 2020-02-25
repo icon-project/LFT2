@@ -32,13 +32,11 @@ jobs:
           pytest tests/integrations
       - name: Zip eventlogs
         run: zip -r integration_result.zip test_*
-        if: failure()
 
       - name: upload result
         uses: actions/upload-artifact@v1
         with:
           path: integration_result.zip
-        if: failure()
 
       - name: slack-notification
         uses: Ilshidur/action-slack@master
