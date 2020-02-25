@@ -27,12 +27,9 @@ jobs:
       run: |
         pytest tests/units
 
-    - name: action-slack
-      uses: 8398a7/action-slack@v2.6.0
+    - name: slack-notification
+      uses: Ilshidur/action-slack@master
       with:
-        status: ${{job.status}}
-        author_name: LFT2-Integrations ${{ github.event.pull_request.head.ref }}
-        fields: repo,ref
+        args: 'Unittest ${{ github.ref }} is ${{ job.status }} \n ${{ github.event_path }}'
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} # require
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
