@@ -16,35 +16,33 @@ jobs:
         python-version: [3.7]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        make develop
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make develop
+      - name: Test with pytest
+        run: |
+          pytest tests/integrations
+      - name: Zip eventlogs
+        run: zip -r integration_result.zip test_*
+        if: failure()
 
-    - name: Test with pytest
-      run: |
-        pytest tests/integrations
+      - name: upload result
+        with:
+          path: integration_result.zip
+        if: failure()
 
-    - name: Zip eventlogs
-      run: zip -r integration_result.zip test_*
-      if: failure()
-
-    - name: upload result
-      with:
-        path: integration_result.zip
-      if: failure()
-
-    - name: slack-notification
-      uses: Ilshidur/action-slack@master
-      with:
-        args: 'LFT2 ${{ github.ref }} integration test is ${{ job.status }}
+      - name: slack-notification
+        uses: Ilshidur/action-slack@master
+        with:
+          args: 'LFT2 ${{ github.ref }} integration test is ${{ job.status }}
         https://github.com/icon-project/LFT2/actions/runs/{{ GITHUB_RUN_ID }}'
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
