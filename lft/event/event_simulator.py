@@ -37,7 +37,7 @@ class EventSimulator:
         self._handlers[event_type].remove(handler)
 
     def raise_event(self, event: Event):
-        event_task = (not event.deterministic, time.monotonic_ns(), event)
+        event_task = (not event.deterministic, time.perf_counter(), event)
         self._event_tasks.put_nowait(event_task)
 
     async def execute_events(self):
