@@ -1,6 +1,6 @@
 # LFT2
-![Unittest](https://github.com/icon-project/LFT2/workflows/Unittest/badge.svg?branch=develop)
-![IntegrationTest](https://github.com/icon-project/LFT2/workflows/IntegrationTest/badge.svg?branch=develop)
+![Unittest](https://github.com/icon-project/LFT2/workflows/Unittest/badge.svg?branch=master)
+![IntegrationTest](https://github.com/icon-project/LFT2/workflows/IntegrationTest/badge.svg?branch=master)
 
 LFT2 is a new consensus algorithm inspired by PBFT. It improves TPS with reducing a pair of votes compared to PBFT when nodes make a consensus. A concept, 'Candidate' has been introduced for keeping safety.
 
