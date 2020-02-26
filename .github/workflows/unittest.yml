@@ -25,12 +25,12 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest tests/units
+        pytest tests/units -s
 
     - name: slack-notification
       uses: Ilshidur/action-slack@master
       with:
-        args: 'LFT2 ${{ github.ref }} unittest is ${{ job.status }}
+        args: 'LFT2 ${{ github.ref }} unittest, ${{ job.status }}
         https://github.com/icon-project/LFT2/actions/runs/{{ GITHUB_RUN_ID }}'
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -29,7 +29,7 @@ jobs:
           make develop
       - name: Test with pytest
         run: |
-          pytest tests/integrations
+          pytest tests/integrations -s
           
       - name: Zip eventlogs
         run: zip -r integration_result.zip test_*
@@ -45,7 +45,7 @@ jobs:
       - name: slack-notification
         uses: Ilshidur/action-slack@master
         with:
-          args: 'LFT2 ${{ github.ref }} integration test is ${{ job.status }}
+          args: 'LFT2 ${{ github.ref }} integration test, ${{ job.status }}
         https://github.com/icon-project/LFT2/actions/runs/{{ GITHUB_RUN_ID }}'
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
