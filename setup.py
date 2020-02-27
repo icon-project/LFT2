@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 deps = {
     'lft': [
-        "jsonrpcclient[requests,aiohttp]==3.3.3"
+        "jsonrpcclient[requests,aiohttp]==3.3.5"
     ],
     'app': [
         "coloredlogs==10.0",
