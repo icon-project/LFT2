@@ -63,9 +63,6 @@ class DataVerifier(ABC):
     async def verify(self, data: 'Data'):
         raise NotImplementedError
 
-    async def add_vote(self, vote: 'Vote'):
-        raise NotImplementedError
-
 
 class DataFactory(ABC):
     @abstractmethod
