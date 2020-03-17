@@ -1,4 +1,11 @@
+import os
 from setuptools import setup, find_packages
+
+version = os.environ.get('VERSION')
+
+if version is None:
+    with open(os.path.join('.', 'VERSION')) as version_file:
+        version = version_file.read().strip()
 
 deps = {
     'lft': [
@@ -21,7 +28,7 @@ install_requires = deps['lft']
 
 setup(
     name='LFT',
-    version='0.1.0',
+    version=version,
     description='Loopchain Fault Tolerance',
     author='ICON Foundation',
     python_requires=">=3.7.0",
