@@ -220,15 +220,13 @@ class Consensus(EventRegister):
         try:
             yield
         finally:
-            if not is_candidate_changed():
-                return
-            self._prune_round(target_round.epoch_num, target_round.num)
-            await self._propagate_candidate_changed(target_round)
-            await self._try_change_candidate_connected_datums(target_round.result_id)
+            if is_candidate_changed():
+                self._prune_round(target_round.epoch_num, target_round.num)
+                await self._propagate_candidate_changed(target_round)
+                await self._try_change_candidate_connected_datums(target_round.result_id)
 
-            if not pruning_messages:
-                return
-            self._prune_messages_before_commit()
+                if pruning_messages:
+                    self._prune_messages_before_commit()
 
     async def _try_change_candidate_connected_datums(self, prev_id: bytes):
         datums = self._data_pool.get_datums_connected(prev_id)
