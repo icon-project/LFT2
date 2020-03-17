@@ -1,4 +1,11 @@
+import os
 from setuptools import setup, find_packages
+
+version = os.environ.get('VERSION')
+
+if version is None:
+    with open(os.path.join('.', 'VERSION')) as version_file:
+        version = version_file.read().strip()
 
 deps = {
     'lft': [
@@ -21,9 +28,13 @@ install_requires = deps['lft']
 
 setup(
     name='LFT',
-    version='0.1.0',
+    version=version,
     description='Loopchain Fault Tolerance',
+    long_description_content_type='text/markdown',
+    long_description=open('README.md').read(),
+    url='https://github.com/icon-project/lft2',
     author='ICON Foundation',
+    author_email='foo@icon.foundation',
     python_requires=">=3.7.0",
     install_requires=install_requires,
     extras_require=deps,
@@ -31,13 +42,13 @@ setup(
     keywords='lft icon blockchain',
     packages=find_packages(exclude=["tests", "tests.*"]),
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Natural Language :: English',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.8'
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.7'
     ],
     entry_points={
         'console_scripts': [
