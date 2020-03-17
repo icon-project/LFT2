@@ -41,13 +41,14 @@ class Epoch(Serializable):
     def voters(self) -> Sequence[bytes]:
         raise NotImplementedError
 
-    @abstractmethod
     def verify_data(self, data: Data):
-        raise NotImplementedError
+        self.verify_proposer(data.proposer_id, data.round_num)
+        for i, prev_vote in enumerate(data.prev_votes):
+            self.verify_vote(prev_vote, i)
 
-    @abstractmethod
     def verify_vote(self, vote: Vote, vote_index: int = -1):
-        raise NotImplementedError
+        if isinstance(vote, Vote):
+            self.verify_voter(vote.voter_id, vote_index)
 
     @abstractmethod
     def verify_proposer(self, proposer_id: bytes, round_num: int) -> bool:

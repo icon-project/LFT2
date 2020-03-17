@@ -32,13 +32,6 @@ class RotateEpoch(Epoch):
     def quorum_num(self) -> int:
         return math.ceil(self.voters_num * 0.67)
 
-    def verify_data(self, data: Data):
-        self.verify_proposer(data.proposer_id, data.round_num)
-
-    def verify_vote(self, vote: Vote, vote_index: int = -1):
-        if isinstance(vote, Vote):
-            self.verify_voter(vote.voter_id, vote_index)
-
     def verify_proposer(self, proposer_id: bytes, round_num: int):
         expected = self.get_proposer_id(round_num)
         if proposer_id != expected:
