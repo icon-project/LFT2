@@ -1,10 +1,16 @@
 import argparse
 from pathlib import Path
-from lft.app import InstantApp, RecordApp, ReplayApp
-from lft.app.app import Mode
 
 
 def main():
+    try:
+        from lft.app import InstantApp, RecordApp, ReplayApp
+        from lft.app.app import Mode
+    except ImportError:
+        print('Requirements are not satisfied. Please use following command to install the requirements.')
+        print('> pip install -U "lft[app]"')
+        exit(1)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", type=Mode, default=Mode.instant.value, nargs='?',
                         help="App running mode, [instant|record|replay], (default: %(default)s)")
