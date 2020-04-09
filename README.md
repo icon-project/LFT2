@@ -8,7 +8,7 @@ This is implemented as a library. So not only blockchain but also any applicatio
 
 This contains an example application for easy understanding. You can run it without integration. Also it composes multiple nodes in this single app. You can simulate byzantine node actions and observe how it tolerates the actions.
 
-The paper of LFT2 will be released soon.
+White paper [[English](Whitepaper%20-%20LFT2%20(ENG).pdf)] [[Korean](Whitepaper%20-%20LFT2%20(KOR).pdf)].
 
 
 ## Example Application
