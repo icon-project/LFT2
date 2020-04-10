@@ -51,7 +51,16 @@ class Epoch(Serializable):
             self.verify_voter(vote.voter_id, vote_index)
 
     @abstractmethod
-    def verify_proposer(self, proposer_id: bytes, round_num: int) -> bool:
+    def verify_proposer(self, proposer_id: bytes, round_num: int):
+        """
+
+        :param proposer_id:
+        :param round_num:
+        :raises:
+            InvalidProposer:
+            InvalidEpoch:
+            InvalidRound:
+        """
         raise NotImplementedError
 
     @abstractmethod
