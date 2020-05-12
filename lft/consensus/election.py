@@ -205,7 +205,7 @@ class Election:
         if data.is_lazy():
             return False
         try:
-            await self._data_verifier.verify(data)
+            await self._data_verifier.verify(candidate_data, data)
         except Exception as e:
             return False
         else:

@@ -60,7 +60,7 @@ class Data(Message):
 
 class DataVerifier(ABC):
     @abstractmethod
-    async def verify(self, data: 'Data'):
+    async def verify(self, prev_data: 'Data', data: 'Data'):
         raise NotImplementedError
 
 
