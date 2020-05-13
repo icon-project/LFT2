@@ -61,6 +61,13 @@ class Data(Message):
 class DataVerifier(ABC):
     @abstractmethod
     async def verify(self, prev_data: 'Data', data: 'Data'):
+        """Verify Data.
+        
+        :param prev_data:
+        :param data:
+        :raises:
+            Exception:
+        """
         raise NotImplementedError
 
 
