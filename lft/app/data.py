@@ -94,7 +94,7 @@ class DefaultData(Data):
 
 
 class DefaultDataVerifier(DataVerifier):
-    async def verify(self, data: 'DefaultData'):
+    async def verify(self, prev_data: 'DefaultData', data: 'DefaultData'):
         pass
 
 
