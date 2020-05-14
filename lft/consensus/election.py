@@ -195,8 +195,6 @@ class Election:
         await self._raise_broadcast_vote(vote)
 
     async def _verify_data(self, data):
-        if data.proposer_id == self._node_id:
-            return True
         if self._candidate_id != data.prev_id:
             return False
         candidate_data = self._data_pool.get_data(self._candidate_id)
