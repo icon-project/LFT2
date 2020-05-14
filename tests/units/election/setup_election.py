@@ -5,6 +5,7 @@ from lft.app.vote import DefaultVoteFactory
 from lft.app.epoch import RotateEpoch
 from lft.consensus.messages.data import DataPool
 from lft.consensus.messages.vote import VotePool
+from lft.consensus.epoch import EpochPool
 from lft.consensus.election import Election
 from lft.event import EventSystem
 
@@ -32,7 +33,11 @@ async def setup_election(peer_num: int) -> Tuple[EventSystem, Election, List[byt
     )
     data_pool.add_data(genesis_data)
 
-    election = Election(TEST_NODE_ID, RotateEpoch(0, voters), genesis_data.round_num + 1,
-                        event_system, data_factory, vote_factory, data_pool, vote_pool)
+    epoch = RotateEpoch(0, voters)
+    epoch_pool = EpochPool()
+    epoch_pool.add_epoch(epoch)
+
+    election = Election(TEST_NODE_ID, epoch.num, genesis_data.round_num + 1,
+                        event_system, data_factory, vote_factory, epoch_pool, data_pool, vote_pool)
     election._candidate_id = CANDIDATE_ID
     return event_system, election, voters

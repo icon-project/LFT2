@@ -176,8 +176,8 @@ class Consensus(EventRegister):
 
     def _new_round(self, epoch_num: int, round_num: int, candidate_id: bytes):
         epoch = self._get_epoch(epoch_num)
-        election = Election(self._node_id, epoch, round_num, self._event_system,
-                            self._data_factory, self._vote_factory, self._data_pool, self._vote_pool)
+        election = Election(self._node_id, epoch.num, round_num, self._event_system,
+                            self._data_factory, self._vote_factory, self._epoch_pool, self._data_pool, self._vote_pool)
         new_round = Round(election, self._node_id, epoch, round_num,
                           self._event_system, self._data_factory, self._vote_factory)
         new_round.candidate_id = candidate_id
