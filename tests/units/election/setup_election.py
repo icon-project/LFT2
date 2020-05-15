@@ -33,11 +33,14 @@ async def setup_election(peer_num: int) -> Tuple[EventSystem, Election, List[byt
     )
     data_pool.add_data(genesis_data)
 
-    epoch = RotateEpoch(0, voters)
+    genesis_epoch = RotateEpoch(0, ())
+    epoch = RotateEpoch(1, voters)
+
     epoch_pool = EpochPool()
+    epoch_pool.add_epoch(genesis_epoch)
     epoch_pool.add_epoch(epoch)
 
-    election = Election(TEST_NODE_ID, epoch.num, genesis_data.round_num + 1,
+    election = Election(TEST_NODE_ID, epoch.num, 0,
                         event_system, data_factory, vote_factory, epoch_pool, data_pool, vote_pool)
     election._candidate_id = CANDIDATE_ID
     return event_system, election, voters
