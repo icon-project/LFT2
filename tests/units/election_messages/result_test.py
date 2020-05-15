@@ -2,7 +2,7 @@ import os
 import pytest
 
 from lft.app.data import DefaultDataFactory
-from lft.app.vote import DefaultVoteFactory
+from lft.app.vote import DefaultVoteFactory, DefaultVote
 from lft.app.epoch import RotateEpoch
 from lft.consensus.election import ElectionMessages
 
@@ -48,6 +48,24 @@ async def test_round_failure_lazy():
     for voter in voters[:epoch.quorum_num]:
         vote = DefaultVoteFactory(voter).create_lazy_vote(voter, epoch.num, round_num)
         election_messages.add_vote(vote)
+    election_messages.update()
+    candidate = election_messages.result
+
+    assert candidate is None
+
+
+@pytest.mark.asyncio
+async def test_round_failure_consensus_id():
+    class FakeVote(DefaultVote):
+        @property
+        def consensus_id(self) -> bytes:
+            return b'abcd'
+
+    epoch, round_num, election_messages, data, voters = await setup()
+
+    last_vote = await DefaultVoteFactory(voters[-1]).create_vote(data.id, b'', epoch.num, round_num)
+    last_vote.__class__ = FakeVote
+    election_messages.add_vote(last_vote)
     election_messages.update()
     candidate = election_messages.result
 
