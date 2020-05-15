@@ -22,6 +22,11 @@ class Vote(Message):
     def voter_id(self) -> bytes:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def consensus_id(self) -> bytes:
+        raise NotImplementedError
+
     @abstractmethod
     def is_none(self) -> bool:
         raise NotImplementedError

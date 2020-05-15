@@ -40,6 +40,10 @@ class DefaultVote(Vote):
         return self._voter_id
 
     @property
+    def consensus_id(self) -> bytes:
+        return bytes(x ^ y for x, y in zip(self._data_id, self._commit_id))
+
+    @property
     def round_num(self) -> int:
         return self._round_num
 

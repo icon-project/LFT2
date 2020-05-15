@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 from typing import DefaultDict, OrderedDict, Set, Optional, Dict
 from lft.consensus.epoch import EpochPool
 from lft.consensus.messages.data import Data, DataFactory, DataPool, DataVerifier
@@ -147,21 +148,35 @@ class Election:
         candidate_epoch_num = candidate_data.epoch_num
         candidate_round_num = candidate_data.round_num
 
-        candidate_votes = self._vote_pool.get_votes(candidate_epoch_num, candidate_round_num)
-        candidate_votes = {vote.voter_id: vote for vote in candidate_votes if vote.data_id == self._candidate_id}
-
         candidate_epoch = self._epoch_pool.get_epoch(candidate_data.epoch_num)
-        candidate_votes = tuple((candidate_votes[voter]
-                                if voter in candidate_votes else
-                                self._vote_factory.create_lazy_vote(voter, candidate_epoch_num, candidate_round_num))
-                                for voter in candidate_epoch.voters)
+        if candidate_epoch.quorum_num == 0:
+            consensus_votes = tuple()
+        else:
+            candidate_votes = self._vote_pool.get_votes(candidate_epoch_num, candidate_round_num)
+            candidate_votes = {vote.voter_id: vote
+                               for vote in candidate_votes
+                               if vote.data_id == self._candidate_id}
+
+            candidate_votes = {voter: candidate_votes[voter]
+                               for voter in candidate_epoch.voters
+                               if voter in candidate_votes}
+
+            consensus_id_counter = Counter(vote.consensus_id for vote in candidate_votes.values())
+            consensus_id = consensus_id_counter.most_common(1)[0][0]
+
+            consensus_votes = tuple(
+                candidate_votes[voter]
+                if voter in candidate_votes and candidate_votes[voter].consensus_id == consensus_id else
+                self._vote_factory.create_lazy_vote(voter, candidate_epoch_num, candidate_round_num)
+                for voter in candidate_epoch.voters
+            )
 
         new_data = await self._data_factory.create_data(
             data_number=candidate_data.number + 1,
             prev_id=self._candidate_id,
             epoch_num=self._epoch.num,
             round_num=self._round_num,
-            prev_votes=candidate_votes
+            prev_votes=consensus_votes
         )
         await self._raise_broadcast_data(new_data)
         self._is_proposed = True
@@ -222,8 +237,11 @@ class Election:
             return True
 
 
-Datums = OrderedDict[bytes, Data]  # dict[data_id] = data
-Votes = DefaultDict[bytes, Dict[bytes, Vote]]  # dict[data_id][voter_id] = vote
+# dict[data_id] = data
+Datums = OrderedDict[bytes, Data]
+
+# dict[data_id][consensus_id][voter_id] = vote
+Votes = DefaultDict[bytes, DefaultDict[bytes, Dict[bytes, Vote]]]
 
 
 class ElectionMessages:
@@ -233,7 +251,7 @@ class ElectionMessages:
         self._data_factory = data_factory
 
         self._datums: Datums = OrderedDict()
-        self._votes: Votes = DefaultDict(dict)
+        self._votes: Votes = DefaultDict(lambda : DefaultDict(dict))
 
         self._voters: Set[bytes] = set()
         self._result: Optional[Data] = None
@@ -251,7 +269,7 @@ class ElectionMessages:
 
     def add_vote(self, vote: Vote):
         self._voters.add(vote.voter_id)
-        self._votes[vote.data_id][vote.voter_id] = vote
+        self._votes[vote.data_id][vote.consensus_id][vote.voter_id] = vote
 
     def update(self):
         # RealData : Determine round success and round end
@@ -268,9 +286,17 @@ class ElectionMessages:
         self._result = None
 
     def _update_quorum_data(self):
-        quorum_datums = [data for data in self._datums.values()
-                         if len(self._votes[data.id]) >= self._epoch.quorum_num]
-        quorum_datums.sort(key=lambda data: not data.is_determinative())
+        quorum_datums = []
+        for data in self._datums.values():
+            consensus_id_to_votes = self._votes[data.id]
+            if self._epoch.quorum_num == 0:  # genesis
+                quorum_datums.append(data)
+            else:
+                if any(len(votes) >= self._epoch.quorum_num
+                       for votes in consensus_id_to_votes.values()):
+                    quorum_datums.append(data)
+
+        quorum_datums.sort(key=lambda d: not d.is_determinative())
         assert ((len(quorum_datums) <= 1) or
                 (len(quorum_datums) == 2 and quorum_datums[0].is_determinative() and quorum_datums[1].is_lazy()))
 
