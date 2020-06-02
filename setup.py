@@ -9,16 +9,16 @@ if version is None:
 
 deps = {
     'lft': [
-        "jsonrpcclient[requests,aiohttp]==3.3.5"
+        "jsonrpcclient[requests,aiohttp]~=3.3.5"
     ],
     'app': [
-        "coloredlogs==10.0",
-        "ipython==7.9.0"
+        "coloredlogs~=10.0.0",
+        "ipython~=7.9.0"
     ],
     'test': [
-        "mock==4.0.1",
-        "pytest==4.6.3",
-        "pytest-asyncio==0.10.0"
+        "mock~=4.0.1",
+        "pytest~=4.6.3",
+        "pytest-asyncio~=0.10.0"
     ],
 }
 
