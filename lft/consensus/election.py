@@ -143,11 +143,17 @@ class Election:
             return
 
         candidate_data = self._data_pool.get_data(self._candidate_id)
-        candidate_votes = self._vote_pool.get_votes(candidate_data.epoch_num, candidate_data.round_num)
+
+        candidate_epoch_num = candidate_data.epoch_num
+        candidate_round_num = candidate_data.round_num
+
+        candidate_votes = self._vote_pool.get_votes(candidate_epoch_num, candidate_round_num)
         candidate_votes = {vote.voter_id: vote for vote in candidate_votes if vote.data_id == self._candidate_id}
 
         candidate_epoch = self._epoch_pool.get_epoch(candidate_data.epoch_num)
-        candidate_votes = tuple(candidate_votes[voter] if voter in candidate_votes else None
+        candidate_votes = tuple((candidate_votes[voter]
+                                if voter in candidate_votes else
+                                self._vote_factory.create_lazy_vote(voter, candidate_epoch_num, candidate_round_num))
                                 for voter in candidate_epoch.voters)
 
         new_data = await self._data_factory.create_data(
