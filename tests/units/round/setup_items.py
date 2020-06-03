@@ -6,6 +6,7 @@ from lft.app.vote import DefaultVoteFactory
 from lft.app.epoch import RotateEpoch
 from lft.consensus.election import Election
 from lft.consensus.round import Round
+from lft.consensus.epoch import EpochPool
 from lft.consensus.messages.data import DataPool
 from lft.consensus.messages.vote import VotePool
 from lft.event import EventSystem
@@ -17,17 +18,21 @@ async def setup_items(voter_num: int, round_num: int):
     voter = voters[0]
 
     epoch = RotateEpoch(1, voters)
+    epoch_pool = EpochPool()
+    epoch_pool.add_epoch(epoch)
+
     event_system = MagicMock(EventSystem(use_priority=True))
 
     data_factory = DefaultDataFactory(voter)
     vote_factory = DefaultVoteFactory(voter)
 
     election = MagicMock(Election(voter,
-                                  epoch,
+                                  epoch.num,
                                   round_num,
                                   event_system,
                                   data_factory,
                                   vote_factory,
+                                  epoch_pool,
                                   DataPool(),
                                   VotePool()))
     round_ = Round(election,

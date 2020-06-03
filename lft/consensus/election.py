@@ -1,5 +1,6 @@
 import logging
 from typing import DefaultDict, OrderedDict, Set, Optional, Dict
+from lft.consensus.epoch import EpochPool
 from lft.consensus.messages.data import Data, DataFactory, DataPool, DataVerifier
 from lft.consensus.messages.vote import Vote, VoteFactory, VotePool
 from lft.consensus.events import (RoundEndEvent, BroadcastDataEvent, BroadcastVoteEvent,
@@ -14,20 +15,23 @@ __all__ = ("Election", "ElectionMessages")
 class Election:
     def __init__(self,
                  node_id: bytes,
-                 epoch: Epoch,
+                 epoch_num: int,
                  round_num: int,
                  event_system: EventSystem,
                  data_factory: DataFactory,
                  vote_factory: VoteFactory,
+                 epoch_pool: EpochPool,
                  data_pool: DataPool,
                  vote_pool: VotePool):
         self._node_id: bytes = node_id
-        self._epoch = epoch
+        self._epoch = epoch_pool.get_epoch(epoch_num)
         self._round_num = round_num
 
         self._event_system: EventSystem = event_system
         self._data_factory: DataFactory = data_factory
         self._vote_factory: VoteFactory = vote_factory
+
+        self._epoch_pool = epoch_pool
         self._data_pool = data_pool
         self._vote_pool = vote_pool
 
@@ -36,7 +40,7 @@ class Election:
         self._data_verifier: DataVerifier = None
 
         self._candidate_id: bytes = None
-        self._messages: ElectionMessages = ElectionMessages(epoch, round_num, data_factory)
+        self._messages: ElectionMessages = ElectionMessages(self._epoch, round_num, data_factory)
 
         self._is_proposed = False
         self._is_voted = False
@@ -141,8 +145,10 @@ class Election:
         candidate_data = self._data_pool.get_data(self._candidate_id)
         candidate_votes = self._vote_pool.get_votes(candidate_data.epoch_num, candidate_data.round_num)
         candidate_votes = {vote.voter_id: vote for vote in candidate_votes if vote.data_id == self._candidate_id}
+
+        candidate_epoch = self._epoch_pool.get_epoch(candidate_data.epoch_num)
         candidate_votes = tuple(candidate_votes[voter] if voter in candidate_votes else None
-                                for voter in self._epoch.voters)
+                                for voter in candidate_epoch.voters)
 
         new_data = await self._data_factory.create_data(
             data_number=candidate_data.number + 1,
