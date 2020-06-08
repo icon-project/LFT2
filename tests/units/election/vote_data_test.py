@@ -73,8 +73,8 @@ async def set_election_for_receive_vote():
         prev_id=CANDIDATE_ID,
         proposer_id=LEADER_ID,
         number=1,
-        epoch_num=0,
-        round_num=1,
+        epoch_num=1,
+        round_num=0,
         prev_votes=[]
     )
     await election.receive_data(data=consensus_data)
@@ -95,16 +95,16 @@ async def do_votes(election, success_vote_num, none_vote_num, lazy_vote_num, vot
             await validator_vote_factories[i].create_vote(
                 data_id=PROPOSE_ID,
                 commit_id=CANDIDATE_ID,
-                epoch_num=0,
-                round_num=1
+                epoch_num=1,
+                round_num=0
             )
         )
     for i in range(none_vote_num):
         await do_vote(
             election,
             validator_vote_factories[success_vote_num + i].create_none_vote(
-                epoch_num=0,
-                round_num=1
+                epoch_num=1,
+                round_num=0
             )
         )
     for i in range(lazy_vote_num):
@@ -112,8 +112,8 @@ async def do_votes(election, success_vote_num, none_vote_num, lazy_vote_num, vot
             election,
             validator_vote_factories[i].create_lazy_vote(
                 voter_id=voters[i],
-                epoch_num=0,
-                round_num=1
+                epoch_num=1,
+                round_num=0
             )
         )
 
@@ -134,5 +134,5 @@ def verify_success_round_end(round_end: RoundEndEvent,
 
 
 def verify_round_num_is_correct(round_end):
-    assert round_end.round_num == 1
-    assert round_end.epoch_num == 0
+    assert round_end.round_num == 0
+    assert round_end.epoch_num == 1
