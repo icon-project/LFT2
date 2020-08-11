@@ -25,7 +25,9 @@ class Round:
                  round_num: int,
                  event_system: EventSystem,
                  data_factory: DataFactory,
-                 vote_factory: VoteFactory):
+                 vote_factory: VoteFactory,
+                 timeout_propose: float,
+                 timeout_vote: float):
         self._election = election
         self._node_id = node_id
 
@@ -40,6 +42,8 @@ class Round:
         self._messages = RoundMessages()
 
         self._vote_timeout_started = False
+        self._timeout_propose = timeout_propose
+        self._timeout_vote = timeout_vote
 
     @property
     def num(self):
@@ -116,7 +120,7 @@ class Round:
         self._vote_timeout_started = True
         for voter in self._epoch.get_voters_id():
             vote = self._vote_factory.create_lazy_vote(voter, self._epoch.num, self._num)
-            await self._raise_receive_vote(delay=TIMEOUT_VOTE, vote=vote)
+            await self._raise_receive_vote(delay=self._timeout_vote, vote=vote)
 
     async def _new_unreal_datums(self):
         none_data = self._data_factory.create_none_data(epoch_num=self._epoch.num,
@@ -129,7 +133,7 @@ class Round:
         lazy_data = self._data_factory.create_lazy_data(self._epoch.num,
                                                         self._num,
                                                         expected_proposer)
-        await self._raise_receive_data(delay=TIMEOUT_PROPOSE, data=lazy_data)
+        await self._raise_receive_data(delay=self._timeout_propose, data=lazy_data)
 
     async def _receive_votes_if_exist(self, data: Data):
         votes_by_data_id = self._messages.get_votes(data_id=data.id)

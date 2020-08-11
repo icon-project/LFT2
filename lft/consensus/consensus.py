@@ -5,7 +5,7 @@ from lft.event import EventRegister
 from lft.consensus.epoch import EpochPool
 from lft.consensus.messages.data import DataPool
 from lft.consensus.messages.vote import VotePool
-from lft.consensus.round import Round, RoundPool
+from lft.consensus.round import Round, RoundPool, TIMEOUT_PROPOSE, TIMEOUT_VOTE
 from lft.consensus.election import Election
 from lft.consensus.events import InitializeEvent, RoundStartEvent, ReceiveDataEvent, ReceiveVoteEvent
 from lft.consensus.exceptions import InvalidRound, InvalidEpoch, InvalidProposer, InvalidVoter
@@ -22,7 +22,8 @@ __all__ = ("Consensus", )
 
 class Consensus(EventRegister):
     def __init__(self, event_system: 'EventSystem', node_id: bytes,
-                 data_factory: 'DataFactory', vote_factory: 'VoteFactory'):
+                 data_factory: 'DataFactory', vote_factory: 'VoteFactory',
+                 timeout_propose: float = TIMEOUT_PROPOSE, timeout_vote: float = TIMEOUT_VOTE):
         super().__init__(event_system.simulator)
 
         self._event_system = event_system
@@ -36,6 +37,9 @@ class Consensus(EventRegister):
         self._vote_pool = VotePool()
 
         self._logger = logging.getLogger(node_id.hex())
+
+        self._timeout_propose = timeout_propose
+        self._timeout_vote = timeout_vote
 
     async def _on_event_initialize(self, event: InitializeEvent):
         await self.initialize(event.commit_id, event.epoch_pool, event.data_pool, event.vote_pool)
@@ -179,7 +183,8 @@ class Consensus(EventRegister):
         election = Election(self._node_id, epoch.num, round_num, self._event_system,
                             self._data_factory, self._vote_factory, self._epoch_pool, self._data_pool, self._vote_pool)
         new_round = Round(election, self._node_id, epoch, round_num,
-                          self._event_system, self._data_factory, self._vote_factory)
+                          self._event_system, self._data_factory, self._vote_factory,
+                          self._timeout_propose, self._timeout_vote)
         new_round.candidate_id = candidate_id
         self._round_pool.add_round(new_round)
         return new_round
