@@ -26,8 +26,8 @@ class Round:
                  event_system: EventSystem,
                  data_factory: DataFactory,
                  vote_factory: VoteFactory,
-                 timeout_propose: float,
-                 timeout_vote: float):
+                 timeout_propose: float = TIMEOUT_PROPOSE,
+                 timeout_vote: float = TIMEOUT_VOTE):
         self._election = election
         self._node_id = node_id
 
